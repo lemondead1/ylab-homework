@@ -1,5 +1,6 @@
 package com.lemondead1.carshopservice.repo;
 
+import com.lemondead1.carshopservice.dto.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
@@ -7,7 +8,6 @@ import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
 import java.util.*;
 
 public class UserRepo {
-  public record User(int id, String username, String password, UserRole role) { }
 
   private final Map<Integer, User> map = new HashMap<>();
   private final Map<String, User> usernameMap = new HashMap<>();
@@ -33,7 +33,7 @@ public class UserRepo {
     }
     var newUser = new User(id, newUsername, newPassword, newRole);
     var old = map.put(id, newUser);
-    usernameMap.remove(Objects.requireNonNull(old).username);
+    usernameMap.remove(Objects.requireNonNull(old).username());
     usernameMap.put(newUsername, newUser);
   }
 
@@ -42,7 +42,7 @@ public class UserRepo {
     if (old == null) {
       throw new RowNotFoundException();
     }
-    usernameMap.remove(old.username);
+    usernameMap.remove(old.username());
     return old;
   }
 

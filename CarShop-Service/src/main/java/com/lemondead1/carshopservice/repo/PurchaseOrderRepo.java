@@ -1,5 +1,6 @@
 package com.lemondead1.carshopservice.repo;
 
+import com.lemondead1.carshopservice.dto.PurchaseOrder;
 import com.lemondead1.carshopservice.enums.PurchaseOrderState;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 
@@ -10,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 
 public class PurchaseOrderRepo {
-  public record PurchaseOrder(int id, Instant createdAt, PurchaseOrderState state, int customerId, int carId) { }
 
   private final Map<Integer, PurchaseOrder> map = new HashMap<>();
   private int lastId = 0;

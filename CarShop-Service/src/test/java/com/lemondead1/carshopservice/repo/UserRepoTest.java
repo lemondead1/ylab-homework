@@ -2,6 +2,7 @@ package com.lemondead1.carshopservice.repo;
 
 import static org.assertj.core.api.Assertions.*;
 
+import com.lemondead1.carshopservice.dto.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
@@ -26,7 +27,7 @@ public class UserRepoTest {
   void createdUserMatchesSpec() {
     repo.create("user", "password", UserRole.CLIENT);
     repo.create("admin", "password", UserRole.ADMIN);
-    assertThat(repo.findById(2)).isEqualTo(new UserRepo.User(2, "admin", "password", UserRole.ADMIN));
+    assertThat(repo.findById(2)).isEqualTo(new User(2, "admin", "password", UserRole.ADMIN));
   }
 
   @Test
@@ -40,7 +41,7 @@ public class UserRepoTest {
   void editedUserMatchesSpec() {
     repo.create("user", "password", UserRole.CLIENT);
     repo.edit(1, "newUsername", "newPassword", UserRole.ADMIN);
-    assertThat(repo.findById(1)).isEqualTo(new UserRepo.User(1, "newUsername", "newPassword", UserRole.ADMIN));
+    assertThat(repo.findById(1)).isEqualTo(new User(1, "newUsername", "newPassword", UserRole.ADMIN));
   }
 
   @Test
@@ -60,7 +61,7 @@ public class UserRepoTest {
   @Test
   void deleteReturnsOldUser() {
     repo.create("user", "password", UserRole.CLIENT);
-    assertThat(repo.delete(1)).isEqualTo(new UserRepo.User(1, "user", "password", UserRole.CLIENT));
+    assertThat(repo.delete(1)).isEqualTo(new User(1, "user", "password", UserRole.CLIENT));
   }
 
   @Test
@@ -80,12 +81,12 @@ public class UserRepoTest {
   @Test
   void findByUsernameReturnsUser() {
     repo.create("user", "password", UserRole.CLIENT);
-    assertThat(repo.findByUsername("user")).isEqualTo(new UserRepo.User(1, "user", "password", UserRole.CLIENT));
+    assertThat(repo.findByUsername("user")).isEqualTo(new User(1, "user", "password", UserRole.CLIENT));
   }
 
   @Test
   void findByIdReturnsUser() {
     repo.create("user", "password", UserRole.CLIENT);
-    assertThat(repo.findById(1)).isEqualTo(new UserRepo.User(1, "user", "password", UserRole.CLIENT));
+    assertThat(repo.findById(1)).isEqualTo(new User(1, "user", "password", UserRole.CLIENT));
   }
 }

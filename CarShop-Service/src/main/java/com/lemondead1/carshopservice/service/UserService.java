@@ -1,5 +1,6 @@
 package com.lemondead1.carshopservice.service;
 
+import com.lemondead1.carshopservice.dto.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.exceptions.WrongUsernamePassword;
@@ -28,7 +29,7 @@ public class UserService {
   }
 
   public void login(String username, String password, SessionService session) {
-    UserRepo.User user;
+    User user;
     try {
       user = users.findByUsername(username);
     } catch (RowNotFoundException e) {

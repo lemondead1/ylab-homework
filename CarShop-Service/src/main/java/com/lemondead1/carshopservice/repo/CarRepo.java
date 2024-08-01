@@ -1,15 +1,13 @@
 package com.lemondead1.carshopservice.repo;
 
+import com.lemondead1.carshopservice.dto.Car;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
-import com.lemondead1.carshopservice.service.CarService;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class CarRepo {
-  public record Car(int id, String brand, String model, int yearOfIssue, int price, String condition) { }
-
   private final Map<Integer, Car> cars = new HashMap<>();
   private int lastId;
 

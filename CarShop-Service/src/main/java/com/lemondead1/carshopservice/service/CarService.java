@@ -1,5 +1,6 @@
 package com.lemondead1.carshopservice.service;
 
+import com.lemondead1.carshopservice.dto.Car;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.repo.CarRepo;
 import org.jetbrains.annotations.Nullable;
@@ -34,17 +35,12 @@ public class CarService {
     events.onCarDeleted(user, carId);
   }
 
-  public record CarDTO(int id, String brand, String model, int yearOfIssue, int price, String condition) { }
-
-  public CarDTO findById(int id) {
-    var car = cars.findById(id);
-    return new CarDTO(id, car.brand(), car.model(), car.yearOfIssue(), car.price(), car.condition());
+  public Car findById(int id) {
+    return cars.findById(id);
   }
 
-  public List<CarDTO> lookupCars(@Nullable String brand, @Nullable String model, @Nullable Integer yearOfIssue,
-                                 @Nullable Integer price, @Nullable String condition, @Nullable CarSorting sorting) {
-    return cars.lookupCars(brand, model, yearOfIssue, price, condition, sorting).stream()
-               .map(c -> new CarDTO(c.id(), c.brand(), c.model(), c.yearOfIssue(), c.price(), c.condition()))
-               .toList();
+  public List<Car> lookupCars(@Nullable String brand, @Nullable String model, @Nullable Integer yearOfIssue,
+                              @Nullable Integer price, @Nullable String condition, @Nullable CarSorting sorting) {
+    return cars.lookupCars(brand, model, yearOfIssue, price, condition, sorting);
   }
 }
