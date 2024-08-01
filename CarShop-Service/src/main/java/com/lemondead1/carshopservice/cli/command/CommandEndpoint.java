@@ -39,8 +39,12 @@ public class CommandEndpoint implements Command {
   @Override
   public void execute(SessionService currentUser, ConsoleIO cli, String... path) {
     try {
-      var result = endpoint.execute(currentUser, cli, path);
-      cli.println(result);
+      if (path.length >= 1 && "help".equals(path[0])) {
+        cli.println(getDescription());
+      } else {
+        var result = endpoint.execute(currentUser, cli, path);
+        cli.println(result);
+      }
     } catch (CommandException e) {
       cli.println(e.getMessage());
     }
