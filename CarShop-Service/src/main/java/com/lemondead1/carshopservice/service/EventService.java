@@ -1,10 +1,12 @@
 package com.lemondead1.carshopservice.service;
 
-import com.lemondead1.carshopservice.event.*;
-import com.lemondead1.carshopservice.repo.EventRepo;
-import com.lemondead1.carshopservice.enums.PurchaseOrderState;
-import com.lemondead1.carshopservice.enums.ServiceOrderState;
+import com.lemondead1.carshopservice.enums.OrderKind;
+import com.lemondead1.carshopservice.enums.OrderState;
+import com.lemondead1.carshopservice.event.CarEvent;
+import com.lemondead1.carshopservice.event.OrderEvent;
+import com.lemondead1.carshopservice.event.UserEvent;
 import com.lemondead1.carshopservice.exceptions.DumpException;
+import com.lemondead1.carshopservice.repo.EventRepo;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -35,36 +37,20 @@ public class EventService {
     events.submitEvent(new CarEvent.Deleted(time.now(), deleterId, carId));
   }
 
-  public void onPurchaseOrderCreated(int creatorId, int orderId, Instant createdAt,
-                                     PurchaseOrderState state, int customerId, int carId) {
-    events.submitEvent(new PurchaseOrderEvent.Created(time.now(), creatorId, orderId, createdAt,
-                                                      state, customerId, carId));
+  public void onOrderCreated(int creatorId, int orderId, Instant createdAt, OrderKind kind,
+                             OrderState state, int customerId, int carId, String comments) {
+    events.submitEvent(new OrderEvent.Created(time.now(), creatorId, orderId, createdAt, kind,
+                                              state, customerId, carId, comments));
   }
 
-  public void onPurchaseOrderEdited(int creatorId, int newOrderId, Instant newCreatedAt,
-                                    PurchaseOrderState newOrderState, int newCustomerId, int newCarId) {
-    events.submitEvent(new PurchaseOrderEvent.Modified(time.now(), creatorId, newOrderId, newCreatedAt,
-                                                       newOrderState, newCustomerId, newCarId));
+  public void onOrderEdited(int creatorId, int newOrderId, Instant newCreatedAt, OrderKind newKind,
+                            OrderState newState, int newCustomerId, int newCarId, String newComments) {
+    events.submitEvent(new OrderEvent.Modified(time.now(), creatorId, newOrderId, newCreatedAt, newKind,
+                                               newState, newCustomerId, newCarId, newComments));
   }
 
-  public void onPurchaseOrderDeleted(int deleterId, int orderId) {
-    events.submitEvent(new PurchaseOrderEvent.Deleted(time.now(), deleterId, orderId));
-  }
-
-  public void onServiceOrderCreated(int creatorId, int orderId, Instant createdAt, ServiceOrderState state,
-                                    int customerId, int carId, String complaints) {
-    events.submitEvent(new ServiceOrderEvent.Created(time.now(), creatorId, orderId, createdAt,
-                                                     state, customerId, carId, complaints));
-  }
-
-  public void onServiceOrderEdited(int editorId, int newOrderId, Instant newCreatedAt, ServiceOrderState newOrderState,
-                                   int newCustomerId, int newCarId, String newComplaints) {
-    events.submitEvent(new ServiceOrderEvent.Modified(time.now(), editorId, newOrderId, newCreatedAt,
-                                                      newOrderState, newCustomerId, newCarId, newComplaints));
-  }
-
-  public void onServiceOrderDeleted(int deleterId, int orderId) {
-    events.submitEvent(new ServiceOrderEvent.Deleted(time.now(), deleterId, orderId));
+  public void onOrderDeleted(int deleterId, int orderId) {
+    events.submitEvent(new OrderEvent.Deleted(time.now(), deleterId, orderId));
   }
 
   public void onUserLoggedIn(int userId) {

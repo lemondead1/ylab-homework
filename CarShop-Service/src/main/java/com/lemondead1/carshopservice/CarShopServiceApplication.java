@@ -2,6 +2,7 @@ package com.lemondead1.carshopservice;
 
 import com.lemondead1.carshopservice.cli.CarController;
 import com.lemondead1.carshopservice.cli.HomeController;
+import com.lemondead1.carshopservice.cli.OrderController;
 import com.lemondead1.carshopservice.cli.parsing.ConsoleIO;
 import com.lemondead1.carshopservice.cli.LoginController;
 import com.lemondead1.carshopservice.cli.command.builders.CommandTreeBuilder;
@@ -17,14 +18,15 @@ public class CarShopServiceApplication {
   }
 
   public static void main(String[] args) {
+    LoggerService logger = new LoggerService();
+
     var userRepo = new UserRepo();
 
     userRepo.create("admin", "password", UserRole.ADMIN);
 
     var carRepo = new CarRepo();
     var eventRepo = new EventRepo();
-    var purchaseOrderRepo = new PurchaseOrderRepo();
-    var serviceOrderRepo = new ServiceOrderRepo();
+    var orderRepo = new OrderRepo(logger, userRepo, carRepo);
 
     var timeService = new TimeService();
     var eventService = new EventService(eventRepo, timeService);
@@ -37,6 +39,7 @@ public class CarShopServiceApplication {
     new LoginController(userService).registerEndpoints(commandBuilder);
     new HomeController().registerEndpoints(commandBuilder);
     new CarController(carService).registerEndpoints(commandBuilder);
+    new OrderController(orderRepo).registerEndpoints(commandBuilder);
 
     var rootCommand = commandBuilder.build();
 

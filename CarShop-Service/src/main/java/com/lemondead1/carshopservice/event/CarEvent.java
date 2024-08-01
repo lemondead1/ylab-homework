@@ -18,22 +18,6 @@ public abstract class CarEvent extends Event {
     return carId;
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) { return true; }
-    if (o == null || getClass() != o.getClass()) { return false; }
-    if (!super.equals(o)) { return false; }
-    CarEvent carEvent = (CarEvent) o;
-    return carId == carEvent.carId;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + carId;
-    return result;
-  }
-
   public static class Created extends CarEvent {
     private final String brand;
     private final String model;
@@ -77,26 +61,6 @@ public abstract class CarEvent extends Event {
     @Override
     public EventType getType() {
       return EventType.CAR_CREATED;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) { return true; }
-      if (o == null || getClass() != o.getClass()) { return false; }
-      if (!super.equals(o)) { return false; }
-      Created created = (Created) o;
-      return yearOfIssue == created.yearOfIssue && price == created.price && brand.equals(created.brand) &&
-             condition.equals(created.condition);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + brand.hashCode();
-      result = 31 * result + yearOfIssue;
-      result = 31 * result + price;
-      result = 31 * result + condition.hashCode();
-      return result;
     }
 
     @Override
@@ -151,26 +115,6 @@ public abstract class CarEvent extends Event {
     @Override
     public EventType getType() {
       return EventType.CAR_MODIFIED;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) { return true; }
-      if (o == null || getClass() != o.getClass()) { return false; }
-      if (!super.equals(o)) { return false; }
-      Modified modified = (Modified) o;
-      return newYearOfIssue == modified.newYearOfIssue && newPrice == modified.newPrice &&
-             newBrand.equals(modified.newBrand) && newCondition.equals(modified.newCondition);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + newBrand.hashCode();
-      result = 31 * result + newYearOfIssue;
-      result = 31 * result + newPrice;
-      result = 31 * result + newCondition.hashCode();
-      return result;
     }
 
     @Override

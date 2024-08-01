@@ -5,18 +5,18 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public enum ServiceOrderState {
+public enum OrderState {
   NEW("new"),
   PERFORMING("performing"),
   DONE("done"),
   CANCELLED("cancelled");
 
-  private static final Map<String, ServiceOrderState> idToEnumMap =
-      Arrays.stream(values()).collect(Collectors.toMap(ServiceOrderState::getId, Function.identity()));
+  private static final Map<String, OrderState> idToEnumMap =
+      Arrays.stream(values()).collect(Collectors.toMap(OrderState::getId, Function.identity()));
 
   private final String id;
 
-  ServiceOrderState(String id) {
+  OrderState(String id) {
     this.id = id;
   }
 
@@ -24,7 +24,7 @@ public enum ServiceOrderState {
     return id;
   }
 
-  public static ServiceOrderState idToEnum(String sqlName) {
+  public static OrderState idToEnum(String sqlName) {
     var result = idToEnumMap.get(sqlName);
     if (result == null) {
       throw new IllegalArgumentException();

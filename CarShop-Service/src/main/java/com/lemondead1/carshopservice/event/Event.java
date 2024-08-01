@@ -26,20 +26,4 @@ public abstract class Event {
   public abstract EventType getType();
 
   public abstract String serialize();
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) { return true; }
-    if (o == null || getClass() != o.getClass()) { return false; }
-    Event event = (Event) o;
-    return userId == event.userId && timestamp.equals(event.timestamp);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = timestamp.hashCode();
-    result = 31 * result + userId;
-    result = 31 * result + getType().hashCode();
-    return result;
-  }
 }
