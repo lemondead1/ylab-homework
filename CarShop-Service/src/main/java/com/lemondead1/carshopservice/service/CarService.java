@@ -21,7 +21,25 @@ public class CarService {
     return newCarId;
   }
 
+  public void editCar(int user, int carId, String newBrand, String newModel, int newYearOfIssue, int newPrice,
+                      String newCondition) {
+    cars.edit(carId, newBrand, newModel, newYearOfIssue, newPrice, newCondition);
+    events.onCarEdited(user, carId, newBrand, newModel, newYearOfIssue, newPrice, newCondition);
+  }
+
+  public void deleteCar(int user, int carId) {
+    //TODO cleanup orders
+
+    cars.delete(carId);
+    events.onCarDeleted(user, carId);
+  }
+
   public record CarDTO(int id, String brand, String model, int yearOfIssue, int price, String condition) { }
+
+  public CarDTO findById(int id) {
+    var car = cars.findById(id);
+    return new CarDTO(id, car.brand(), car.model(), car.yearOfIssue(), car.price(), car.condition());
+  }
 
   public List<CarDTO> lookupCars(@Nullable String brand, @Nullable String model, @Nullable Integer yearOfIssue,
                                  @Nullable Integer price, @Nullable String condition, @Nullable CarSorting sorting) {

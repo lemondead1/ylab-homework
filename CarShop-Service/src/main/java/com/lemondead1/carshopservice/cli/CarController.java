@@ -7,9 +7,12 @@ import com.lemondead1.carshopservice.cli.parsing.IntParser;
 import com.lemondead1.carshopservice.cli.parsing.StringParser;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.enums.UserRole;
+import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.service.CarService;
 import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.util.TableFormatter;
+
+import static com.lemondead1.carshopservice.enums.UserRole.*;
 
 public class CarController implements Controller {
   private final CarService cars;
@@ -21,9 +24,12 @@ public class CarController implements Controller {
   @Override
   public void registerEndpoints(TreeSubcommandBuilder builder) {
     builder
-        .push("car", "Car CRUD operations").allow(UserRole.CLIENT, UserRole.MANAGER, UserRole.ADMIN)
-        .accept("create", "Creates a new car", this::createCar).allow(UserRole.MANAGER, UserRole.ADMIN).pop()
-        .accept("search", "Car search", this::listCars).allow(UserRole.CLIENT, UserRole.MANAGER, UserRole.ADMIN).pop();
+        .push("car", "Car CRUD operations").allow(CLIENT, MANAGER, ADMIN)
+            .accept("create", "Creates a new car", this::createCar).allow(MANAGER, ADMIN).pop()
+            .accept("search", "Car search", this::listCars).allow(CLIENT, MANAGER, ADMIN).pop()
+            .accept("edit", "Edit car", this::editCar).allow(MANAGER, ADMIN).pop()
+            .accept("delete", "Deletes the car", this::deleteCar).allow(MANAGER, ADMIN).pop()
+        .pop();
   }
 
   String createCar(SessionService session, ConsoleIO cli, String... path) {
@@ -33,7 +39,7 @@ public class CarController implements Controller {
     var price = cli.parse("Price > ", IntParser.INSTANCE);
     var condition = cli.parse("Condition > ", StringParser.INSTANCE);
     var id = cars.createCar(session.getCurrentUserId(), brand, model, yearOfIssue, price, condition);
-    return "Created car with id " + id + ".";
+    return "Created a car with id " + id + ".";
   }
 
   String listCars(SessionService session, ConsoleIO cli, String... path) {
@@ -55,5 +61,37 @@ public class CarController implements Controller {
       table.addRow(car.id(), car.brand(), car.model(), car.yearOfIssue(), car.price(), car.condition());
     }
     return table.format();
+  }
+
+  String editCar(SessionService session, ConsoleIO cli, String... path) {
+    if (path.length == 0) {
+      throw new CommandException("Usage: car edit <id>");
+    }
+    int id = IntParser.INSTANCE.parse(path[0]);
+    var car = cars.findById(id);
+    var newBrand = cli.parseOptional("Brand (" + car.brand() + ") > ", StringParser.INSTANCE).orElse(car.brand());
+    var newModel = cli.parseOptional("Model (" + car.model() + ") > ", StringParser.INSTANCE).orElse(car.model());
+    var newYearOfIssue = cli.parse("Year of issue (" + car.yearOfIssue() + ") > ", IntParser.INSTANCE);
+    var newPrice = cli.parse("Price (" + car.price() + ") > ", IntParser.INSTANCE);
+    var newCondition = cli.parse("Condition (" + car.condition() + ") > ", StringParser.INSTANCE);
+    cars.editCar(session.getCurrentUserId(), id, newBrand, newModel, newYearOfIssue, newPrice, newCondition);
+    return "Saved changes to the car '" + id + "'";
+  }
+
+  String deleteCar(SessionService session, ConsoleIO cli, String... path) {
+    if (path.length == 0) {
+      throw new CommandException("Usage: car delete <id>");
+    }
+    int id = IntParser.INSTANCE.parse(path[0]);
+    var car = cars.findById(id);
+    cli.printf("Deleting car: Brand=%s, Model=%s, Year of issue=%s, Price=%s, Condition=%s.",
+               car.brand(), car.model(), car.yearOfIssue(), car.price(), car.price(), car.condition());
+    var confirmation = cli.readInteractive("Confirm [y/N] > ");
+    if ("y".equalsIgnoreCase(confirmation)) {
+      cars.deleteCar(session.getCurrentUserId(), id);
+      return "Done";
+    } else {
+      return "Cancelled";
+    }
   }
 }

@@ -38,6 +38,13 @@ public class CarRepo {
     return new ArrayList<>(cars.values());
   }
 
+  public Car findById(int id) {
+    if (!cars.containsKey(id)) {
+      throw new RowNotFoundException("Car with id '" + id + "' not found.");
+    }
+    return cars.get(id);
+  }
+
   public List<Car> lookupCars(@Nullable String brand,
                               @Nullable String model,
                               @Nullable Integer yearOfIssue,
