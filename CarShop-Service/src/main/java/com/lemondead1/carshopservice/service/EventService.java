@@ -2,6 +2,7 @@ package com.lemondead1.carshopservice.service;
 
 import com.lemondead1.carshopservice.dto.Car;
 import com.lemondead1.carshopservice.dto.Order;
+import com.lemondead1.carshopservice.dto.User;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.event.CarEvent;
@@ -60,6 +61,15 @@ public class EventService {
 
   public void onUserSignedUp(int userId, String username) {
     events.submitEvent(new UserEvent.SignUp(time.now(), userId, username));
+  }
+
+  public void onUserEdited(int editorId, User oldUser, User newUser) {
+    events.submitEvent(new UserEvent.Edited(time.now(), editorId, newUser.id(), newUser.username(),
+                                            !oldUser.password().equals(newUser.password())));
+  }
+
+  public void onUserCreated(int creatorId, User created) {
+    events.submitEvent(new UserEvent.Created(time.now(), creatorId, created.id(), created.username()));
   }
 
   public void dumpAll(Path file) {

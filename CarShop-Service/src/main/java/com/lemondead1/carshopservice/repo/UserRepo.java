@@ -2,15 +2,16 @@ package com.lemondead1.carshopservice.repo;
 
 import com.lemondead1.carshopservice.dto.User;
 import com.lemondead1.carshopservice.enums.UserRole;
+import com.lemondead1.carshopservice.enums.UserSorting;
 import com.lemondead1.carshopservice.exceptions.ForeignKeyException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
+import com.lemondead1.carshopservice.util.StringUtil;
 import lombok.Builder;
 import lombok.Setter;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class UserRepo {
   @Setter
@@ -20,7 +21,7 @@ public class UserRepo {
   private final Map<String, User> usernameMap = new HashMap<>();
   private int lastId;
 
-  public int create(String username, String password, UserRole role) {
+  public User create(String username, String password, UserRole role) {
     if (usernameMap.containsKey(username)) {
       throw new UserAlreadyExistsException("Username '" + username + "' is already taken.");
     }
@@ -28,11 +29,11 @@ public class UserRepo {
     var newUser = new User(lastId, username, password, role);
     usernameMap.put(username, newUser);
     map.put(lastId, newUser);
-    return lastId;
+    return newUser;
   }
 
   @Builder(builderMethodName = "", buildMethodName = "apply", builderClassName = "EditBuilder")
-  private void applyEdit(int id, String username, String password, UserRole role) {
+  private User applyEdit(int id, String username, String password, UserRole role) {
     var old = findById(id);
 
     password = password == null ? old.password() : password;
@@ -46,6 +47,7 @@ public class UserRepo {
     map.put(id, newUser);
     usernameMap.remove(Objects.requireNonNull(old).username());
     usernameMap.put(username, newUser);
+    return newUser;
   }
 
   public EditBuilder edit(int id) {
@@ -80,5 +82,22 @@ public class UserRepo {
       throw new RowNotFoundException("User " + id + " does not exist.");
     }
     return map.get(id);
+  }
+
+  public List<User> search(@Nullable String username, @Nullable UserRole role, UserSorting sorting) {
+    var stream = map.values().stream();
+    if (username != null) {
+      stream = stream.filter(user -> StringUtil.containsIgnoreCase(user.username(), username));
+    }
+    if (role != null) {
+      stream = stream.filter(user -> user.role() == role);
+    }
+    stream = stream.sorted(switch (sorting) {
+      case USERNAME_DESC -> Comparator.comparing(User::username, String::compareToIgnoreCase).reversed();
+      case USERNAME_ASC -> Comparator.comparing(User::username, String::compareToIgnoreCase);
+      case ROLE_DESC -> Comparator.comparing(User::role).reversed();
+      case ROLE_ASC -> Comparator.comparing(User::role);
+    });
+    return stream.toList();
   }
 }

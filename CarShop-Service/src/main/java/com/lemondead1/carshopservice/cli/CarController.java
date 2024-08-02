@@ -8,15 +8,13 @@ import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.service.CarService;
 import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.util.TableFormatter;
+import lombok.RequiredArgsConstructor;
 
 import static com.lemondead1.carshopservice.enums.UserRole.*;
 
+@RequiredArgsConstructor
 public class CarController implements Controller {
   private final CarService cars;
-
-  public CarController(CarService cars) {
-    this.cars = cars;
-  }
 
   @Override
   public void registerEndpoints(TreeSubcommandBuilder builder) {

@@ -28,7 +28,7 @@ public class UserRepoTest {
 
   @Test
   void firstCreatedUserHasIdEqualToOne() {
-    assertThat(users.create("username", "password", UserRole.CLIENT)).isEqualTo(1);
+    assertThat(users.create("username", "password", UserRole.CLIENT).id()).isEqualTo(1);
     assertThat(users.findById(1).id()).isEqualTo(1);
   }
 

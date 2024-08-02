@@ -1,10 +1,7 @@
 package com.lemondead1.carshopservice;
 
-import com.lemondead1.carshopservice.cli.CarController;
-import com.lemondead1.carshopservice.cli.HomeController;
-import com.lemondead1.carshopservice.cli.OrderController;
+import com.lemondead1.carshopservice.cli.*;
 import com.lemondead1.carshopservice.cli.parsing.ConsoleIO;
-import com.lemondead1.carshopservice.cli.LoginController;
 import com.lemondead1.carshopservice.cli.command.builders.CommandTreeBuilder;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.repo.*;
@@ -46,6 +43,7 @@ public class CarShopServiceApplication {
     new HomeController().registerEndpoints(commandBuilder);
     new CarController(carService).registerEndpoints(commandBuilder);
     new OrderController(orderService).registerEndpoints(commandBuilder);
+    new UserController(userService).registerEndpoints(commandBuilder);
 
     var rootCommand = commandBuilder.build();
 
