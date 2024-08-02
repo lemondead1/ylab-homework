@@ -15,8 +15,8 @@ public enum BooleanParser implements Parser<Boolean> {
   @Override
   public Boolean parse(String string) {
     return switch (string.toLowerCase()) {
-      case "y", "ye", "yes" -> Boolean.TRUE;
-      case "n", "no" -> Boolean.FALSE;
+      case "y", "yes", "true" -> Boolean.TRUE;
+      case "n", "no", "false" -> Boolean.FALSE;
       default -> {
         if (defaultToNo) {
           yield false;

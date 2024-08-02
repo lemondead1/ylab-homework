@@ -16,7 +16,10 @@ public enum FileParser implements Parser<Path> {
     } catch (Exception e) {
       throw new ParsingException("'" + string + "' is not a valid path.");
     }
-    if (path.getParent() == null || !Files.isDirectory(path.getParent())) {
+    if (path.getParent() == null) {
+      throw new ParsingException("Cannot save file at root.");
+    }
+    if (!Files.isDirectory(path.getParent())) {
       throw new ParsingException("Directory '" + path.getParent() + "' not found.");
     }
     return path;

@@ -35,7 +35,7 @@ public class CarRepoTest {
 
   @ParameterizedTest
   @ValueSource(ints = { 0, 1, 2, 3, 4, 5 })
-  void lookupCarsSortingTest(int sortingType) {
+  void lookupSortingTest(int sortingType) {
     cars.create("a", "model", 2000, 3000, "new");
     cars.create("K", "model", 2003, 3000, "new");
     cars.create("b", "model", 1999, 3000, "new");
@@ -49,7 +49,7 @@ public class CarRepoTest {
     cars.create("J", "model", 2003, 3000, "new");
 
     var sorting = CarSorting.values()[sortingType];
-    assertThat(cars.lookupCars(null, null, null, null, null, sorting).findFirst().orElseThrow().id())
+    assertThat(cars.lookup(null, null, null, null, null, sorting).findFirst().orElseThrow().id())
         .isEqualTo(sortingType + 1);
   }
 
@@ -97,7 +97,7 @@ public class CarRepoTest {
                     @ConvertWith(IntRangeConverter.class) IntRange year,
                     @ConvertWith(IntRangeConverter.class)IntRange price,
                     String condition) {
-      assertThat(cars.lookupCars(brand, model, year, price, condition, CarSorting.NAME_ASC).toList())
+      assertThat(cars.lookup(brand, model, year, price, condition, CarSorting.NAME_ASC).toList())
           .isSortedAccordingTo(Comparator.comparing(c -> c.brand() + " " + c.model(), String::compareToIgnoreCase))
           .map(Car::id)
           .contains(Arrays.stream(expectedIds.split(",")).map(Integer::parseInt).toArray(Integer[]::new));
