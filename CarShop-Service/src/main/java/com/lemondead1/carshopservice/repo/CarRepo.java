@@ -2,12 +2,20 @@ package com.lemondead1.carshopservice.repo;
 
 import com.lemondead1.carshopservice.dto.Car;
 import com.lemondead1.carshopservice.enums.CarSorting;
+import com.lemondead1.carshopservice.exceptions.ForeignKeyException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 public class CarRepo {
+  private OrderRepo orders;
+
+  public void setOrders(OrderRepo orders) {
+    this.orders = orders;
+  }
+
   private final Map<Integer, Car> cars = new HashMap<>();
   private int lastId;
 
@@ -25,15 +33,14 @@ public class CarRepo {
   }
 
   public Car delete(int carId) {
+    if (orders.existCarOrders(carId)) {
+      throw new ForeignKeyException("Cannot delete car " + carId + " as there are orders referencing it.");
+    }
     var old = cars.remove(carId);
     if (old == null) {
       throw new RowNotFoundException();
     }
     return old;
-  }
-
-  public List<Car> listAllCars() {
-    return new ArrayList<>(cars.values());
   }
 
   public Car findById(int id) {
@@ -43,21 +50,34 @@ public class CarRepo {
     return cars.get(id);
   }
 
-  public List<Car> lookupCars(@Nullable String brand,
+  public Stream<Car> listAll() {
+    return cars.values().stream();
+  }
+
+  public Stream<Car> lookupCars(@Nullable String brand,
                               @Nullable String model,
                               @Nullable Integer yearOfIssue,
                               @Nullable Integer price,
                               @Nullable String condition,
                               @Nullable CarSorting sorting) {
-    List<Car> result = new ArrayList<>();
-    for (var car : cars.values()) {
-      if ((brand == null || car.brand().contains(brand)) &&
-          (model == null || car.model().contains(model)) &&
-          (yearOfIssue == null || car.yearOfIssue() == yearOfIssue) &&
-          (price == null || car.price() == price) &&
-          (condition == null || car.condition().contains(condition))) {
-        result.add(car);
-      }
+    var stream = listAll();
+    if (brand != null) {
+      var lowerCaseBrand = brand.toLowerCase();
+      stream = stream.filter(car -> car.brand().toLowerCase().contains(lowerCaseBrand));
+    }
+    if (model != null) {
+      var lowerCaseModel = model.toLowerCase();
+      stream = stream.filter(car -> car.brand().toLowerCase().contains(lowerCaseModel));
+    }
+    if (yearOfIssue != null) {
+      stream = stream.filter(car -> car.yearOfIssue() == yearOfIssue);
+    }
+    if (price != null) {
+      stream = stream.filter(car -> car.price() == price);
+    }
+    if (condition != null) {
+      var lowerCaseCondition = condition.toLowerCase();
+      stream = stream.filter(car -> car.condition().toLowerCase().contains(lowerCaseCondition));
     }
     if (sorting != null) {
       Comparator<Car> sorter = switch (sorting) {
@@ -69,8 +89,8 @@ public class CarRepo {
         case PRICE_ASC -> Comparator.comparingInt(Car::price);
         case PRICE_DESC -> Comparator.comparingInt(Car::price).reversed();
       };
-      result.sort(sorter);
+      stream = stream.sorted(sorter);
     }
-    return result;
+    return stream;
   }
 }

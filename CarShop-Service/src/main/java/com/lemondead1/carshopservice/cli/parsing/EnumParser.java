@@ -21,9 +21,9 @@ public class EnumParser<T extends Enum<T> & HasId> implements Parser<T> {
 
   @Override
   public T parse(String string) {
-    if (!map.containsKey(string)) {
+    if (!map.containsKey(string.toLowerCase())) {
       throw new ParsingException("Invalid value '" + string + "'. Valid values: " + String.join(", ", map.keySet()) + ".");
     }
-    return map.get(string);
+    return map.get(string.toLowerCase());
   }
 }

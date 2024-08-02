@@ -31,6 +31,7 @@ public class CarRepoTest {
     cars.create("J", "model", 2003, 3000, "new");
 
     var sorting = CarSorting.values()[sortingType];
-    assertThat(cars.lookupCars(null, null, null, null, null, sorting).get(0).id()).isEqualTo(sortingType + 1);
+    assertThat(cars.lookupCars(null, null, null, null, null, sorting).findFirst().orElseThrow().id())
+        .isEqualTo(sortingType + 1);
   }
 }

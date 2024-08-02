@@ -4,12 +4,19 @@ import com.lemondead1.carshopservice.cli.validation.Validator;
 import com.lemondead1.carshopservice.exceptions.ParsingException;
 import com.lemondead1.carshopservice.exceptions.ValidationException;
 
+import java.io.Console;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.function.Function;
 
 public class ConsoleIO {
-  private final Scanner scanner = new Scanner(System.in);
+  private final Console scanner = System.console();
+
+  {
+    if (scanner == null) {
+      throw new IllegalStateException("No console was found.");
+    }
+  }
 
   public void println(String line) {
     System.out.println(line);
@@ -25,7 +32,7 @@ public class ConsoleIO {
 
   public String readInteractive(String message) {
     System.out.print(message);
-    return scanner.nextLine();
+    return scanner.readLine();
   }
 
   public String readWhile(String message, Function<String, Optional<String>> feedback) {

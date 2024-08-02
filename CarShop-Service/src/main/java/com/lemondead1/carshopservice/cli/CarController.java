@@ -1,12 +1,10 @@
 package com.lemondead1.carshopservice.cli;
 
 import com.lemondead1.carshopservice.cli.command.builders.TreeSubcommandBuilder;
-import com.lemondead1.carshopservice.cli.parsing.ConsoleIO;
-import com.lemondead1.carshopservice.cli.parsing.EnumParser;
-import com.lemondead1.carshopservice.cli.parsing.IntParser;
-import com.lemondead1.carshopservice.cli.parsing.StringParser;
+import com.lemondead1.carshopservice.cli.parsing.*;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.enums.UserRole;
+import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.service.CarService;
 import com.lemondead1.carshopservice.service.SessionService;
@@ -25,10 +23,10 @@ public class CarController implements Controller {
   public void registerEndpoints(TreeSubcommandBuilder builder) {
     builder
         .push("car", "Car CRUD operations").allow(CLIENT, MANAGER, ADMIN)
-            .accept("create", "Creates a new car", this::createCar).allow(MANAGER, ADMIN).pop()
-            .accept("search", "Car search", this::listCars).allow(CLIENT, MANAGER, ADMIN).pop()
-            .accept("edit", "Edit car", this::editCar).allow(MANAGER, ADMIN).pop()
-            .accept("delete", "Deletes the car", this::deleteCar).allow(MANAGER, ADMIN).pop()
+        .accept("create", "Creates a new car", this::createCar).allow(MANAGER, ADMIN).pop()
+        .accept("search", "Car search", this::listCars).allow(CLIENT, MANAGER, ADMIN).pop()
+        .accept("edit", "Edit car", this::editCar).allow(MANAGER, ADMIN).pop()
+        .accept("delete", "Deletes the car", this::deleteCar).allow(MANAGER, ADMIN).pop()
         .pop();
   }
 
@@ -86,12 +84,19 @@ public class CarController implements Controller {
     var car = cars.findById(id);
     cli.printf("Deleting car: Brand=%s, Model=%s, Year of issue=%s, Price=%s, Condition=%s.",
                car.brand(), car.model(), car.yearOfIssue(), car.price(), car.price(), car.condition());
-    var confirmation = cli.readInteractive("Confirm [y/N] > ");
-    if ("y".equalsIgnoreCase(confirmation)) {
-      cars.deleteCar(session.getCurrentUserId(), id);
-      return "Done";
-    } else {
+    if (!cli.parseOptional("Confirm [y/N] > ", BooleanParser.DEFAULT_TO_FALSE).orElse(false)) {
       return "Cancelled";
     }
+    try {
+      cars.deleteCar(session.getCurrentUserId(), id, false);
+      return "Done";
+    } catch (CascadingException e) {
+      cli.println(e.getMessage());
+    }
+    if (!cli.parseOptional("Delete them [y/N] > ", BooleanParser.DEFAULT_TO_FALSE).orElse(false)) {
+      return "Cancelled";
+    }
+    cars.deleteCar(session.getCurrentUserId(), id, true);
+    return "Done";
   }
 }

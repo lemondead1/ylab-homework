@@ -1,34 +1,24 @@
 package com.lemondead1.carshopservice.enums;
 
-import java.util.Arrays;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 public enum OrderState {
-  NEW("new"),
-  PERFORMING("performing"),
-  DONE("done"),
-  CANCELLED("cancelled");
-
-  private static final Map<String, OrderState> idToEnumMap =
-      Arrays.stream(values()).collect(Collectors.toMap(OrderState::getId, Function.identity()));
+  NEW("new", "New"),
+  PERFORMING("performing", "Performing"),
+  DONE("done", "Done"),
+  CANCELLED("cancelled", "Cancelled");
 
   private final String id;
+  private final String prettyName;
 
-  OrderState(String id) {
+  OrderState(String id, String prettyName) {
     this.id = id;
+    this.prettyName = prettyName;
   }
 
   public String getId() {
     return id;
   }
 
-  public static OrderState idToEnum(String sqlName) {
-    var result = idToEnumMap.get(sqlName);
-    if (result == null) {
-      throw new IllegalArgumentException();
-    }
-    return result;
+  public String getPrettyName() {
+    return prettyName;
   }
 }

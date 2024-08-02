@@ -21,25 +21,31 @@ public class CarShopServiceApplication {
     LoggerService logger = new LoggerService();
 
     var userRepo = new UserRepo();
+    var carRepo = new CarRepo();
+    var orderRepo = new OrderRepo(logger);
+
+    userRepo.setOrders(orderRepo);
+    carRepo.setOrders(orderRepo);
+    orderRepo.setCars(carRepo);
+    orderRepo.setUsers(userRepo);
+
+    var eventRepo = new EventRepo();
 
     userRepo.create("admin", "password", UserRole.ADMIN);
-
-    var carRepo = new CarRepo();
-    var eventRepo = new EventRepo();
-    var orderRepo = new OrderRepo(logger, userRepo, carRepo);
 
     var timeService = new TimeService();
     var eventService = new EventService(eventRepo, timeService);
     var userService = new UserService(userRepo, eventService);
+    var orderService = new OrderService(orderRepo, eventService);
+    var carService = new CarService(carRepo, orderRepo, eventService);
     var sessionService = new SessionService(userService);
-    var carService = new CarService(carRepo,eventService);
 
     var cli = new ConsoleIO();
     var commandBuilder = new CommandTreeBuilder();
     new LoginController(userService).registerEndpoints(commandBuilder);
     new HomeController().registerEndpoints(commandBuilder);
     new CarController(carService).registerEndpoints(commandBuilder);
-    new OrderController(orderRepo).registerEndpoints(commandBuilder);
+    new OrderController(orderService).registerEndpoints(commandBuilder);
 
     var rootCommand = commandBuilder.build();
 

@@ -39,5 +39,6 @@ public class UserService {
       throw new WrongUsernamePassword("Wrong username or password.");
     }
     session.setCurrentUserId(user.id());
+    events.onUserLoggedIn(user.id());
   }
 }

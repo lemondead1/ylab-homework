@@ -65,6 +65,10 @@ public class CommandTree implements Command {
       return;
     }
 
-    subcommand.execute(currentUser, cli, Arrays.copyOfRange(path, 1, path.length));
+    if (subcommand.allowedRoles().contains(currentUser.getCurrentUserRole())) {
+      subcommand.execute(currentUser, cli, Arrays.copyOfRange(path, 1, path.length));
+    } else {
+      cli.println("Insufficient permissions.");
+    }
   }
 }
