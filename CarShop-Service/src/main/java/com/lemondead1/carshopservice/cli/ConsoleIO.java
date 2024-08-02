@@ -1,12 +1,12 @@
-package com.lemondead1.carshopservice.cli.parsing;
+package com.lemondead1.carshopservice.cli;
 
+import com.lemondead1.carshopservice.cli.parsing.Parser;
 import com.lemondead1.carshopservice.cli.validation.Validator;
 import com.lemondead1.carshopservice.exceptions.ParsingException;
 import com.lemondead1.carshopservice.exceptions.ValidationException;
 
 import java.io.Console;
 import java.util.Optional;
-import java.util.Scanner;
 import java.util.function.Function;
 
 public class ConsoleIO {

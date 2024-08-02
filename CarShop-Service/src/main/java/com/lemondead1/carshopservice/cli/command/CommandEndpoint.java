@@ -1,6 +1,6 @@
 package com.lemondead1.carshopservice.cli.command;
 
-import com.lemondead1.carshopservice.cli.parsing.ConsoleIO;
+import com.lemondead1.carshopservice.cli.ConsoleIO;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.service.SessionService;
