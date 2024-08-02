@@ -3,7 +3,6 @@ package com.lemondead1.carshopservice.repo;
 import static org.assertj.core.api.Assertions.*;
 
 import com.lemondead1.carshopservice.dto.User;
-import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
@@ -50,22 +49,22 @@ public class UserRepoTest {
   @Test
   void editedUserMatchesSpec() {
     users.create("user", "password", UserRole.CLIENT);
-    users.edit(1, "newUsername", "newPassword", UserRole.ADMIN);
+    users.edit(1).username("newUsername").password("newPassword").role(UserRole.ADMIN).apply();
     assertThat(users.findById(1)).isEqualTo(new User(1, "newUsername", "newPassword", UserRole.ADMIN));
   }
 
   @Test
   void editNotExistingUserThrows() {
-    assertThatThrownBy(() -> users.edit(1, "username", "password", UserRole.ADMIN))
-        .isInstanceOf(RowNotFoundException.class);
+    var builder = users.edit(1).username("username").password("password").role(UserRole.ADMIN);
+    assertThatThrownBy(builder::apply).isInstanceOf(RowNotFoundException.class);
   }
 
   @Test
   void usernameConflictOnEditThrows() {
     users.create("user_1", "password", UserRole.CLIENT);
     users.create("user_2", "password", UserRole.ADMIN);
-    assertThatThrownBy(() -> users.edit(2, "user_1", "password", UserRole.ADMIN))
-        .isInstanceOf(UserAlreadyExistsException.class);
+    var builder = users.edit(1).username("user_1").password("password").role(UserRole.ADMIN);
+    assertThatThrownBy(builder::apply).isInstanceOf(UserAlreadyExistsException.class);
   }
 
   @Test

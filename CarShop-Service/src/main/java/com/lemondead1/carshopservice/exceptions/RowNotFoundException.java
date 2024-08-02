@@ -1,17 +1,6 @@
 package com.lemondead1.carshopservice.exceptions;
 
-public class RowNotFoundException extends CommandException {
-  public RowNotFoundException() { }
+import lombok.experimental.StandardException;
 
-  public RowNotFoundException(String message) {
-    super(message);
-  }
-
-  public RowNotFoundException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public RowNotFoundException(Throwable cause) {
-    super(cause);
-  }
-}
+@StandardException
+public class RowNotFoundException extends CommandException { }

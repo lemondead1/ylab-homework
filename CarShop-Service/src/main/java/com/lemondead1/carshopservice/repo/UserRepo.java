@@ -5,15 +5,16 @@ import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.ForeignKeyException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
+import lombok.Builder;
+import lombok.Setter;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 public class UserRepo {
+  @Setter
   private OrderRepo orders;
-
-  public void setOrders(OrderRepo orders) {
-    this.orders = orders;
-  }
 
   private final Map<Integer, User> map = new HashMap<>();
   private final Map<String, User> usernameMap = new HashMap<>();
@@ -30,17 +31,25 @@ public class UserRepo {
     return lastId;
   }
 
-  public void edit(int id, String newUsername, String newPassword, UserRole newRole) {
-    if (!map.containsKey(id)) {
-      throw new RowNotFoundException();
+  @Builder(builderMethodName = "", buildMethodName = "apply", builderClassName = "EditBuilder")
+  private void applyEdit(int id, String username, String password, UserRole role) {
+    var old = findById(id);
+
+    password = password == null ? old.password() : password;
+    role = role == null ? old.role() : role;
+    if (username == null) {
+      username = old.username();
+    } else if (usernameMap.containsKey(username)) {
+      throw new UserAlreadyExistsException("Username '" + username + "' is already taken.");
     }
-    if (usernameMap.containsKey(newUsername)) {
-      throw new UserAlreadyExistsException("Username '" + newUsername + "' is already taken.");
-    }
-    var newUser = new User(id, newUsername, newPassword, newRole);
-    var old = map.put(id, newUser);
+    var newUser = new User(id, username, password, role);
+    map.put(id, newUser);
     usernameMap.remove(Objects.requireNonNull(old).username());
-    usernameMap.put(newUsername, newUser);
+    usernameMap.put(username, newUser);
+  }
+
+  public EditBuilder edit(int id) {
+    return new EditBuilder().id(id);
   }
 
   public User delete(int id) {

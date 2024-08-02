@@ -1,6 +1,7 @@
 package com.lemondead1.carshopservice.event;
 
 import com.lemondead1.carshopservice.enums.EventType;
+import lombok.Getter;
 
 import java.time.Instant;
 
@@ -28,16 +29,13 @@ public abstract class UserEvent extends Event {
     }
   }
 
+  @Getter
   public static class SignUp extends UserEvent {
     private final String username;
 
     public SignUp(Instant timestamp, int userId, String username) {
       super(timestamp, userId);
       this.username = username;
-    }
-
-    public String getUsername() {
-      return username;
     }
 
     @Override

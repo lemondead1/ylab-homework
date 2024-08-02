@@ -4,10 +4,12 @@ import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.util.JsonUtil;
+import lombok.Getter;
 
 import java.time.Instant;
 import java.util.Objects;
 
+@Getter
 public abstract class OrderEvent extends Event {
   private final int orderId;
 
@@ -16,10 +18,7 @@ public abstract class OrderEvent extends Event {
     this.orderId = orderId;
   }
 
-  public int getOrderId() {
-    return orderId;
-  }
-
+  @Getter
   public static class Created extends OrderEvent {
     private final Instant createdAt;
     private final OrderKind kind;
@@ -39,33 +38,9 @@ public abstract class OrderEvent extends Event {
       this.carId = carId;
     }
 
-    public Instant getCreatedAt() {
-      return createdAt;
-    }
-
-    public OrderState getState() {
-      return state;
-    }
-
-    public int getCustomerId() {
-      return customerId;
-    }
-
-    public int getCarId() {
-      return carId;
-    }
-
-    public OrderKind getKind() {
-      return kind;
-    }
-
     @Override
     public EventType getType() {
       return EventType.ORDER_CREATED;
-    }
-
-    public String getComments() {
-      return comments;
     }
 
     @Override
@@ -78,6 +53,7 @@ public abstract class OrderEvent extends Event {
     }
   }
 
+  @Getter
   public static class Modified extends OrderEvent {
     private final Instant newCreatedAt;
     private final OrderKind newKind;
@@ -95,30 +71,6 @@ public abstract class OrderEvent extends Event {
       this.newCustomerId = newCustomerId;
       this.newCarId = newCarId;
       this.newComments = Objects.requireNonNull(newComments);
-    }
-
-    public Instant getNewCreatedAt() {
-      return newCreatedAt;
-    }
-
-    public OrderKind getNewKind() {
-      return newKind;
-    }
-
-    public OrderState getNewState() {
-      return newState;
-    }
-
-    public int getNewCustomerId() {
-      return newCustomerId;
-    }
-
-    public int getNewCarId() {
-      return newCarId;
-    }
-
-    public String getNewComments() {
-      return newComments;
     }
 
     @Override

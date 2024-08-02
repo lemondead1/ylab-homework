@@ -6,38 +6,33 @@ import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.service.LoggerService;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Stream;
 
+@RequiredArgsConstructor
 public class OrderRepo {
   private record OrderStore(int id, Instant createdAt, OrderKind kind, OrderState state, int customerId, int carId,
                             String comments) { }
 
   private final LoggerService logger;
 
+  @Setter
   private UserRepo users;
 
-  public void setUsers(UserRepo users) {
-    this.users = users;
-  }
-
+  @Setter
   private CarRepo cars;
-
-  public void setCars(CarRepo cars) {
-    this.cars = cars;
-  }
 
   private final Map<Integer, OrderStore> map = new HashMap<>();
   private final Map<Integer, Set<OrderStore>> customerOrders = new HashMap<>();
   private final Map<Integer, Set<OrderStore>> carOrders = new HashMap<>();
   private int lastId = 0;
-
-  public OrderRepo(LoggerService logger) {
-    this.logger = logger;
-  }
 
   public Order create(Instant createdAt, OrderKind kind, OrderState state, int customerId, int carId, String comments) {
     var user = users.findById(customerId);
@@ -53,16 +48,29 @@ public class OrderRepo {
   /**
    * @return order after edit
    */
-  public Order edit(int id, Instant newCreatedAt, OrderKind newKind, OrderState newState, int newCustomerId,
-                    int newCarId, String newComments) {
-    var newCustomer = users.findById(newCustomerId);
-    var newCar = cars.findById(newCarId);
-    delete(id);
-    var newRow = new OrderStore(id, newCreatedAt, newKind, newState, newCustomerId, newCarId, newComments);
+  @Builder(builderMethodName = "", buildMethodName = "apply", builderClassName = "EditBuilder")
+  private Order applyEdit(int id, Instant createdAt, OrderKind kind, OrderState state,
+                          Integer customerId, Integer carId, String comments) {
+    var newCustomer = customerId == null ? null : users.findById(customerId);
+    var newCar = carId == null ? null : cars.findById(carId);
+
+    var old = delete(id);
+    newCustomer = customerId == null ? old.customer() : newCustomer;
+    newCar = carId == null ? old.car() : newCar;
+    createdAt = createdAt == null ? old.createdAt() : createdAt;
+    kind = kind == null ? old.type() : kind;
+    state = state == null ? old.state() : state;
+    comments = comments == null ? old.comments() : comments;
+
+    var newRow = new OrderStore(id, createdAt, kind, state, newCustomer.id(), newCar.id(), comments);
     map.put(id, newRow);
-    customerOrders.computeIfAbsent(newCustomerId, i -> new HashSet<>()).add(newRow);
-    carOrders.computeIfAbsent(newCarId, i -> new HashSet<>()).add(newRow);
-    return new Order(id, newCreatedAt, newKind, newState, newCustomer, newCar, newComments);
+    customerOrders.computeIfAbsent(customerId, i -> new HashSet<>()).add(newRow);
+    carOrders.computeIfAbsent(carId, i -> new HashSet<>()).add(newRow);
+    return new Order(id, createdAt, kind, state, newCustomer, newCar, comments);
+  }
+
+  public EditBuilder edit(int id) {
+    return new EditBuilder().id(id);
   }
 
   public Order delete(int id) {

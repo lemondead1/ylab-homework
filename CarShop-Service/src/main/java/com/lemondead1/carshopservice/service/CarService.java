@@ -26,10 +26,11 @@ public class CarService {
     return newCarId;
   }
 
-  public void editCar(int user, int carId, String newBrand, String newModel, int newYearOfIssue, int newPrice,
-                      String newCondition) {
-    cars.edit(carId, newBrand, newModel, newYearOfIssue, newPrice, newCondition);
-    events.onCarEdited(user, carId, newBrand, newModel, newYearOfIssue, newPrice, newCondition);
+  public void editCar(int user, int carId, @Nullable String brand, @Nullable String model,
+                      @Nullable Integer yearOfIssue, @Nullable Integer price, @Nullable String condition) {
+    var newCar = cars.edit(carId).brand(brand).model(model).yearOfIssue(yearOfIssue).price(price).condition(condition)
+                     .apply();
+    events.onCarEdited(user, newCar);
   }
 
   public void deleteCar(int user, int carId, boolean cascade) {

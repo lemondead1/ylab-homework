@@ -1,5 +1,6 @@
 plugins {
     id 'application'
+    id("io.freefair.lombok") version "8.6"
 }
 
 group = 'com.lemondead1.carshopservice'

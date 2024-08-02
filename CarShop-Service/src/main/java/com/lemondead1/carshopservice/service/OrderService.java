@@ -8,7 +8,6 @@ import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.exceptions.CarReservedException;
 import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.repo.OrderRepo;
-import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.util.List;
@@ -57,16 +56,14 @@ public class OrderService {
       case CANCELLED -> throw new CommandException("This order has already been cancelled.");
       case DONE -> throw new CommandException("You cannot cancel finished orders.");
     }
-    var newRow = orders.edit(orderId, order.createdAt(), order.type(), OrderState.CANCELLED, order.customer().id(),
-                             order.car().id(), order.comments());
+    var newRow = orders.edit(orderId).state(OrderState.CANCELLED).apply();
     events.onOrderEdited(userId, newRow);
     return newRow;
   }
 
   public void updateState(int userId, int orderId, OrderState newState, String appendComment) {
     var order = orders.find(orderId);
-    var newRow = orders.edit(orderId, order.createdAt(), order.type(), newState, order.customer().id(),
-                             order.car().id(), order.comments() + appendComment);
+    var newRow = orders.edit(orderId).state(newState).comments(order.comments() + appendComment).apply();
     events.onOrderEdited(userId, newRow);
   }
 

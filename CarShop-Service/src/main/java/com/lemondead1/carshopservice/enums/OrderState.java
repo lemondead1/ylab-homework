@@ -1,6 +1,7 @@
 package com.lemondead1.carshopservice.enums;
 
 import com.lemondead1.carshopservice.cli.parsing.HasId;
+import lombok.Getter;
 
 public enum OrderState implements HasId {
   NEW("new", "New"),
@@ -9,6 +10,7 @@ public enum OrderState implements HasId {
   CANCELLED("cancelled", "Cancelled");
 
   private final String id;
+  @Getter
   private final String prettyName;
 
   OrderState(String id, String prettyName) {
@@ -21,7 +23,4 @@ public enum OrderState implements HasId {
     return id;
   }
 
-  public String getPrettyName() {
-    return prettyName;
-  }
 }

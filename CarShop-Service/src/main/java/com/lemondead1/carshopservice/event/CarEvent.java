@@ -2,10 +2,12 @@ package com.lemondead1.carshopservice.event;
 
 import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.util.JsonUtil;
+import lombok.Getter;
 
 import java.time.Instant;
 import java.util.Objects;
 
+@Getter
 public abstract class CarEvent extends Event {
   private final int carId;
 
@@ -14,10 +16,7 @@ public abstract class CarEvent extends Event {
     this.carId = carId;
   }
 
-  public int getCarId() {
-    return carId;
-  }
-
+  @Getter
   public static class Created extends CarEvent {
     private final String brand;
     private final String model;
@@ -38,26 +37,6 @@ public abstract class CarEvent extends Event {
       this.condition = condition;
     }
 
-    public String getBrand() {
-      return brand;
-    }
-
-    public String getModel() {
-      return model;
-    }
-
-    public int getYearOfIssue() {
-      return yearOfIssue;
-    }
-
-    public int getPrice() {
-      return price;
-    }
-
-    public String getCondition() {
-      return condition;
-    }
-
     @Override
     public EventType getType() {
       return EventType.CAR_CREATED;
@@ -74,6 +53,7 @@ public abstract class CarEvent extends Event {
     }
   }
 
+  @Getter
   public static class Modified extends CarEvent {
     private final String newBrand;
     private final String newModel;
@@ -92,24 +72,6 @@ public abstract class CarEvent extends Event {
       this.newYearOfIssue = newYearOfIssue;
       this.newPrice = newPrice;
       this.newCondition = newCondition;
-    }
-
-    public String getNewBrand() {
-      return newBrand;
-    }
-
-    public String getNewModel() { return newModel; }
-
-    public int getNewYearOfIssue() {
-      return newYearOfIssue;
-    }
-
-    public int getNewPrice() {
-      return newPrice;
-    }
-
-    public String getNewCondition() {
-      return newCondition;
     }
 
     @Override

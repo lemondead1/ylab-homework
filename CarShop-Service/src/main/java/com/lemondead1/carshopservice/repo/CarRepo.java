@@ -4,17 +4,18 @@ import com.lemondead1.carshopservice.dto.Car;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.ForeignKeyException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
+import lombok.Builder;
+import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Stream;
 
 public class CarRepo {
+  @Setter
   private OrderRepo orders;
-
-  public void setOrders(OrderRepo orders) {
-    this.orders = orders;
-  }
 
   private final Map<Integer, Car> cars = new HashMap<>();
   private int lastId;
@@ -25,11 +26,23 @@ public class CarRepo {
     return lastId;
   }
 
-  public void edit(int carId, String newBrand, String newModel, int newYearOfIssue, int newPrice, String newCondition) {
-    if (!cars.containsKey(carId)) {
-      throw new RowNotFoundException();
-    }
-    cars.put(carId, new Car(carId, newBrand, newModel, newYearOfIssue, newPrice, newCondition));
+  @Builder(builderMethodName = "", buildMethodName = "apply", builderClassName = "EditBuilder")
+  private Car applyEdit(int id, String brand, String model, Integer yearOfIssue, Integer price, String condition) {
+    var old = findById(id);
+
+    brand = brand == null ? old.brand() : brand;
+    model = model == null ? old.model() : model;
+    yearOfIssue = yearOfIssue == null ? old.yearOfIssue() : yearOfIssue;
+    price = price == null ? old.price() : price;
+    condition = condition == null ? old.condition() : condition;
+
+    Car newRow = new Car(id, brand, model, yearOfIssue, price, condition);
+    cars.put(id, newRow);
+    return newRow;
+  }
+
+  public EditBuilder edit(int id) {
+    return new EditBuilder().id(id);
   }
 
   public Car delete(int carId) {
@@ -55,11 +68,11 @@ public class CarRepo {
   }
 
   public Stream<Car> lookupCars(@Nullable String brand,
-                              @Nullable String model,
-                              @Nullable Integer yearOfIssue,
-                              @Nullable Integer price,
-                              @Nullable String condition,
-                              @Nullable CarSorting sorting) {
+                                @Nullable String model,
+                                @Nullable Integer yearOfIssue,
+                                @Nullable Integer price,
+                                @Nullable String condition,
+                                @Nullable CarSorting sorting) {
     var stream = listAll();
     if (brand != null) {
       var lowerCaseBrand = brand.toLowerCase();

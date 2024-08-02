@@ -83,11 +83,11 @@ public class CarController implements Controller {
     }
     int id = IntParser.INSTANCE.parse(path[0]);
     var car = cars.findById(id);
-    var newBrand = cli.parseOptional("Brand (" + car.brand() + ") > ", StringParser.INSTANCE).orElse(car.brand());
-    var newModel = cli.parseOptional("Model (" + car.model() + ") > ", StringParser.INSTANCE).orElse(car.model());
-    var newYearOfIssue = cli.parse("Year of issue (" + car.yearOfIssue() + ") > ", IntParser.INSTANCE);
-    var newPrice = cli.parse("Price (" + car.price() + ") > ", IntParser.INSTANCE);
-    var newCondition = cli.parse("Condition (" + car.condition() + ") > ", StringParser.INSTANCE);
+    var newBrand = cli.parseOptional("Brand (" + car.brand() + ") > ", StringParser.INSTANCE).orElse(null);
+    var newModel = cli.parseOptional("Model (" + car.model() + ") > ", StringParser.INSTANCE).orElse(null);
+    var newYearOfIssue = cli.parseOptional("Year of issue (" + car.yearOfIssue() + ") > ", IntParser.INSTANCE).orElse(null);
+    var newPrice = cli.parseOptional("Price (" + car.price() + ") > ", IntParser.INSTANCE).orElse(null);
+    var newCondition = cli.parseOptional("Condition (" + car.condition() + ") > ", StringParser.INSTANCE).orElse(null);
     cars.editCar(session.getCurrentUserId(), id, newBrand, newModel, newYearOfIssue, newPrice, newCondition);
     return "Saved changes to the car '" + id + "'";
   }

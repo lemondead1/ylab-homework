@@ -1,6 +1,8 @@
 package com.lemondead1.carshopservice.enums;
 
-public enum EventType {
+import com.lemondead1.carshopservice.cli.parsing.HasId;
+
+public enum EventType implements HasId {
   CAR_CREATED("car_created"),
   CAR_MODIFIED("car_modified"),
   CAR_DELETED("car_deleted"),
@@ -16,6 +18,7 @@ public enum EventType {
     this.id = id;
   }
 
+  @Override
   public String getId() {
     return id;
   }
