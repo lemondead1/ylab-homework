@@ -32,19 +32,21 @@ public class EventRepo {
     }
   }
 
-  public List<Event> lookupEvents(Set<EventType> types, DateRange dates, String username, EventSorting sorting) {
-    var stream = events.stream();
-    stream = stream.filter(e -> types.contains(e.getType()));
-    stream = stream.filter(e -> dates.test(e.getTimestamp()));
-    stream = stream.filter(e -> StringUtil.containsIgnoreCase(findUsername(e.getUserId()), username));
-    return stream.sorted(switch (sorting) {
+  public List<Event> lookup(Set<EventType> types, DateRange dates, String username, EventSorting sorting) {
+    var sorter = switch (sorting) {
       case TIMESTAMP_DESC -> Comparator.comparing(Event::getTimestamp).reversed();
       case TIMESTAMP_ASC -> Comparator.comparing(Event::getTimestamp);
-      case USERNAME_ASC -> Comparator.comparing(e -> findUsername(e.getUserId()), String::compareToIgnoreCase);
+      case USERNAME_ASC -> Comparator.comparing((Event e) -> findUsername(e.getUserId()), String::compareToIgnoreCase);
       case USERNAME_DESC -> Comparator.comparing((Event e) -> findUsername(e.getUserId()), String::compareToIgnoreCase)
                                       .reversed();
       case TYPE_ASC -> Comparator.comparing(Event::getType);
       case TYPE_DESC -> Comparator.comparing(Event::getType).reversed();
-    }).toList();
+    };
+    return events.stream()
+                 .filter(e -> types.contains(e.getType()))
+                 .filter(e -> dates.test(e.getTimestamp()))
+                 .filter(e -> StringUtil.containsIgnoreCase(findUsername(e.getUserId()), username))
+                 .sorted(sorter)
+                 .toList();
   }
 }

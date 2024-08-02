@@ -6,6 +6,7 @@ import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.service.LoggerService;
+import com.lemondead1.carshopservice.util.StringUtil;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -13,7 +14,6 @@ import lombok.Setter;
 import javax.annotation.Nullable;
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Stream;
 
 @RequiredArgsConstructor
 public class OrderRepo {
@@ -48,8 +48,13 @@ public class OrderRepo {
    * @return order after edit
    */
   @Builder(builderMethodName = "", buildMethodName = "apply", builderClassName = "EditBuilder")
-  private Order applyEdit(int id, Instant createdAt, OrderKind kind, OrderState state,
-                          Integer customerId, Integer carId, String comments) {
+  private Order applyEdit(int id,
+                          @Nullable Instant createdAt,
+                          @Nullable OrderKind kind,
+                          @Nullable OrderState state,
+                          @Nullable Integer customerId,
+                          @Nullable Integer carId,
+                          @Nullable String comments) {
     var newCustomer = customerId == null ? null : users.findById(customerId);
     var newCar = carId == null ? null : cars.findById(carId);
 
@@ -103,7 +108,7 @@ public class OrderRepo {
                      users.findById(order.id), cars.findById(order.carId), order.comments);
   }
 
-  public Order find(int id) {
+  public Order lookup(int id) {
     var order = map.get(id);
     if (order == null) {
       throw new RowNotFoundException("Order " + id + " not found.");
@@ -127,71 +132,41 @@ public class OrderRepo {
    * @return List of orders done by that customer
    */
   public List<Order> getCustomerOrders(int customerId, OrderSorting sorting) {
-    List<Order> list = new ArrayList<>();
-    for (var o : customerOrders.getOrDefault(customerId, Collections.emptySet())) {
-      Order order = new Order(o.id(), o.createdAt(), o.kind(), o.state(),
-                              users.findById(o.customerId()), cars.findById(o.carId()), o.comments());
-      list.add(order);
-    }
-    Comparator<Order> sorter = switch (sorting) {
-      case LATEST_FIRST -> Comparator.comparing(Order::createdAt).reversed();
-      case OLDEST_FIRST -> Comparator.comparing(Order::createdAt);
-      case CAR_NAME_DESC ->
-          Comparator.comparing((Order o) -> o.car().brand().toLowerCase() + " " + o.car().model().toLowerCase())
-                    .reversed();
-      case CAR_NAME_ASC ->
-          Comparator.comparing((Order o) -> o.car().brand().toLowerCase() + " " + o.car().model().toLowerCase());
-    };
-    list.sort(sorter);
-    return list;
+    Comparator<? super Order> sorter = getSorter(sorting);
+    return customerOrders.getOrDefault(customerId, Set.of())
+                         .stream()
+                         .map(this::hydrateOrder)
+                         .sorted(sorter).toList();
   }
 
-  public Stream<Order> listAll() {
-    return map.values().stream().map(
-        o -> new Order(o.id(), o.createdAt(), o.kind(), o.state(), users.findById(o.customerId()),
-                       cars.findById(o.carId()), o.comments()));
+  public List<Order> lookup(String customerName,
+                            String carBrand,
+                            String carModel,
+                            Set<OrderState> states,
+                            OrderSorting sorting) {
+    var sorter = getSorter(sorting);
+    return map.values()
+              .stream()
+              .map(this::hydrateOrder)
+              .filter(o -> StringUtil.containsIgnoreCase(o.customer().username(), customerName))
+              .filter(o -> StringUtil.containsIgnoreCase(o.car().brand(), carBrand))
+              .filter(o -> StringUtil.containsIgnoreCase(o.car().model(), carModel))
+              .filter(o -> states.contains(o.state()))
+              .sorted(sorter)
+              .toList();
   }
 
-  public List<Order> find(@Nullable String customerName,
-                          @Nullable String carBrand,
-                          @Nullable String carModel,
-                          @Nullable OrderState state,
-                          OrderSorting sorting) {
-    var stream = listAll();
-    if (customerName != null) {
-      var customerNameLower = customerName.toLowerCase();
-      stream = stream.filter(o -> o.customer().username().toLowerCase().contains(customerNameLower));
-    }
-    if (carBrand != null) {
-      var carBrandLower = carBrand.toLowerCase();
-      stream = stream.filter(o -> o.car().brand().toLowerCase().contains(carBrandLower));
-    }
-    if (carModel != null) {
-      var carModelLower = carModel.toLowerCase();
-      stream = stream.filter(o -> o.car().model().toLowerCase().contains(carModelLower));
-    }
-    if (state != null) {
-      stream = stream.filter(o -> o.state() == state);
-    }
-    Comparator<Order> sorter = switch (sorting) {
+  private Comparator<? super Order> getSorter(OrderSorting sorting) {
+    return switch (sorting) {
       case LATEST_FIRST -> Comparator.comparing(Order::createdAt).reversed();
       case OLDEST_FIRST -> Comparator.comparing(Order::createdAt);
-      case CAR_NAME_DESC ->
-          Comparator.comparing((Order o) -> o.car().brand().toLowerCase() + " " + o.car().model().toLowerCase())
-                    .reversed();
-      case CAR_NAME_ASC ->
-          Comparator.comparing((Order o) -> o.car().brand().toLowerCase() + " " + o.car().model().toLowerCase());
+      case CAR_NAME_DESC -> Comparator.comparing((Order o) -> o.car().getBrandModel(), String::compareToIgnoreCase)
+                                      .reversed();
+      case CAR_NAME_ASC -> Comparator.comparing((Order o) -> o.car().getBrandModel(), String::compareToIgnoreCase);
     };
-    return stream.sorted(sorter).toList();
   }
 
   public List<Order> getCarOrders(int carId) {
-    List<Order> list = new ArrayList<>();
-    for (var o : carOrders.getOrDefault(carId, Collections.emptySet())) {
-      Order order = new Order(o.id(), o.createdAt(), o.kind(), o.state(),
-                              users.findById(o.customerId()), cars.findById(o.carId()), o.comments());
-      list.add(order);
-    }
-    return list;
+    return carOrders.getOrDefault(carId,Set.of()).stream().map(this::hydrateOrder).toList();
   }
 }

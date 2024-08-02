@@ -32,10 +32,9 @@ public class EventService {
     this.time = time;
   }
 
-  public void onCarCreated(int creatorId, int carId, String brand, String model,
-                           int productionYear, int price, String condition) {
-    events.submitEvent(
-        new CarEvent.Created(time.now(), creatorId, carId, brand, model, productionYear, price, condition));
+  public void onCarCreated(int creatorId, Car car) {
+    events.submitEvent(new CarEvent.Created(time.now(), creatorId, car.id(), car.brand(), car.model(),
+                                            car.productionYear(), car.price(), car.condition()));
   }
 
   public void onCarEdited(int editorId, Car newCar) {
@@ -82,12 +81,12 @@ public class EventService {
   }
 
   public List<Event> findEvents(Collection<EventType> types, DateRange range, String username, EventSorting sorting) {
-    return events.lookupEvents(EnumSet.copyOf(types), range, username, sorting);
+    return events.lookup(EnumSet.copyOf(types), range, username, sorting);
   }
 
   public List<Event> dumpEvents(Collection<EventType> types, DateRange range, String username, EventSorting sorting,
                                 Path file) {
-    var list = events.lookupEvents(EnumSet.copyOf(types), range, username, sorting);
+    var list = events.lookup(EnumSet.copyOf(types), range, username, sorting);
     try (var writer = Files.newBufferedWriter(file)) {
       for (var ev : list) {
         writer.write(ev.serialize());

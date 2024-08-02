@@ -2,6 +2,7 @@ package com.lemondead1.carshopservice.controller;
 
 import com.lemondead1.carshopservice.cli.ConsoleIO;
 import com.lemondead1.carshopservice.cli.command.builders.TreeSubcommandBuilder;
+import com.lemondead1.carshopservice.cli.parsing.IdListParser;
 import com.lemondead1.carshopservice.cli.parsing.IdParser;
 import com.lemondead1.carshopservice.cli.parsing.IntParser;
 import com.lemondead1.carshopservice.cli.parsing.StringParser;
@@ -42,8 +43,8 @@ public class UserController implements Controller {
   }
 
   String list(SessionService session, ConsoleIO console, String... path) {
-    var username = console.parseOptional("Username > ", StringParser.INSTANCE).orElse(null);
-    var role = console.parseOptional("Role > ", IdParser.of(UserRole.class)).orElse(null);
+    var username = console.parseOptional("Username > ", StringParser.INSTANCE).orElse("");
+    var role = console.parseOptional("Role > ", IdListParser.of(UserRole.class)).orElse(UserRole.ALL);
     var sort = console.parseOptional("Sorting > ", IdParser.of(UserSorting.class)).orElse(UserSorting.USERNAME_ASC);
     var list = users.searchUsers(username, role, sort);
     var table = new TableFormatter("ID", "Username", "Role");

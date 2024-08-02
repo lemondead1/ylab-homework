@@ -33,7 +33,10 @@ public class UserRepo {
   }
 
   @Builder(builderMethodName = "", buildMethodName = "apply", builderClassName = "EditBuilder")
-  private User applyEdit(int id, String username, String password, UserRole role) {
+  private User applyEdit(int id,
+                         @Nullable String username,
+                         @Nullable String password,
+                         @Nullable UserRole role) {
     var old = findById(id);
 
     password = password == null ? old.password() : password;
@@ -84,20 +87,17 @@ public class UserRepo {
     return map.get(id);
   }
 
-  public List<User> search(@Nullable String username, @Nullable UserRole role, UserSorting sorting) {
-    var stream = map.values().stream();
-    if (username != null) {
-      stream = stream.filter(user -> StringUtil.containsIgnoreCase(user.username(), username));
-    }
-    if (role != null) {
-      stream = stream.filter(user -> user.role() == role);
-    }
-    stream = stream.sorted(switch (sorting) {
-      case USERNAME_DESC -> Comparator.comparing(User::username, String::compareToIgnoreCase).reversed();
-      case USERNAME_ASC -> Comparator.comparing(User::username, String::compareToIgnoreCase);
-      case ROLE_DESC -> Comparator.comparing(User::role).reversed();
-      case ROLE_ASC -> Comparator.comparing(User::role);
-    });
-    return stream.toList();
+  public List<User> lookup(String username, Set<UserRole> role, UserSorting sorting) {
+    return map.values()
+              .stream()
+              .filter(user -> StringUtil.containsIgnoreCase(user.username(), username))
+              .filter(user -> role.contains(user.role()))
+              .sorted(switch (sorting) {
+                case USERNAME_DESC -> Comparator.comparing(User::username, String::compareToIgnoreCase).reversed();
+                case USERNAME_ASC -> Comparator.comparing(User::username, String::compareToIgnoreCase);
+                case ROLE_DESC -> Comparator.comparing(User::role).reversed();
+                case ROLE_ASC -> Comparator.comparing(User::role);
+              })
+              .toList();
   }
 }

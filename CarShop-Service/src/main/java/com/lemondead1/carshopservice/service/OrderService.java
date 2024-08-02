@@ -10,6 +10,8 @@ import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.repo.OrderRepo;
 
 import java.time.Instant;
+import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 
 public class OrderService {
@@ -47,7 +49,7 @@ public class OrderService {
   }
 
   public Order find(int orderId) {
-    return orders.find(orderId);
+    return orders.lookup(orderId);
   }
 
   public void deleteOrder(int deleterId, int orderId) {
@@ -56,7 +58,7 @@ public class OrderService {
   }
 
   public Order cancel(int userId, int orderId) {
-    var order = orders.find(orderId);
+    var order = orders.lookup(orderId);
     switch (order.state()) {
       case CANCELLED -> throw new CommandException("This order has already been cancelled.");
       case DONE -> throw new CommandException("You cannot cancel finished orders.");
@@ -67,7 +69,7 @@ public class OrderService {
   }
 
   public void updateState(int userId, int orderId, OrderState newState, String appendComment) {
-    var order = orders.find(orderId);
+    var order = orders.lookup(orderId);
     var newRow = orders.edit(orderId).state(newState).comments(order.comments() + appendComment).apply();
     events.onOrderEdited(userId, newRow);
   }
@@ -76,8 +78,8 @@ public class OrderService {
     return orders.getCustomerOrders(user, sorting);
   }
 
-  public List<Order> findAllOrders(String username, String carBrand, String carModel, OrderState state,
+  public List<Order> findAllOrders(String username, String carBrand, String carModel, Collection<OrderState> states,
                                    OrderSorting sorting) {
-    return orders.find(username, carBrand, carModel, state, sorting);
+    return orders.lookup(username, carBrand, carModel, EnumSet.copyOf(states), sorting);
   }
 }

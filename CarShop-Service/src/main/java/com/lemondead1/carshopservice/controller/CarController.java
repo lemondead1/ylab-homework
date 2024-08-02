@@ -8,6 +8,7 @@ import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.service.CarService;
 import com.lemondead1.carshopservice.service.SessionService;
+import com.lemondead1.carshopservice.util.IntRange;
 import com.lemondead1.carshopservice.util.TableFormatter;
 import lombok.RequiredArgsConstructor;
 
@@ -55,12 +56,12 @@ public class CarController implements Controller {
   }
 
   String listCars(SessionService session, ConsoleIO cli, String... path) {
-    var brand = cli.parseOptional("Brand > ", StringParser.INSTANCE).orElse(null);
-    var model = cli.parseOptional("Model > ", StringParser.INSTANCE).orElse(null);
-    var productionYear = cli.parseOptional("Production year > ", IntRangeParser.INSTANCE).orElse(null);
-    var price = cli.parseOptional("Price > ", IntRangeParser.INSTANCE).orElse(null);
+    var brand = cli.parseOptional("Brand > ", StringParser.INSTANCE).orElse("");
+    var model = cli.parseOptional("Model > ", StringParser.INSTANCE).orElse("");
+    var productionYear = cli.parseOptional("Production year > ", IntRangeParser.INSTANCE).orElse(IntRange.ANY);
+    var price = cli.parseOptional("Price > ", IntRangeParser.INSTANCE).orElse(IntRange.ANY);
     //TODO Not sure whether parsing this way is any useful. Maybe I should make it an enum
-    var condition = cli.parseOptional("Condition > ", StringParser.INSTANCE).orElse(null);
+    var condition = cli.parseOptional("Condition > ", StringParser.INSTANCE).orElse("");
     var sorting = cli.parseOptional("Sort by > ", IdParser.of(CarSorting.class)).orElse(CarSorting.NAME_ASC);
     var list = cars.lookupCars(brand, model, productionYear, price, condition, sorting);
     var table = new TableFormatter("ID", "Brand", "Model", "Prod. year", "Price", "Condition");

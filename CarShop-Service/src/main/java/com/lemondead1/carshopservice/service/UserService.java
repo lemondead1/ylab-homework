@@ -8,6 +8,8 @@ import com.lemondead1.carshopservice.exceptions.WrongUsernamePassword;
 import com.lemondead1.carshopservice.repo.UserRepo;
 
 import javax.annotation.Nullable;
+import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 
 public class UserService {
@@ -50,8 +52,8 @@ public class UserService {
     return users.findById(id);
   }
 
-  public List<User> searchUsers(@Nullable String username, @Nullable UserRole role, UserSorting sorting) {
-    return users.search(username, role, sorting);
+  public List<User> searchUsers(String username, Collection<UserRole> roles, UserSorting sorting) {
+    return users.lookup(username, EnumSet.copyOf(roles), sorting);
   }
 
   public User createUser(int creatorId, String username, String password, UserRole role) {

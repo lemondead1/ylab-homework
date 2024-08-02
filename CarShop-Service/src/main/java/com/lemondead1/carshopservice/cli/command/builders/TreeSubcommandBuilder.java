@@ -3,7 +3,6 @@ package com.lemondead1.carshopservice.cli.command.builders;
 import com.lemondead1.carshopservice.cli.command.Command;
 import com.lemondead1.carshopservice.cli.command.CommandTree;
 import com.lemondead1.carshopservice.cli.command.Endpoint;
-import com.lemondead1.carshopservice.enums.UserRole;
 
 import java.util.HashMap;
 import java.util.Map;

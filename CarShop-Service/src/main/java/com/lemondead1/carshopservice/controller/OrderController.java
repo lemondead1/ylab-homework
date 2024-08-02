@@ -142,10 +142,10 @@ public class OrderController implements Controller {
   }
 
   String find(SessionService session, ConsoleIO cli, String... path) {
-    var username = cli.parseOptional("Customer > ", StringParser.INSTANCE).orElse(null);
-    var carBrand = cli.parseOptional("Car brand > ", StringParser.INSTANCE).orElse(null);
-    var carModel = cli.parseOptional("Car model > ", StringParser.INSTANCE).orElse(null);
-    var state = cli.parseOptional("State > ", IdParser.of(OrderState.class)).orElse(null);
+    var username = cli.parseOptional("Customer > ", StringParser.INSTANCE).orElse("");
+    var carBrand = cli.parseOptional("Car brand > ", StringParser.INSTANCE).orElse("");
+    var carModel = cli.parseOptional("Car model > ", StringParser.INSTANCE).orElse("");
+    var state = cli.parseOptional("State > ", IdListParser.of(OrderState.class)).orElse(OrderState.ALL);
     var sorting = cli.parseOptional("Sorting > ", IdParser.of(OrderSorting.class)).orElse(OrderSorting.LATEST_FIRST);
     var list = orders.findAllOrders(username, carBrand, carModel, state, sorting);
     var table = new TableFormatter("Order ID", "Creation date", "Type", "Status",

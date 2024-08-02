@@ -41,13 +41,15 @@ public class CommandEndpoint implements Command {
   public void execute(SessionService currentUser, ConsoleIO cli, String... path) {
     try {
       if (path.length >= 1 && "help".equals(path[0])) {
-        cli.println(getDescription());
+        cli.println(description);
       } else {
         var result = endpoint.execute(currentUser, cli, path);
-        cli.println(result);
+        if (result != null) {
+          cli.println(result);
+        }
       }
     } catch (WrongUsageException e) {
-      cli.println(getDescription());
+      cli.println(description);
     } catch (CommandException e) {
       cli.println(e.getMessage());
     }

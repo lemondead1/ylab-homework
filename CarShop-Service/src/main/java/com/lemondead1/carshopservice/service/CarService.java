@@ -22,9 +22,9 @@ public class CarService {
   }
 
   public int createCar(int user, String brand, String model, int productionYear, int price, String condition) {
-    int newCarId = cars.create(brand, model, productionYear, price, condition);
-    events.onCarCreated(user, newCarId, brand, model, productionYear, price, condition);
-    return newCarId;
+    Car newCar = cars.create(brand, model, productionYear, price, condition);
+    events.onCarCreated(user, newCar);
+    return newCar.id();
   }
 
   public void editCar(int user, int carId, @Nullable String brand, @Nullable String model,
@@ -53,8 +53,8 @@ public class CarService {
     return cars.findById(id);
   }
 
-  public List<Car> lookupCars(@Nullable String brand, @Nullable String model, @Nullable IntRange productionYear,
-                              @Nullable IntRange price, @Nullable String condition, CarSorting sorting) {
-    return cars.lookupCars(brand, model, productionYear, price, condition, sorting).toList();
+  public List<Car> lookupCars(String brand, String model, IntRange productionYear,
+                              IntRange price, String condition, CarSorting sorting) {
+    return cars.lookup(brand, model, productionYear, price, condition, sorting);
   }
 }
