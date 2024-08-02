@@ -10,7 +10,6 @@ import lombok.Builder;
 import lombok.Setter;
 
 import javax.annotation.Nullable;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,14 +76,6 @@ public class CarRepo {
                           IntRange price,
                           String condition,
                           CarSorting sorting) {
-    var sorter = switch (sorting) {
-      case NAME_ASC -> Comparator.comparing(Car::getBrandModel, String::compareToIgnoreCase);
-      case NAME_DESC -> Comparator.comparing(Car::getBrandModel, String::compareToIgnoreCase).reversed();
-      case PRODUCTION_YEAR_ASC -> Comparator.comparingInt(Car::productionYear);
-      case PRODUCTION_YEAR_DESC -> Comparator.comparingInt(Car::productionYear).reversed();
-      case PRICE_ASC -> Comparator.comparingInt(Car::price);
-      case PRICE_DESC -> Comparator.comparingInt(Car::price).reversed();
-    };
     return cars.values()
                .stream()
                .filter(car -> StringUtil.containsIgnoreCase(car.brand(), brand))
@@ -92,7 +83,7 @@ public class CarRepo {
                .filter(car -> productionYear.test(car.productionYear()))
                .filter(car -> price.test(car.price()))
                .filter(car -> StringUtil.containsIgnoreCase(car.condition(), condition))
-               .sorted(sorter)
+               .sorted(sorting.getSorter())
                .toList();
   }
 }

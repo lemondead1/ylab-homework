@@ -1,7 +1,7 @@
 package com.lemondead1.carshopservice.dto;
 
-import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.enums.OrderKind;
+import com.lemondead1.carshopservice.enums.OrderState;
 
 import java.time.Instant;
 

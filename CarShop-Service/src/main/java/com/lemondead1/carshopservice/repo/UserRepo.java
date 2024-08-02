@@ -92,12 +92,7 @@ public class UserRepo {
               .stream()
               .filter(user -> StringUtil.containsIgnoreCase(user.username(), username))
               .filter(user -> role.contains(user.role()))
-              .sorted(switch (sorting) {
-                case USERNAME_DESC -> Comparator.comparing(User::username, String::compareToIgnoreCase).reversed();
-                case USERNAME_ASC -> Comparator.comparing(User::username, String::compareToIgnoreCase);
-                case ROLE_DESC -> Comparator.comparing(User::role).reversed();
-                case ROLE_ASC -> Comparator.comparing(User::role);
-              })
+              .sorted(sorting.getSorter())
               .toList();
   }
 }

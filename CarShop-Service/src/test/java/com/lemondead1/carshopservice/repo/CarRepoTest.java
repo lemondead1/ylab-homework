@@ -7,6 +7,7 @@ import com.lemondead1.carshopservice.service.LoggerService;
 import com.lemondead1.carshopservice.util.IntRange;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -14,6 +15,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,28 +35,8 @@ public class CarRepoTest {
     orders.setUsers(users);
   }
 
-  @ParameterizedTest
-  @ValueSource(ints = { 0, 1, 2, 3, 4, 5 })
-  void lookupSortingTest(int sortingType) {
-    cars.create("a", "model", 2000, 3000, "new");
-    cars.create("K", "model", 2003, 3000, "new");
-    cars.create("b", "model", 1999, 3000, "new");
-    cars.create("c", "model", 2004, 3000, "new");
-    cars.create("D", "model", 2000, 2999, "new");
-    cars.create("E", "model", 2000, 3001, "new");
-    cars.create("F", "model", 2003, 3000, "new");
-    cars.create("G", "model", 2003, 3000, "new");
-    cars.create("H", "model", 2003, 3000, "new");
-    cars.create("I", "model", 2003, 3000, "new");
-    cars.create("J", "model", 2003, 3000, "new");
-
-    var sorting = CarSorting.values()[sortingType];
-    assertThat(cars.lookup(null, null, null, null, null, sorting).findFirst().orElseThrow().id())
-        .isEqualTo(sortingType + 1);
-  }
-
   @Nested
-  class LookupCarsFilterTests {
+  class LookupCarsTests {
     @BeforeEach
     void beforeEach() {
       var csv = """
@@ -80,25 +62,33 @@ public class CarRepoTest {
             .forEachOrdered(r -> cars.create(r[0], r[1], Integer.parseInt(r[2]), Integer.parseInt(r[3]), r[4]));
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "NAME_ASC", "NAME_DESC", "PRODUCTION_YEAR_ASC", "PRODUCTION_YEAR_DESC", "PRICE_ASC", "PRICE_DESC" })
+    void sortingTest(CarSorting sorting) {
+      assertThat(cars.lookup("", "", IntRange.ALL, IntRange.ALL, "", sorting))
+          .isSortedAccordingTo(sorting.getSorter())
+          .map(Car::id).contains(IntStream.range(1, 16).boxed().toArray(Integer[]::new));
+    }
+
     //TODO add more cases
     @ParameterizedTest
     @CsvSource(value =
                    {
-                       "'1', chev, cor, null, null, null",
-                       "'4,5,11', null, an, null, null, null",
-                       "'10,16', null, null, 1995, null, null",
-                       "'2,4,10,12,13', null, null, null, 3000000 - 4000000, null",
-                       "'3,6,12,13,15,16', null, null, null, null, air"
+                       "'1',               chev, cor, ALL,  ALL,               ''",
+                       "'4,5,11',          '',   an,  ALL,  ALL,               ''",
+                       "'10,16',           '',   '',  1995, ALL,               ''",
+                       "'2,4,10,12,13',    '',   '',  ALL,  3000000 - 4000000, ''",
+                       "'3,6,12,13,15,16', '',   '',  ALL,  ALL,               air"
                    },
                nullValues = "null")
     void lookupTest(String expectedIds,
                     String brand,
                     String model,
                     @ConvertWith(IntRangeConverter.class) IntRange year,
-                    @ConvertWith(IntRangeConverter.class)IntRange price,
+                    @ConvertWith(IntRangeConverter.class) IntRange price,
                     String condition) {
-      assertThat(cars.lookup(brand, model, year, price, condition, CarSorting.NAME_ASC).toList())
-          .isSortedAccordingTo(Comparator.comparing(c -> c.brand() + " " + c.model(), String::compareToIgnoreCase))
+      assertThat(cars.lookup(brand, model, year, price, condition, CarSorting.NAME_ASC))
+          .isSortedAccordingTo(Comparator.comparing(Car::getBrandModel, String::compareToIgnoreCase))
           .map(Car::id)
           .contains(Arrays.stream(expectedIds.split(",")).map(Integer::parseInt).toArray(Integer[]::new));
     }

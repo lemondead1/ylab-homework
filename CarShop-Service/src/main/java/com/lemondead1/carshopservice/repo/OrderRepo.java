@@ -132,11 +132,11 @@ public class OrderRepo {
    * @return List of orders done by that customer
    */
   public List<Order> getCustomerOrders(int customerId, OrderSorting sorting) {
-    Comparator<? super Order> sorter = getSorter(sorting);
     return customerOrders.getOrDefault(customerId, Set.of())
                          .stream()
                          .map(this::hydrateOrder)
-                         .sorted(sorter).toList();
+                         .sorted(sorting.getSorter())
+                         .toList();
   }
 
   public List<Order> lookup(String customerName,
@@ -144,7 +144,6 @@ public class OrderRepo {
                             String carModel,
                             Set<OrderState> states,
                             OrderSorting sorting) {
-    var sorter = getSorter(sorting);
     return map.values()
               .stream()
               .map(this::hydrateOrder)
@@ -152,18 +151,8 @@ public class OrderRepo {
               .filter(o -> StringUtil.containsIgnoreCase(o.car().brand(), carBrand))
               .filter(o -> StringUtil.containsIgnoreCase(o.car().model(), carModel))
               .filter(o -> states.contains(o.state()))
-              .sorted(sorter)
+              .sorted(sorting.getSorter())
               .toList();
-  }
-
-  private Comparator<? super Order> getSorter(OrderSorting sorting) {
-    return switch (sorting) {
-      case LATEST_FIRST -> Comparator.comparing(Order::createdAt).reversed();
-      case OLDEST_FIRST -> Comparator.comparing(Order::createdAt);
-      case CAR_NAME_DESC -> Comparator.comparing((Order o) -> o.car().getBrandModel(), String::compareToIgnoreCase)
-                                      .reversed();
-      case CAR_NAME_ASC -> Comparator.comparing((Order o) -> o.car().getBrandModel(), String::compareToIgnoreCase);
-    };
   }
 
   public List<Order> getCarOrders(int carId) {

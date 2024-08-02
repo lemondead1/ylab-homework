@@ -9,6 +9,6 @@ import org.junit.jupiter.params.converter.ArgumentConverter;
 public class IntRangeConverter implements ArgumentConverter {
   @Override
   public Object convert(Object source, ParameterContext context) throws ArgumentConversionException {
-    return source == null ? null : IntRangeParser.INSTANCE.parse((String) source);
+    return source.equals("ALL") ? IntRange.ALL : IntRangeParser.INSTANCE.parse((String) source);
   }
 }

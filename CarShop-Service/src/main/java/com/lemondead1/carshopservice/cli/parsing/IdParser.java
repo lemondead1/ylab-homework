@@ -2,7 +2,10 @@ package com.lemondead1.carshopservice.cli.parsing;
 
 import com.lemondead1.carshopservice.exceptions.ParsingException;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class IdParser<T extends HasId> implements Parser<T> {
