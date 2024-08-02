@@ -23,8 +23,7 @@ public abstract class UserEvent extends Event {
     @Override
     public String serialize() {
       String pattern = """
-          {"timestamp": "%s", "type": "%s", "user_id": %d}
-          """;
+          {"timestamp": "%s", "type": "%s", "user_id": %d}""";
       return String.format(pattern, getTimestamp(), getType().getId(), getUserId());
     }
   }
@@ -46,8 +45,7 @@ public abstract class UserEvent extends Event {
     @Override
     public String serialize() {
       String pattern = """
-          {"timestamp": "%s", "type": "%s", "user_id": %d, "username": %s}
-          """;
+          {"timestamp": "%s", "type": "%s", "user_id": %d, "username": %s}""";
       return String.format(pattern, getTimestamp(), getType().getId(), getUserId());
     }
   }
@@ -73,8 +71,7 @@ public abstract class UserEvent extends Event {
     @Override
     public String serialize() {
       String pattern = """
-          {"timestamp": "%s", "type": "%s", "user_id": %d, "changed_user_id": %d, "new_username": %s, "password_changed": %s}
-          """;
+          {"timestamp": "%s", "type": "%s", "user_id": %d, "changed_user_id": %d, "new_username": %s, "password_changed": %s}""";
       return String.format(pattern, getTimestamp(), getType().getId(), getUserId(), getChangedUserId(),
                            getNewUsername(), passwordChanged);
     }
@@ -99,8 +96,7 @@ public abstract class UserEvent extends Event {
     @Override
     public String serialize() {
       String pattern = """
-          {"timestamp": "%s", "type": "%s", "user_id": %d, "created_user_id": %d, "username": %s}
-          """;
+          {"timestamp": "%s", "type": "%s", "user_id": %d, "created_user_id": %d, "username": %s}""";
       return String.format(pattern, getTimestamp(), getType().getId(), getUserId(), getCreatedUserId(), getUsername());
     }
   }

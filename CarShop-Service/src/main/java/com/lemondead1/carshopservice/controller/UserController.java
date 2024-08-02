@@ -1,8 +1,8 @@
 package com.lemondead1.carshopservice.controller;
 
-import com.lemondead1.carshopservice.cli.command.builders.TreeSubcommandBuilder;
 import com.lemondead1.carshopservice.cli.ConsoleIO;
-import com.lemondead1.carshopservice.cli.parsing.EnumParser;
+import com.lemondead1.carshopservice.cli.command.builders.TreeSubcommandBuilder;
+import com.lemondead1.carshopservice.cli.parsing.IdParser;
 import com.lemondead1.carshopservice.cli.parsing.IntParser;
 import com.lemondead1.carshopservice.cli.parsing.StringParser;
 import com.lemondead1.carshopservice.enums.UserRole;
@@ -43,8 +43,8 @@ public class UserController implements Controller {
 
   String list(SessionService session, ConsoleIO console, String... path) {
     var username = console.parseOptional("Username > ", StringParser.INSTANCE).orElse(null);
-    var role = console.parseOptional("Role > ", EnumParser.of(UserRole.class)).orElse(null);
-    var sort = console.parseOptional("Sorting > ", EnumParser.of(UserSorting.class)).orElse(UserSorting.USERNAME_ASC);
+    var role = console.parseOptional("Role > ", IdParser.of(UserRole.class)).orElse(null);
+    var sort = console.parseOptional("Sorting > ", IdParser.of(UserSorting.class)).orElse(UserSorting.USERNAME_ASC);
     var list = users.searchUsers(username, role, sort);
     var table = new TableFormatter("ID", "Username", "Role");
     for (var row : list) {
@@ -56,7 +56,7 @@ public class UserController implements Controller {
   String create(SessionService session, ConsoleIO console, String... path) {
     var username = console.parse("Username > ", StringParser.INSTANCE);
     var password = console.parse("Password > ", StringParser.INSTANCE);
-    var role = console.parse("Role > ", EnumParser.of(UserRole.class, CLIENT, MANAGER, ADMIN));
+    var role = console.parse("Role > ", IdParser.of(CLIENT, MANAGER, ADMIN));
     var newUser = users.createUser(session.getCurrentUserId(), username, password, role);
     return "Created " + newUser;
   }
@@ -70,7 +70,7 @@ public class UserController implements Controller {
     var username = console.parseOptional("Username (" + old.username() + ") > ", StringParser.INSTANCE).orElse(null);
     var password = console.parseOptional("Password > ", StringParser.INSTANCE).orElse(null);
     var role = console.parseOptional("Role (" + old.role().getPrettyName() + ") > ",
-                                     EnumParser.of(UserRole.class, CLIENT, MANAGER, ADMIN))
+                                     IdParser.of(CLIENT, MANAGER, ADMIN))
                       .orElse(null);
     var newUser = users.editUser(session.getCurrentUserId(), id, username, password, role);
     return "Modified " + newUser;

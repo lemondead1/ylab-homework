@@ -2,6 +2,8 @@ package com.lemondead1.carshopservice.enums;
 
 import com.lemondead1.carshopservice.cli.parsing.HasId;
 
+import java.util.List;
+
 public enum EventType implements HasId {
   CAR_CREATED("car_created"),
   CAR_MODIFIED("car_edited"),
@@ -13,6 +15,8 @@ public enum EventType implements HasId {
   USER_SIGNED_UP("user_signed_up"),
   USER_MODIFIED("user_edited"),
   USER_CREATED("user_created");
+
+  public static final List<EventType> ALL = List.of(values());
 
   private final String id;
 

@@ -46,8 +46,7 @@ public abstract class OrderEvent extends Event {
     @Override
     public String serialize() {
       var pattern = """
-          {"timestamp": "%s", "type": "%s", "user_id": %d, "order_id": %d, "created_at": "%s", "kind": "%s", "state": "%s", "customer_id": %d, "car_id": %d, "comments": "%s"}
-          """;
+          {"timestamp": "%s", "type": "%s", "user_id": %d, "order_id": %d, "created_at": "%s", "kind": "%s", "state": "%s", "customer_id": %d, "car_id": %d, "comments": "%s"}""";
       return String.format(pattern, getTimestamp(), getType().getId(), getUserId(), getOrderId(), getCreatedAt(),
                            getKind(), getState().getId(), getCustomerId(), getCarId());
     }
@@ -81,8 +80,7 @@ public abstract class OrderEvent extends Event {
     @Override
     public String serialize() {
       var pattern = """
-          {"timestamp": "%s", "type": "%s", "user_id": %d, "order_id": %d, "new_created_at": "%s", "new_kind": "%s", "new_state": "%s", "new_customer_id": %d, "new_car_id": %d, "new_comments": "%s"}
-          """;
+          {"timestamp": "%s", "type": "%s", "user_id": %d, "order_id": %d, "new_created_at": "%s", "new_kind": "%s", "new_state": "%s", "new_customer_id": %d, "new_car_id": %d, "new_comments": "%s"}""";
       return String.format(pattern, getTimestamp(), getType().getId(), getUserId(), getOrderId(), getNewCreatedAt(),
                            getNewKind().getId(), getNewState().getId(), getNewCustomerId(), getNewCarId(),
                            JsonUtil.escapeCharacters(getNewComments()));
@@ -102,8 +100,7 @@ public abstract class OrderEvent extends Event {
     @Override
     public String serialize() {
       var pattern = """
-          {"timestamp": "%s", "type": "%s", "user_id": %d, "order_id": %d}
-          """;
+          {"timestamp": "%s", "type": "%s", "user_id": %d, "order_id": %d}""";
       return String.format(pattern, getTimestamp(), getType().getId(), getUserId(), getOrderId());
     }
   }

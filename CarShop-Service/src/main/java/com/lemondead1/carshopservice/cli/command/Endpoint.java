@@ -2,7 +2,8 @@ package com.lemondead1.carshopservice.cli.command;
 
 import com.lemondead1.carshopservice.cli.ConsoleIO;
 import com.lemondead1.carshopservice.service.SessionService;
-import org.jetbrains.annotations.Nullable;
+
+import javax.annotation.Nullable;
 
 public interface Endpoint {
   @Nullable

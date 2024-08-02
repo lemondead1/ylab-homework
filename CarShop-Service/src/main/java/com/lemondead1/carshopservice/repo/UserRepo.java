@@ -9,8 +9,8 @@ import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
 import com.lemondead1.carshopservice.util.StringUtil;
 import lombok.Builder;
 import lombok.Setter;
-import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 public class UserRepo {

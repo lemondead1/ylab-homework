@@ -6,8 +6,8 @@ import com.lemondead1.carshopservice.enums.UserSorting;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.exceptions.WrongUsernamePassword;
 import com.lemondead1.carshopservice.repo.UserRepo;
-import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 public class UserService {

@@ -61,7 +61,7 @@ public class CarController implements Controller {
     var price = cli.parseOptional("Price > ", IntRangeParser.INSTANCE).orElse(null);
     //TODO Not sure whether parsing this way is any useful. Maybe I should make it an enum
     var condition = cli.parseOptional("Condition > ", StringParser.INSTANCE).orElse(null);
-    var sorting = cli.parseOptional("Sort by > ", EnumParser.of(CarSorting.class)).orElse(CarSorting.NAME_ASC);
+    var sorting = cli.parseOptional("Sort by > ", IdParser.of(CarSorting.class)).orElse(CarSorting.NAME_ASC);
     var list = cars.lookupCars(brand, model, productionYear, price, condition, sorting);
     var table = new TableFormatter("ID", "Brand", "Model", "Prod. year", "Price", "Condition");
     for (var car : list) {

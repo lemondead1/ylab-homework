@@ -20,13 +20,13 @@ public class CarShopServiceApplication {
     var userRepo = new UserRepo();
     var carRepo = new CarRepo();
     var orderRepo = new OrderRepo(logger);
+    var eventRepo = new EventRepo();
 
     userRepo.setOrders(orderRepo);
     carRepo.setOrders(orderRepo);
     orderRepo.setCars(carRepo);
     orderRepo.setUsers(userRepo);
-
-    var eventRepo = new EventRepo();
+    eventRepo.setUsers(userRepo);
 
     userRepo.create("admin", "password", UserRole.ADMIN);
 
@@ -44,6 +44,7 @@ public class CarShopServiceApplication {
     new CarController(carService).registerEndpoints(commandBuilder);
     new OrderController(orderService).registerEndpoints(commandBuilder);
     new UserController(userService).registerEndpoints(commandBuilder);
+    new EventController(eventService).registerEndpoints(commandBuilder);
 
     var rootCommand = commandBuilder.build();
 

@@ -3,18 +3,25 @@ package com.lemondead1.carshopservice.service;
 import com.lemondead1.carshopservice.dto.Car;
 import com.lemondead1.carshopservice.dto.Order;
 import com.lemondead1.carshopservice.dto.User;
+import com.lemondead1.carshopservice.enums.EventSorting;
+import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.event.CarEvent;
+import com.lemondead1.carshopservice.event.Event;
 import com.lemondead1.carshopservice.event.OrderEvent;
 import com.lemondead1.carshopservice.event.UserEvent;
 import com.lemondead1.carshopservice.exceptions.DumpException;
 import com.lemondead1.carshopservice.repo.EventRepo;
+import com.lemondead1.carshopservice.util.DateRange;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
 
 public class EventService {
   private final EventRepo events;
@@ -72,6 +79,24 @@ public class EventService {
 
   public void onUserCreated(int creatorId, User created) {
     events.submitEvent(new UserEvent.Created(time.now(), creatorId, created.id(), created.username()));
+  }
+
+  public List<Event> findEvents(Collection<EventType> types, DateRange range, String username, EventSorting sorting) {
+    return events.lookupEvents(EnumSet.copyOf(types), range, username, sorting);
+  }
+
+  public List<Event> dumpEvents(Collection<EventType> types, DateRange range, String username, EventSorting sorting,
+                                Path file) {
+    var list = events.lookupEvents(EnumSet.copyOf(types), range, username, sorting);
+    try (var writer = Files.newBufferedWriter(file)) {
+      for (var ev : list) {
+        writer.write(ev.serialize());
+        writer.write('\n');
+      }
+    } catch (IOException e) {
+      throw new DumpException("Failed to create an event dump", e);
+    }
+    return list;
   }
 
   public void dumpAll(Path file) {

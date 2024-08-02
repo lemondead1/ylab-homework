@@ -102,7 +102,7 @@ public class OrderController implements Controller {
       return "Usage: order update-state <order id> <new state>";
     }
     int orderId = IntParser.INSTANCE.parse(path[0]);
-    var newState = EnumParser.of(OrderState.class).parse(path[1]);
+    var newState = IdParser.of(OrderState.class).parse(path[1]);
     var order = orders.find(orderId);
     if (order.state() == newState) {
       throw new CommandException("State has not been changed.");
@@ -115,7 +115,7 @@ public class OrderController implements Controller {
   String myOrders(SessionService session, ConsoleIO cli, String... path) {
     OrderSorting sorting = OrderSorting.LATEST_FIRST;
     if (path.length > 0) {
-      sorting = EnumParser.of(OrderSorting.class).parse(path[0]);
+      sorting = IdParser.of(OrderSorting.class).parse(path[0]);
     }
     var list = orders.findMyOrders(session.getCurrentUserId(), sorting);
     var table = new TableFormatter("Order ID", "Creation date", "Type", "Status",
@@ -145,8 +145,8 @@ public class OrderController implements Controller {
     var username = cli.parseOptional("Customer > ", StringParser.INSTANCE).orElse(null);
     var carBrand = cli.parseOptional("Car brand > ", StringParser.INSTANCE).orElse(null);
     var carModel = cli.parseOptional("Car model > ", StringParser.INSTANCE).orElse(null);
-    var state = cli.parseOptional("State > ", EnumParser.of(OrderState.class)).orElse(null);
-    var sorting = cli.parseOptional("Sorting > ", EnumParser.of(OrderSorting.class)).orElse(OrderSorting.LATEST_FIRST);
+    var state = cli.parseOptional("State > ", IdParser.of(OrderState.class)).orElse(null);
+    var sorting = cli.parseOptional("Sorting > ", IdParser.of(OrderSorting.class)).orElse(OrderSorting.LATEST_FIRST);
     var list = orders.findAllOrders(username, carBrand, carModel, state, sorting);
     var table = new TableFormatter("Order ID", "Creation date", "Type", "Status",
                                    "Customer ID", "Customer name", "Car ID", "Car brand", "Car model",
