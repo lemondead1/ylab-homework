@@ -4,6 +4,7 @@ import com.lemondead1.carshopservice.dto.Car;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.ForeignKeyException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
+import com.lemondead1.carshopservice.util.IntRange;
 import lombok.Builder;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
@@ -69,8 +70,8 @@ public class CarRepo {
 
   public Stream<Car> lookupCars(@Nullable String brand,
                                 @Nullable String model,
-                                @Nullable Integer productionYear,
-                                @Nullable Integer price,
+                                @Nullable IntRange productionYear,
+                                @Nullable IntRange price,
                                 @Nullable String condition,
                                 CarSorting sorting) {
     var stream = listAll();
@@ -83,10 +84,10 @@ public class CarRepo {
       stream = stream.filter(car -> car.model().toLowerCase().contains(lowerCaseModel));
     }
     if (productionYear != null) {
-      stream = stream.filter(car -> car.productionYear() == productionYear);
+      stream = stream.filter(car -> productionYear.test(car.productionYear()));
     }
     if (price != null) {
-      stream = stream.filter(car -> car.price() == price);
+      stream = stream.filter(car -> price.test(car.price()));
     }
     if (condition != null) {
       var lowerCaseCondition = condition.toLowerCase();

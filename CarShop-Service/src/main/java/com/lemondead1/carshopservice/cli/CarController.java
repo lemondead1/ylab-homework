@@ -56,8 +56,8 @@ public class CarController implements Controller {
   String listCars(SessionService session, ConsoleIO cli, String... path) {
     var brand = cli.parseOptional("Brand > ", StringParser.INSTANCE).orElse(null);
     var model = cli.parseOptional("Model > ", StringParser.INSTANCE).orElse(null);
-    var productionYear = cli.parseOptional("Production year > ", IntParser.INSTANCE).orElse(null);
-    var price = cli.parseOptional("Price > ", IntParser.INSTANCE).orElse(null);
+    var productionYear = cli.parseOptional("Production year > ", IntRangeParser.INSTANCE).orElse(null);
+    var price = cli.parseOptional("Price > ", IntRangeParser.INSTANCE).orElse(null);
     //TODO Not sure whether parsing this way is any useful. Maybe I should make it an enum
     var condition = cli.parseOptional("Condition > ", StringParser.INSTANCE).orElse(null);
     var sorting = cli.parseOptional("Sort by > ", EnumParser.of(CarSorting.class)).orElse(CarSorting.NAME_ASC);

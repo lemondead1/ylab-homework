@@ -5,6 +5,7 @@ import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.repo.CarRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
+import com.lemondead1.carshopservice.util.IntRange;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -52,8 +53,8 @@ public class CarService {
     return cars.findById(id);
   }
 
-  public List<Car> lookupCars(@Nullable String brand, @Nullable String model, @Nullable Integer productionYear,
-                              @Nullable Integer price, @Nullable String condition, CarSorting sorting) {
+  public List<Car> lookupCars(@Nullable String brand, @Nullable String model, @Nullable IntRange productionYear,
+                              @Nullable IntRange price, @Nullable String condition, CarSorting sorting) {
     return cars.lookupCars(brand, model, productionYear, price, condition, sorting).toList();
   }
 }

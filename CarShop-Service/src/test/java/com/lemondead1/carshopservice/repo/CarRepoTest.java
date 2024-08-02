@@ -1,11 +1,14 @@
 package com.lemondead1.carshopservice.repo;
 
+import com.lemondead1.carshopservice.IntRangeConverter;
 import com.lemondead1.carshopservice.dto.Car;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.service.LoggerService;
+import com.lemondead1.carshopservice.util.IntRange;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -84,15 +87,15 @@ public class CarRepoTest {
                        "'1', chev, cor, null, null, null",
                        "'4,5,11', null, an, null, null, null",
                        "'10,16', null, null, 1995, null, null",
-                       "'2', null, null, null, 3130630, null",
+                       "'2,4,10,12,13', null, null, null, 3000000 - 4000000, null",
                        "'3,6,12,13,15,16', null, null, null, null, air"
                    },
                nullValues = "null")
     void lookupTest(String expectedIds,
                     String brand,
                     String model,
-                    Integer year,
-                    Integer price,
+                    @ConvertWith(IntRangeConverter.class) IntRange year,
+                    @ConvertWith(IntRangeConverter.class)IntRange price,
                     String condition) {
       assertThat(cars.lookupCars(brand, model, year, price, condition, CarSorting.NAME_ASC).toList())
           .isSortedAccordingTo(Comparator.comparing(c -> c.brand() + " " + c.model(), String::compareToIgnoreCase))
