@@ -20,11 +20,11 @@ public abstract class CarEvent extends Event {
   public static class Created extends CarEvent {
     private final String brand;
     private final String model;
-    private final int yearOfIssue;
+    private final int productionYear;
     private final int price;
     private final String condition;
 
-    public Created(Instant timestamp, int userId, int carId, String brand, String model, int yearOfIssue, int price,
+    public Created(Instant timestamp, int userId, int carId, String brand, String model, int productionYear, int price,
                    String condition) {
       super(timestamp, userId, carId);
       Objects.requireNonNull(brand);
@@ -32,7 +32,7 @@ public abstract class CarEvent extends Event {
       Objects.requireNonNull(condition);
       this.brand = brand;
       this.model = model;
-      this.yearOfIssue = yearOfIssue;
+      this.productionYear = productionYear;
       this.price = price;
       this.condition = condition;
     }
@@ -45,11 +45,11 @@ public abstract class CarEvent extends Event {
     @Override
     public String serialize() {
       var pattern = """
-          {"timestamp": "%s", "type": "%s", "user_id": %d, "car_id": %d, "brand": "%s", "model": "%s", "year_of_issue": %d, "price": %d, "condition": "%s"}
+          {"timestamp": "%s", "type": "%s", "user_id": %d, "car_id": %d, "brand": "%s", "model": "%s", "production_year": %d, "price": %d, "condition": "%s"}
           """;
       return String.format(pattern, getTimestamp(), getType().getId(), getUserId(), getCarId(),
                            JsonUtil.escapeCharacters(getBrand()), JsonUtil.escapeCharacters(getModel()),
-                           getYearOfIssue(), getPrice(), JsonUtil.escapeCharacters(getCondition()));
+                           getProductionYear(), getPrice(), JsonUtil.escapeCharacters(getCondition()));
     }
   }
 
@@ -57,11 +57,11 @@ public abstract class CarEvent extends Event {
   public static class Modified extends CarEvent {
     private final String newBrand;
     private final String newModel;
-    private final int newYearOfIssue;
+    private final int newProductionYear;
     private final int newPrice;
     private final String newCondition;
 
-    public Modified(Instant timestamp, int userId, int carId, String newBrand, String newModel, int newYearOfIssue,
+    public Modified(Instant timestamp, int userId, int carId, String newBrand, String newModel, int newProductionYear,
                     int newPrice, String newCondition) {
       super(timestamp, userId, carId);
       Objects.requireNonNull(newBrand);
@@ -69,7 +69,7 @@ public abstract class CarEvent extends Event {
       Objects.requireNonNull(newCondition);
       this.newBrand = newBrand;
       this.newModel = newModel;
-      this.newYearOfIssue = newYearOfIssue;
+      this.newProductionYear = newProductionYear;
       this.newPrice = newPrice;
       this.newCondition = newCondition;
     }
@@ -82,11 +82,11 @@ public abstract class CarEvent extends Event {
     @Override
     public String serialize() {
       String pattern = """
-          {"timestamp": "%s", "type": "%s", "user_id": %d, "car_id": %d, "new_brand": "%s", "new_model": "%s", "new_year_of_issue": %d, "new_price": %d, "new_condition": "%s"}
+          {"timestamp": "%s", "type": "%s", "user_id": %d, "car_id": %d, "new_brand": "%s", "new_model": "%s", "new_production_year": %d, "new_price": %d, "new_condition": "%s"}
           """;
       return String.format(pattern, getTimestamp(), getType().getId(), getUserId(), getCarId(),
                            JsonUtil.escapeCharacters(getNewBrand()), JsonUtil.escapeCharacters(getNewModel()),
-                           getNewYearOfIssue(), getNewPrice(), JsonUtil.escapeCharacters(getNewCondition()));
+                           getNewProductionYear(), getNewPrice(), JsonUtil.escapeCharacters(getNewCondition()));
     }
   }
 

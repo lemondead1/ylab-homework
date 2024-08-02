@@ -20,23 +20,23 @@ public class CarRepo {
   private final Map<Integer, Car> cars = new HashMap<>();
   private int lastId;
 
-  public int create(String brand, String model, int yearOfIssue, int price, String condition) {
+  public int create(String brand, String model, int productionYear, int price, String condition) {
     lastId++;
-    cars.put(lastId, new Car(lastId, brand, model, yearOfIssue, price, condition));
+    cars.put(lastId, new Car(lastId, brand, model, productionYear, price, condition));
     return lastId;
   }
 
   @Builder(builderMethodName = "", buildMethodName = "apply", builderClassName = "EditBuilder")
-  private Car applyEdit(int id, String brand, String model, Integer yearOfIssue, Integer price, String condition) {
+  private Car applyEdit(int id, String brand, String model, Integer productionYear, Integer price, String condition) {
     var old = findById(id);
 
     brand = brand == null ? old.brand() : brand;
     model = model == null ? old.model() : model;
-    yearOfIssue = yearOfIssue == null ? old.yearOfIssue() : yearOfIssue;
+    productionYear = productionYear == null ? old.productionYear() : productionYear;
     price = price == null ? old.price() : price;
     condition = condition == null ? old.condition() : condition;
 
-    Car newRow = new Car(id, brand, model, yearOfIssue, price, condition);
+    Car newRow = new Car(id, brand, model, productionYear, price, condition);
     cars.put(id, newRow);
     return newRow;
   }
@@ -69,7 +69,7 @@ public class CarRepo {
 
   public Stream<Car> lookupCars(@Nullable String brand,
                                 @Nullable String model,
-                                @Nullable Integer yearOfIssue,
+                                @Nullable Integer productionYear,
                                 @Nullable Integer price,
                                 @Nullable String condition,
                                 CarSorting sorting) {
@@ -82,8 +82,8 @@ public class CarRepo {
       var lowerCaseModel = model.toLowerCase();
       stream = stream.filter(car -> car.model().toLowerCase().contains(lowerCaseModel));
     }
-    if (yearOfIssue != null) {
-      stream = stream.filter(car -> car.yearOfIssue() == yearOfIssue);
+    if (productionYear != null) {
+      stream = stream.filter(car -> car.productionYear() == productionYear);
     }
     if (price != null) {
       stream = stream.filter(car -> car.price() == price);
@@ -96,8 +96,8 @@ public class CarRepo {
       case NAME_ASC -> Comparator.comparing(car -> car.brand() + " " + car.model(), String::compareToIgnoreCase);
       case NAME_DESC -> Comparator.comparing((Car car) -> car.brand() + " " + car.model(), String::compareToIgnoreCase)
                                   .reversed();
-      case YEAR_OF_ISSUE_ASC -> Comparator.comparingInt(Car::yearOfIssue);
-      case YEAR_OF_ISSUE_DESC -> Comparator.comparingInt(Car::yearOfIssue).reversed();
+      case PRODUCTION_YEAR_ASC -> Comparator.comparingInt(Car::productionYear);
+      case PRODUCTION_YEAR_DESC -> Comparator.comparingInt(Car::productionYear).reversed();
       case PRICE_ASC -> Comparator.comparingInt(Car::price);
       case PRICE_DESC -> Comparator.comparingInt(Car::price).reversed();
     });

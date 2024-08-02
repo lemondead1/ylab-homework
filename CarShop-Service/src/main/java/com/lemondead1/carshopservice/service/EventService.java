@@ -26,13 +26,15 @@ public class EventService {
   }
 
   public void onCarCreated(int creatorId, int carId, String brand, String model,
-                           int yearOfIssue, int price, String condition) {
-    events.submitEvent(new CarEvent.Created(time.now(), creatorId, carId, brand, model, yearOfIssue, price, condition));
+                           int productionYear, int price, String condition) {
+    events.submitEvent(
+        new CarEvent.Created(time.now(), creatorId, carId, brand, model, productionYear, price, condition));
   }
 
   public void onCarEdited(int editorId, Car newCar) {
     events.submitEvent(new CarEvent.Modified(time.now(), editorId, newCar.id(), newCar.brand(),
-                                             newCar.model(), newCar.yearOfIssue(), newCar.price(), newCar.condition()));
+                                             newCar.model(), newCar.productionYear(), newCar.price(),
+                                             newCar.condition()));
   }
 
   public void onCarDeleted(int deleterId, int carId) {
