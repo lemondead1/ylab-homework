@@ -1,7 +1,7 @@
 package com.lemondead1.carshopservice.controller;
 
-import com.lemondead1.carshopservice.cli.command.builders.TreeSubcommandBuilder;
 import com.lemondead1.carshopservice.cli.ConsoleIO;
+import com.lemondead1.carshopservice.cli.command.builders.TreeCommandBuilder;
 import com.lemondead1.carshopservice.cli.parsing.StringParser;
 import com.lemondead1.carshopservice.cli.validation.PatternValidator;
 import com.lemondead1.carshopservice.cli.validation.Validator;
@@ -16,7 +16,7 @@ public class LoginController implements Controller {
   private final UserService users;
 
   @Override
-  public void registerEndpoints(TreeSubcommandBuilder builder) {
+  public void registerEndpoints(TreeCommandBuilder<?> builder) {
     builder.accept("signup", this::signUp)
            .describe("Use 'signup' to sign up.")
            .allow(UserRole.ANONYMOUS)

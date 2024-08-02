@@ -1,7 +1,7 @@
 package com.lemondead1.carshopservice.controller;
 
 import com.lemondead1.carshopservice.cli.ConsoleIO;
-import com.lemondead1.carshopservice.cli.command.builders.TreeSubcommandBuilder;
+import com.lemondead1.carshopservice.cli.command.builders.TreeCommandBuilder;
 import com.lemondead1.carshopservice.cli.parsing.IdListParser;
 import com.lemondead1.carshopservice.cli.parsing.IdParser;
 import com.lemondead1.carshopservice.cli.parsing.IntParser;
@@ -21,7 +21,7 @@ public class UserController implements Controller {
   private final UserService users;
 
   @Override
-  public void registerEndpoints(TreeSubcommandBuilder builder) {
+  public void registerEndpoints(TreeCommandBuilder<?> builder) {
     builder.push("user").describe("Use 'user' to access user database.").allow(MANAGER, ADMIN)
 
            .accept("list", this::list)

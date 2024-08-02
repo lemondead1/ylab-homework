@@ -1,7 +1,7 @@
 package com.lemondead1.carshopservice.controller;
 
 import com.lemondead1.carshopservice.cli.ConsoleIO;
-import com.lemondead1.carshopservice.cli.command.builders.TreeSubcommandBuilder;
+import com.lemondead1.carshopservice.cli.command.builders.TreeCommandBuilder;
 import com.lemondead1.carshopservice.cli.parsing.*;
 import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;
@@ -19,7 +19,7 @@ public class OrderController implements Controller {
   private final OrderService orders;
 
   @Override
-  public void registerEndpoints(TreeSubcommandBuilder builder) {
+  public void registerEndpoints(TreeCommandBuilder<?> builder) {
     builder.push("order").describe("Commands for managing orders").allow(CLIENT, MANAGER, ADMIN)
 
            .accept("purchase", this::purchase)

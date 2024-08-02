@@ -1,46 +1,19 @@
 package com.lemondead1.carshopservice.cli.command;
 
 import com.lemondead1.carshopservice.cli.ConsoleIO;
-import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.service.SessionService;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
-public class CommandTree implements Command {
+public class CommandTreeRoot {
   private final Map<String, Command> subcommands;
-  private final String name;
-  private final String description;
-  private final Set<UserRole> allowedRoles;
 
-  public CommandTree(Map<String, Command> subcommands, String name, String description, Set<UserRole> allowedRoles) {
+  public CommandTreeRoot(Map<String, Command> subcommands) {
     this.subcommands = subcommands;
-    this.name = name;
-    this.description = description;
-    this.allowedRoles = allowedRoles;
-  }
-
-  @Override
-  public String getName() {
-    return name;
-  }
-
-  @Override
-  public String getDescription() {
-    return description;
-  }
-
-  @Override
-  public Collection<UserRole> allowedRoles() {
-    return allowedRoles;
   }
 
   private void printHelp(SessionService session, ConsoleIO cli) {
-    if (description != null) {
-      cli.println(description);
-    }
     cli.println("Subcommands:");
     for (var subcommand : subcommands.values()) {
       if (subcommand.allowedRoles().contains(session.getCurrentUserRole())) {
@@ -49,7 +22,6 @@ public class CommandTree implements Command {
     }
   }
 
-  @Override
   public void execute(SessionService currentUser, ConsoleIO cli, String... path) {
     if (path.length == 0) {
       printHelp(currentUser, cli);

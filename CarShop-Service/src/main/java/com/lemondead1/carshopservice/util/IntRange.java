@@ -8,7 +8,7 @@ import java.util.function.IntPredicate;
 @RequiredArgsConstructor
 @EqualsAndHashCode
 public class IntRange implements IntPredicate {
-  public static IntRange ANY = new IntRange(Integer.MIN_VALUE, Integer.MAX_VALUE);
+  public static IntRange ALL = new IntRange(Integer.MIN_VALUE, Integer.MAX_VALUE);
 
   private final int min;
   private final int max;

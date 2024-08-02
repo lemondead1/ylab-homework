@@ -1,7 +1,7 @@
 package com.lemondead1.carshopservice.controller;
 
 import com.lemondead1.carshopservice.cli.ConsoleIO;
-import com.lemondead1.carshopservice.cli.command.builders.TreeSubcommandBuilder;
+import com.lemondead1.carshopservice.cli.command.builders.TreeCommandBuilder;
 import com.lemondead1.carshopservice.cli.parsing.*;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
@@ -19,7 +19,7 @@ public class CarController implements Controller {
   private final CarService cars;
 
   @Override
-  public void registerEndpoints(TreeSubcommandBuilder builder) {
+  public void registerEndpoints(TreeCommandBuilder<?> builder) {
     builder.push("car").describe("Use 'car' to access car database.").allow(CLIENT, MANAGER, ADMIN)
 
            .accept("create", this::createCar)
@@ -58,8 +58,8 @@ public class CarController implements Controller {
   String listCars(SessionService session, ConsoleIO cli, String... path) {
     var brand = cli.parseOptional("Brand > ", StringParser.INSTANCE).orElse("");
     var model = cli.parseOptional("Model > ", StringParser.INSTANCE).orElse("");
-    var productionYear = cli.parseOptional("Production year > ", IntRangeParser.INSTANCE).orElse(IntRange.ANY);
-    var price = cli.parseOptional("Price > ", IntRangeParser.INSTANCE).orElse(IntRange.ANY);
+    var productionYear = cli.parseOptional("Production year > ", IntRangeParser.INSTANCE).orElse(IntRange.ALL);
+    var price = cli.parseOptional("Price > ", IntRangeParser.INSTANCE).orElse(IntRange.ALL);
     //TODO Not sure whether parsing this way is any useful. Maybe I should make it an enum
     var condition = cli.parseOptional("Condition > ", StringParser.INSTANCE).orElse("");
     var sorting = cli.parseOptional("Sort by > ", IdParser.of(CarSorting.class)).orElse(CarSorting.NAME_ASC);
