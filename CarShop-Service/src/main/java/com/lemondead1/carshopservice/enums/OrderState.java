@@ -1,6 +1,8 @@
 package com.lemondead1.carshopservice.enums;
 
-public enum OrderState {
+import com.lemondead1.carshopservice.cli.parsing.HasId;
+
+public enum OrderState implements HasId {
   NEW("new", "New"),
   PERFORMING("performing", "Performing"),
   DONE("done", "Done"),
@@ -14,6 +16,7 @@ public enum OrderState {
     this.prettyName = prettyName;
   }
 
+  @Override
   public String getId() {
     return id;
   }

@@ -21,13 +21,29 @@ public class CarController implements Controller {
 
   @Override
   public void registerEndpoints(TreeSubcommandBuilder builder) {
-    builder
-        .push("car", "Car CRUD operations").allow(CLIENT, MANAGER, ADMIN)
-        .accept("create", "Creates a new car", this::createCar).allow(MANAGER, ADMIN).pop()
-        .accept("search", "Car search", this::listCars).allow(CLIENT, MANAGER, ADMIN).pop()
-        .accept("edit", "Edit car", this::editCar).allow(MANAGER, ADMIN).pop()
-        .accept("delete", "Deletes the car", this::deleteCar).allow(MANAGER, ADMIN).pop()
-        .pop();
+    builder.push("car").describe("Use 'car' to access car database.").allow(CLIENT, MANAGER, ADMIN)
+
+           .accept("create", this::createCar)
+           .describe("Use 'car create' to create a new car.")
+           .allow(MANAGER, ADMIN)
+           .pop()
+
+           .accept("search", this::listCars)
+           .describe("Use 'car search' to look up cars.")
+           .allow(CLIENT, MANAGER, ADMIN)
+           .pop()
+
+           .accept("edit", this::editCar)
+           .describe("Use 'car edit' to update car info.")
+           .allow(MANAGER, ADMIN)
+           .pop()
+
+           .accept("delete", this::deleteCar)
+           .describe("Use 'car delete' to delete a car.")
+           .allow(MANAGER, ADMIN)
+           .pop()
+
+           .pop();
   }
 
   String createCar(SessionService session, ConsoleIO cli, String... path) {

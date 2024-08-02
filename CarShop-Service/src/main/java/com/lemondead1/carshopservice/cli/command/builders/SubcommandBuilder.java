@@ -7,25 +7,32 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Set;
 
-abstract class SubcommandBuilder {
+abstract class SubcommandBuilder<SELF extends SubcommandBuilder<SELF>> {
   final TreeSubcommandBuilder parent;
   final String name;
-  final String description;
+  String description;
   final Set<UserRole> allowedRoles = EnumSet.noneOf(UserRole.class);
 
-  SubcommandBuilder(TreeSubcommandBuilder parent, String name, String description) {
+  SubcommandBuilder(TreeSubcommandBuilder parent, String name) {
     this.parent = parent;
+    description = name;
     this.name = name;
-    this.description = description;
   }
 
   public TreeSubcommandBuilder pop() {
     return parent;
   }
 
-  public SubcommandBuilder allow(UserRole... roles) {
+  @SuppressWarnings("unchecked")
+  public SELF describe(String description) {
+    this.description = description;
+    return (SELF) this;
+  }
+
+  @SuppressWarnings("unchecked")
+  public SELF allow(UserRole... roles) {
     allowedRoles.addAll(Arrays.asList(roles));
-    return this;
+    return (SELF) this;
   }
 
   abstract Command build();

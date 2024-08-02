@@ -3,6 +3,8 @@ package com.lemondead1.carshopservice.cli;
 import com.lemondead1.carshopservice.cli.command.builders.TreeSubcommandBuilder;
 import com.lemondead1.carshopservice.cli.parsing.*;
 import com.lemondead1.carshopservice.enums.OrderSorting;
+import com.lemondead1.carshopservice.enums.OrderState;
+import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.service.OrderService;
 import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.util.TableFormatter;
@@ -18,15 +20,39 @@ public class OrderController implements Controller {
 
   @Override
   public void registerEndpoints(TreeSubcommandBuilder builder) {
-    builder.push("order", "Commands for managing orders").allow(CLIENT, MANAGER, ADMIN)
-           .accept("purchase", "Adds a new car purchase order", this::purchase).allow(ADMIN, CLIENT, MANAGER).pop()
-           .accept("service",
-                   "Use 'order service <car id> to schedule service for your car",
-                   this::service).allow(CLIENT, MANAGER, ADMIN).pop()
-           .accept("my",
-                   "Use 'order my [sorting]' to list your orders",
-                   this::myOrders).allow(CLIENT, MANAGER, ADMIN).pop()
-           .accept("find", "Use 'order find' to find orders.", this::find).allow(MANAGER, ADMIN).pop();
+    builder.push("order").describe("Commands for managing orders").allow(CLIENT, MANAGER, ADMIN)
+
+           .accept("purchase", this::purchase)
+           .describe("Adds a new car purchase order")
+           .allow(ADMIN, CLIENT, MANAGER)
+           .pop()
+
+           .accept("service", this::service)
+           .describe("Use 'order service <car id> to schedule service for your car")
+           .allow(CLIENT, MANAGER, ADMIN)
+           .pop()
+
+           .accept("my-list", this::myOrders)
+           .describe("Use 'order my-list [sorting]' to list your orders")
+           .allow(CLIENT, MANAGER, ADMIN)
+           .pop()
+
+           .accept("cancel", this::cancel)
+           .describe("Use 'order cancel <order id>' to cancel orders.")
+           .allow(CLIENT, MANAGER, ADMIN)
+           .pop()
+
+           .accept("update-state", this::updateState)
+           .describe("Use 'order update-state <order id> <new state>' to change order state.")
+           .allow(MANAGER, ADMIN)
+           .pop()
+
+           .accept("find", this::find)
+           .describe("Use 'order find' to find orders.")
+           .allow(MANAGER, ADMIN)
+           .pop()
+
+           .pop();
 
   }
 
@@ -53,6 +79,34 @@ public class OrderController implements Controller {
     return "Scheduled service for " + car;
   }
 
+  String cancel(SessionService session, ConsoleIO cli, String... path) {
+    if (path.length == 0) {
+      return "Usage: order cancel <order id>";
+    }
+    int orderId = IntParser.INSTANCE.parse(path[0]);
+    var order = orders.find(orderId);
+    if (session.getCurrentUserRole() == CLIENT && order.customer().id() != session.getCurrentUserId()) {
+      throw new CommandException("Wrong order id.");
+    }
+    orders.cancel(session.getCurrentUserId(), orderId);
+    return "Cancelled " + order;
+  }
+
+  String updateState(SessionService session, ConsoleIO cli, String... path) {
+    if (path.length < 2) {
+      return "Usage: order update-state <order id> <new state>";
+    }
+    int orderId = IntParser.INSTANCE.parse(path[0]);
+    var newState = EnumParser.of(OrderState.class).parse(path[1]);
+    var order = orders.find(orderId);
+    if (order.state() == newState) {
+      throw new CommandException("State has not been changed.");
+    }
+    var addedComments = cli.parseOptional("Append comment > ", StringParser.INSTANCE).map(c -> "\n" + c).orElse("");
+    orders.updateState(session.getCurrentUserId(), orderId, newState, addedComments);
+    return "Done";
+  }
+
   String myOrders(SessionService session, ConsoleIO cli, String... path) {
     OrderSorting sorting = OrderSorting.LATEST_FIRST;
     if (path.length > 0) {
@@ -69,7 +123,7 @@ public class OrderController implements Controller {
   }
 
   String find(SessionService session, ConsoleIO cli, String... path) {
-    var username = cli.parseOptional("Customer username > ", StringParser.INSTANCE).orElse(null);
+    var username = cli.parseOptional("Customer > ", StringParser.INSTANCE).orElse(null);
     var carBrand = cli.parseOptional("Car brand > ", StringParser.INSTANCE).orElse(null);
     var carModel = cli.parseOptional("Car model > ", StringParser.INSTANCE).orElse(null);
     var sorting = cli.parseOptional("Sorting > ", EnumParser.of(OrderSorting.class)).orElse(null);

@@ -19,8 +19,15 @@ public class LoginController implements Controller {
 
   @Override
   public void registerEndpoints(TreeSubcommandBuilder builder) {
-    builder.accept("signup", "Creates new user", this::signUp).allow(UserRole.ANONYMOUS).pop()
-           .accept("login", "Logs you in", this::login).allow(UserRole.ANONYMOUS).pop();
+    builder.accept("signup", this::signUp)
+           .describe("Use 'signup' to sign up.")
+           .allow(UserRole.ANONYMOUS)
+           .pop()
+
+           .accept("login", this::login)
+           .describe("Use 'login' to log in.")
+           .allow(UserRole.ANONYMOUS)
+           .pop();
   }
 
   private static final Validator<String> validUsername = new PatternValidator("[A-Za-z0-9_\\-.]{3,32}");

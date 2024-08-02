@@ -5,7 +5,7 @@ import com.lemondead1.carshopservice.enums.UserRole;
 
 public class CommandTreeBuilder extends TreeSubcommandBuilder {
   public CommandTreeBuilder() {
-    super(null, null, null);
+    super(null, null);
     for (var role : UserRole.values()) {
       allow(role);
     }

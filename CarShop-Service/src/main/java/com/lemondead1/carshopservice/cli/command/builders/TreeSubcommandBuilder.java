@@ -8,16 +8,11 @@ import com.lemondead1.carshopservice.enums.UserRole;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TreeSubcommandBuilder extends SubcommandBuilder {
-  private final Map<String, SubcommandBuilder> subcommands = new HashMap<>();
+public class TreeSubcommandBuilder extends SubcommandBuilder<TreeSubcommandBuilder> {
+  private final Map<String, SubcommandBuilder<?>> subcommands = new HashMap<>();
 
-  TreeSubcommandBuilder(TreeSubcommandBuilder parent, String name, String description) {
-    super(parent, name, description);
-  }
-
-  @Override
-  public TreeSubcommandBuilder allow(UserRole... roles) {
-    return (TreeSubcommandBuilder) super.allow(roles);
+  TreeSubcommandBuilder(TreeSubcommandBuilder parent, String name) {
+    super(parent, name);
   }
 
   @Override
@@ -29,26 +24,26 @@ public class TreeSubcommandBuilder extends SubcommandBuilder {
     return new CommandTree(subcommands, name, description, allowedRoles);
   }
 
-  public TreeSubcommandBuilder push(String name, String description) {
+  public TreeSubcommandBuilder push(String name) {
     if ("help".equals(name)) {
       throw new IllegalArgumentException("help is a reserved command name");
     }
     if (subcommands.containsKey(name)) {
       throw new IllegalArgumentException("Subcommand with name " + name + " already exists");
     }
-    var subcommand = new TreeSubcommandBuilder(this, name, description);
+    var subcommand = new TreeSubcommandBuilder(this, name);
     subcommands.put(name, subcommand);
     return subcommand;
   }
 
-  public EndpointSubcommandBuilder accept(String name, String description, Endpoint endpoint) {
+  public EndpointSubcommandBuilder accept(String name, Endpoint endpoint) {
     if ("help".equals(name)) {
       throw new IllegalArgumentException("help is a reserved command name");
     }
     if (subcommands.containsKey(name)) {
       throw new IllegalArgumentException("Subcommand with name " + name + " already exists");
     }
-    var subcommand = new EndpointSubcommandBuilder(this, name, description, endpoint);
+    var subcommand = new EndpointSubcommandBuilder(this, name, endpoint);
     subcommands.put(name, subcommand);
     return subcommand;
   }

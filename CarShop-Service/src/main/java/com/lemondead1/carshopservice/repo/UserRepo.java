@@ -68,7 +68,7 @@ public class UserRepo {
 
   public User findById(int id) {
     if (!map.containsKey(id)) {
-      throw new RowNotFoundException();
+      throw new RowNotFoundException("User " + id + " does not exist.");
     }
     return map.get(id);
   }

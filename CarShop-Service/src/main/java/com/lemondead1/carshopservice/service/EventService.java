@@ -1,5 +1,6 @@
 package com.lemondead1.carshopservice.service;
 
+import com.lemondead1.carshopservice.dto.Order;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.event.CarEvent;
@@ -43,10 +44,10 @@ public class EventService {
                                               state, customerId, carId, comments));
   }
 
-  public void onOrderEdited(int creatorId, int newOrderId, Instant newCreatedAt, OrderKind newKind,
-                            OrderState newState, int newCustomerId, int newCarId, String newComments) {
-    events.submitEvent(new OrderEvent.Modified(time.now(), creatorId, newOrderId, newCreatedAt, newKind,
-                                               newState, newCustomerId, newCarId, newComments));
+  public void onOrderEdited(int editorId, Order order) {
+    events.submitEvent(new OrderEvent.Modified(time.now(), editorId, order.id(), order.createdAt(), order.type(),
+                                               order.state(), order.customer().id(), order.car().id(),
+                                               order.comments()));
   }
 
   public void onOrderDeleted(int deleterId, int orderId) {

@@ -50,32 +50,19 @@ public class OrderRepo {
     return new Order(lastId, createdAt, kind, state, user, car, comments);
   }
 
-  public void edit(int id, Instant newCreatedAt, OrderKind newKind, OrderState newState, int newCustomerId,
-                   int newCarId, String newComments) {
-    if (!map.containsKey(id)) {
-      throw new RowNotFoundException();
-    }
+  /**
+   * @return order after edit
+   */
+  public Order edit(int id, Instant newCreatedAt, OrderKind newKind, OrderState newState, int newCustomerId,
+                    int newCarId, String newComments) {
+    var newCustomer = users.findById(newCustomerId);
+    var newCar = cars.findById(newCarId);
+    delete(id);
     var newRow = new OrderStore(id, newCreatedAt, newKind, newState, newCustomerId, newCarId, newComments);
-    var old = map.put(id, newRow);
-    Objects.requireNonNull(old);
-
-    var ordersSet = customerOrders.getOrDefault(old.customerId(), Collections.emptySet());
-    if (!ordersSet.remove(old)) {
-      logger.printf("Database is in an inconsistent state. %s is not in customerOrders.\n", old);
-    }
-    if (ordersSet.isEmpty()) {
-      customerOrders.remove(old.customerId());
-    }
-    customerOrders.computeIfAbsent(newCustomerId, integer -> new HashSet<>()).add(newRow);
-
-    var carOrdersSet = carOrders.getOrDefault(old.carId(), Collections.emptySet());
-    if (!carOrdersSet.remove(old)) {
-      logger.printf("Database is in an inconsistent state. %s is not in carOrders.\n", old);
-    }
-    if (carOrdersSet.isEmpty()) {
-      carOrders.remove(old.carId());
-    }
+    map.put(id, newRow);
+    customerOrders.computeIfAbsent(newCustomerId, i -> new HashSet<>()).add(newRow);
     carOrders.computeIfAbsent(newCarId, i -> new HashSet<>()).add(newRow);
+    return new Order(id, newCreatedAt, newKind, newState, newCustomer, newCar, newComments);
   }
 
   public Order delete(int id) {
@@ -102,6 +89,19 @@ public class OrderRepo {
 
     return new Order(old.id, old.createdAt, old.kind, old.state,
                      users.findById(old.id), cars.findById(old.carId), old.comments);
+  }
+
+  private Order hydrateOrder(OrderStore order) {
+    return new Order(order.id, order.createdAt, order.kind, order.state,
+                     users.findById(order.id), cars.findById(order.carId), order.comments);
+  }
+
+  public Order find(int id) {
+    var order = map.get(id);
+    if (order == null) {
+      throw new RowNotFoundException("Order " + id + " not found.");
+    }
+    return hydrateOrder(order);
   }
 
   public boolean existCustomerOrders(int customerId) {

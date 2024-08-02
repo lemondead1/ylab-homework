@@ -5,18 +5,12 @@ import com.lemondead1.carshopservice.cli.command.CommandEndpoint;
 import com.lemondead1.carshopservice.cli.command.Endpoint;
 import com.lemondead1.carshopservice.enums.UserRole;
 
-public class EndpointSubcommandBuilder extends SubcommandBuilder {
+public class EndpointSubcommandBuilder extends SubcommandBuilder<EndpointSubcommandBuilder> {
   private final Endpoint endpoint;
 
-  EndpointSubcommandBuilder(TreeSubcommandBuilder parent, String name,
-                            String description, Endpoint endpoint) {
-    super(parent, name, description);
+  EndpointSubcommandBuilder(TreeSubcommandBuilder parent, String name, Endpoint endpoint) {
+    super(parent, name);
     this.endpoint = endpoint;
-  }
-
-  @Override
-  public EndpointSubcommandBuilder allow(UserRole... userRoles) {
-    return (EndpointSubcommandBuilder) super.allow(userRoles);
   }
 
   @Override
