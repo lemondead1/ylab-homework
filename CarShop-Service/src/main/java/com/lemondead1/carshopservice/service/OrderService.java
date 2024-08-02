@@ -37,7 +37,7 @@ public class OrderService {
     if (orders.getCarOrders(carId).stream()
               .anyMatch(o -> o.type() == OrderKind.PURCHASE &&
                              o.state() == OrderState.DONE &&
-                             o.customer().id() == user)) { //Check if user has bought the car.
+                             o.customer().id() == user)) { //Check if the user has bought the car.
       throw new CarReservedException("Car " + carId + " is not yours.");
     }
     var order = orders.create(Instant.now(), OrderKind.SERVICE, OrderState.NEW, user, carId, comments);
@@ -48,6 +48,11 @@ public class OrderService {
 
   public Order find(int orderId) {
     return orders.find(orderId);
+  }
+
+  public void deleteOrder(int deleterId, int orderId) {
+    orders.delete(orderId);
+    events.onOrderDeleted(deleterId, orderId);
   }
 
   public Order cancel(int userId, int orderId) {
@@ -71,7 +76,8 @@ public class OrderService {
     return orders.getCustomerOrders(user, sorting);
   }
 
-  public List<Order> findAllOrders(String username, String carBrand, String carModel, OrderState state, OrderSorting sorting) {
+  public List<Order> findAllOrders(String username, String carBrand, String carModel, OrderState state,
+                                   OrderSorting sorting) {
     return orders.find(username, carBrand, carModel, state, sorting);
   }
 }

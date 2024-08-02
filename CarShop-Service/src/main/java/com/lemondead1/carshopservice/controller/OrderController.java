@@ -6,6 +6,7 @@ import com.lemondead1.carshopservice.cli.parsing.*;
 import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.exceptions.CommandException;
+import com.lemondead1.carshopservice.exceptions.WrongUsageException;
 import com.lemondead1.carshopservice.service.OrderService;
 import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.util.TableFormatter;
@@ -39,6 +40,11 @@ public class OrderController implements Controller {
            .accept("cancel", this::cancel)
            .describe("Use 'order cancel <order id>' to cancel orders.")
            .allow(CLIENT, MANAGER, ADMIN)
+           .pop()
+
+           .accept("delete", this::deleteOrder)
+           .describe("Use 'order delete <order id>' to delete orders.")
+           .allow(ADMIN)
            .pop()
 
            .accept("update-state", this::updateState)
@@ -119,6 +125,20 @@ public class OrderController implements Controller {
                    row.car().id(), row.car().brand(), row.car().model(), row.comments());
     }
     return table.format(true);
+  }
+
+  String deleteOrder(SessionService session, ConsoleIO cli, String... path) {
+    if (path.length == 0) {
+      throw new WrongUsageException();
+    }
+    int orderId = IntParser.INSTANCE.parse(path[0]);
+    var order = orders.find(orderId);
+    cli.printf("Deleting %s\n", order);
+    if (cli.parseOptional("Confirm [y/N] > ", BooleanParser.DEFAULT_TO_FALSE).orElse(false)) {
+      orders.deleteOrder(session.getCurrentUserId(), orderId);
+      return "Deleted";
+    }
+    return "Cancelled";
   }
 
   String find(SessionService session, ConsoleIO cli, String... path) {

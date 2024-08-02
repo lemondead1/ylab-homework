@@ -3,6 +3,7 @@ package com.lemondead1.carshopservice.cli.command;
 import com.lemondead1.carshopservice.cli.ConsoleIO;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.CommandException;
+import com.lemondead1.carshopservice.exceptions.WrongUsageException;
 import com.lemondead1.carshopservice.service.SessionService;
 
 import java.util.Collection;
@@ -45,6 +46,8 @@ public class CommandEndpoint implements Command {
         var result = endpoint.execute(currentUser, cli, path);
         cli.println(result);
       }
+    } catch (WrongUsageException e) {
+      cli.println(getDescription());
     } catch (CommandException e) {
       cli.println(e.getMessage());
     }
