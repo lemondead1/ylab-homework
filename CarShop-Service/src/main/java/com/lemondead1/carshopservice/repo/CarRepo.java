@@ -72,7 +72,7 @@ public class CarRepo {
                                 @Nullable Integer yearOfIssue,
                                 @Nullable Integer price,
                                 @Nullable String condition,
-                                @Nullable CarSorting sorting) {
+                                CarSorting sorting) {
     var stream = listAll();
     if (brand != null) {
       var lowerCaseBrand = brand.toLowerCase();
@@ -92,18 +92,15 @@ public class CarRepo {
       var lowerCaseCondition = condition.toLowerCase();
       stream = stream.filter(car -> car.condition().toLowerCase().contains(lowerCaseCondition));
     }
-    if (sorting != null) {
-      Comparator<Car> sorter = switch (sorting) {
-        case NAME_ASC -> Comparator.comparing(car -> car.brand().toLowerCase() + " " + car.model().toLowerCase());
-        case NAME_DESC ->
-            Comparator.comparing((Car car) -> car.brand().toLowerCase() + " " + car.model().toLowerCase()).reversed();
-        case YEAR_OF_ISSUE_ASC -> Comparator.comparingInt(Car::yearOfIssue);
-        case YEAR_OF_ISSUE_DESC -> Comparator.comparingInt(Car::yearOfIssue).reversed();
-        case PRICE_ASC -> Comparator.comparingInt(Car::price);
-        case PRICE_DESC -> Comparator.comparingInt(Car::price).reversed();
-      };
-      stream = stream.sorted(sorter);
-    }
+    stream = stream.sorted(switch (sorting) {
+      case NAME_ASC -> Comparator.comparing(car -> car.brand() + " " + car.model(), String::compareToIgnoreCase);
+      case NAME_DESC -> Comparator.comparing((Car car) -> car.brand() + " " + car.model(), String::compareToIgnoreCase)
+                                  .reversed();
+      case YEAR_OF_ISSUE_ASC -> Comparator.comparingInt(Car::yearOfIssue);
+      case YEAR_OF_ISSUE_DESC -> Comparator.comparingInt(Car::yearOfIssue).reversed();
+      case PRICE_ASC -> Comparator.comparingInt(Car::price);
+      case PRICE_DESC -> Comparator.comparingInt(Car::price).reversed();
+    });
     return stream;
   }
 }

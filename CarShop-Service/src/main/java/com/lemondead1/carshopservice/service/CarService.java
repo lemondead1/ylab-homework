@@ -52,7 +52,7 @@ public class CarService {
   }
 
   public List<Car> lookupCars(@Nullable String brand, @Nullable String model, @Nullable Integer yearOfIssue,
-                              @Nullable Integer price, @Nullable String condition, @Nullable CarSorting sorting) {
+                              @Nullable Integer price, @Nullable String condition, CarSorting sorting) {
     return cars.lookupCars(brand, model, yearOfIssue, price, condition, sorting).toList();
   }
 }

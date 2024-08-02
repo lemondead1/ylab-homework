@@ -9,19 +9,22 @@ import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.ValidationException;
 import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.service.UserService;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public class LoginController implements Controller {
   private final UserService users;
-
-  public LoginController(UserService users) {
-    this.users = users;
-  }
 
   @Override
   public void registerEndpoints(TreeSubcommandBuilder builder) {
     builder.accept("signup", this::signUp)
            .describe("Use 'signup' to sign up.")
            .allow(UserRole.ANONYMOUS)
+           .pop()
+
+           .accept("logout", this::logout)
+           .describe("Use 'logout' to log out.")
+           .allow(UserRole.CLIENT, UserRole.MANAGER, UserRole.ADMIN)
            .pop()
 
            .accept("login", this::login)
@@ -53,6 +56,6 @@ public class LoginController implements Controller {
 
   String logout(SessionService session, ConsoleIO cli, String... params) {
     session.setCurrentUserId(0);
-    return "Goodbye!";
+    return "Logout";
   }
 }

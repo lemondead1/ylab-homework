@@ -1,7 +1,5 @@
 package com.lemondead1.carshopservice.repo;
 
-import static org.assertj.core.api.Assertions.*;
-
 import com.lemondead1.carshopservice.dto.Car;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.service.LoggerService;
@@ -12,7 +10,9 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Comparator;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class CarRepoTest {
   private CarRepo cars;
@@ -94,8 +94,10 @@ public class CarRepoTest {
                     Integer year,
                     Integer price,
                     String condition) {
-      assertThat(cars.lookupCars(brand, model, year, price, condition, null).map(Car::id).toList())
-          .containsExactly(Arrays.stream(expectedIds.split(",")).map(Integer::parseInt).toArray(Integer[]::new));
+      assertThat(cars.lookupCars(brand, model, year, price, condition, CarSorting.NAME_ASC).toList())
+          .isSortedAccordingTo(Comparator.comparing(c -> c.brand() + " " + c.model(), String::compareToIgnoreCase))
+          .map(Car::id)
+          .contains(Arrays.stream(expectedIds.split(",")).map(Integer::parseInt).toArray(Integer[]::new));
     }
   }
 }

@@ -64,8 +64,8 @@ public class OrderRepo {
 
     var newRow = new OrderStore(id, createdAt, kind, state, newCustomer.id(), newCar.id(), comments);
     map.put(id, newRow);
-    customerOrders.computeIfAbsent(customerId, i -> new HashSet<>()).add(newRow);
-    carOrders.computeIfAbsent(carId, i -> new HashSet<>()).add(newRow);
+    customerOrders.computeIfAbsent(newCustomer.id(), i -> new HashSet<>()).add(newRow);
+    carOrders.computeIfAbsent(newCar.id(), i -> new HashSet<>()).add(newRow);
     return new Order(id, createdAt, kind, state, newCustomer, newCar, comments);
   }
 

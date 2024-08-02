@@ -8,15 +8,13 @@ import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.service.OrderService;
 import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.util.TableFormatter;
+import lombok.RequiredArgsConstructor;
 
 import static com.lemondead1.carshopservice.enums.UserRole.*;
 
+@RequiredArgsConstructor
 public class OrderController implements Controller {
   private final OrderService orders;
-
-  public OrderController(OrderService orders) {
-    this.orders = orders;
-  }
 
   @Override
   public void registerEndpoints(TreeSubcommandBuilder builder) {
@@ -127,7 +125,7 @@ public class OrderController implements Controller {
     var carBrand = cli.parseOptional("Car brand > ", StringParser.INSTANCE).orElse(null);
     var carModel = cli.parseOptional("Car model > ", StringParser.INSTANCE).orElse(null);
     var state = cli.parseOptional("State > ", EnumParser.of(OrderState.class)).orElse(null);
-    var sorting = cli.parseOptional("Sorting > ", EnumParser.of(OrderSorting.class)).orElse(null);
+    var sorting = cli.parseOptional("Sorting > ", EnumParser.of(OrderSorting.class)).orElse(OrderSorting.LATEST_FIRST);
     var list = orders.findAllOrders(username, carBrand, carModel, state, sorting);
     var table = new TableFormatter("Order ID", "Creation date", "Type", "Status",
                                    "Customer ID", "Customer name", "Car ID", "Car brand", "Car model",
