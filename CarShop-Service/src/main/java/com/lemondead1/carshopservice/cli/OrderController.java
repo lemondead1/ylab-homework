@@ -119,15 +119,16 @@ public class OrderController implements Controller {
       table.addRow(row.id(), row.createdAt(), row.type().getPrettyName(), row.state().getPrettyName(),
                    row.car().id(), row.car().brand(), row.car().model(), row.comments());
     }
-    return table.format() + "\nRow count: " + list.size();
+    return table.format(true);
   }
 
   String find(SessionService session, ConsoleIO cli, String... path) {
     var username = cli.parseOptional("Customer > ", StringParser.INSTANCE).orElse(null);
     var carBrand = cli.parseOptional("Car brand > ", StringParser.INSTANCE).orElse(null);
     var carModel = cli.parseOptional("Car model > ", StringParser.INSTANCE).orElse(null);
+    var state = cli.parseOptional("State > ", EnumParser.of(OrderState.class)).orElse(null);
     var sorting = cli.parseOptional("Sorting > ", EnumParser.of(OrderSorting.class)).orElse(null);
-    var list = orders.findAllOrders(username, carBrand, carModel, sorting);
+    var list = orders.findAllOrders(username, carBrand, carModel, state, sorting);
     var table = new TableFormatter("Order ID", "Creation date", "Type", "Status",
                                    "Customer ID", "Customer name", "Car ID", "Car brand", "Car model",
                                    "Comments");
@@ -136,6 +137,6 @@ public class OrderController implements Controller {
                    row.customer().id(), row.customer().username(), row.car().id(), row.car().brand(), row.car().model(),
                    row.comments());
     }
-    return table.format() + "\nRow count: " + list.size();
+    return table.format(true);
   }
 }

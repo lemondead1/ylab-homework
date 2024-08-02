@@ -28,7 +28,7 @@ public class TableFormatter {
     rows.add(rowSerialized);
   }
 
-  public String format() {
+  public String format(boolean printRowCount) {
     int cols = columnsNames.length;
 
     StringBuilder builder = new StringBuilder();
@@ -64,6 +64,11 @@ public class TableFormatter {
         builder.append(row[i]);
         builder.append(" ".repeat(maxColWidths[i] - row[i].length()));
       }
+    }
+
+    if (printRowCount) {
+      builder.append('\n');
+      builder.append("Row count: ").append(rows.size());
     }
 
     return builder.toString();

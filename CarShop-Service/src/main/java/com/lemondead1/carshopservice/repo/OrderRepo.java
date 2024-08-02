@@ -153,7 +153,10 @@ public class OrderRepo {
                        cars.findById(o.carId()), o.comments()));
   }
 
-  public List<Order> find(@Nullable String customerName, @Nullable String carBrand, @Nullable String carModel,
+  public List<Order> find(@Nullable String customerName,
+                          @Nullable String carBrand,
+                          @Nullable String carModel,
+                          @Nullable OrderState state,
                           OrderSorting sorting) {
     var stream = listAll();
     if (customerName != null) {
@@ -167,6 +170,9 @@ public class OrderRepo {
     if (carModel != null) {
       var carModelLower = carModel.toLowerCase();
       stream = stream.filter(o -> o.car().model().toLowerCase().contains(carModelLower));
+    }
+    if (state != null) {
+      stream = stream.filter(o -> o.state() == state);
     }
     Comparator<Order> sorter = switch (sorting) {
       case LATEST_FIRST -> Comparator.comparing(Order::createdAt).reversed();

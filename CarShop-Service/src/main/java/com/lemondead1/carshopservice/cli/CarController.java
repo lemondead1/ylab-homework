@@ -3,7 +3,6 @@ package com.lemondead1.carshopservice.cli;
 import com.lemondead1.carshopservice.cli.command.builders.TreeSubcommandBuilder;
 import com.lemondead1.carshopservice.cli.parsing.*;
 import com.lemondead1.carshopservice.enums.CarSorting;
-import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.service.CarService;
@@ -57,13 +56,13 @@ public class CarController implements Controller {
   }
 
   String listCars(SessionService session, ConsoleIO cli, String... path) {
-    var brand = cli.parseOptional("Brand (optional) > ", StringParser.INSTANCE);
-    var model = cli.parseOptional("Model (optional) > ", StringParser.INSTANCE);
-    var yearOfIssue = cli.parseOptional("Year of issue (optional) > ", IntParser.INSTANCE);
-    var price = cli.parseOptional("Price (optional) > ", IntParser.INSTANCE);
+    var brand = cli.parseOptional("Brand > ", StringParser.INSTANCE);
+    var model = cli.parseOptional("Model > ", StringParser.INSTANCE);
+    var yearOfIssue = cli.parseOptional("Year of issue > ", IntParser.INSTANCE);
+    var price = cli.parseOptional("Price > ", IntParser.INSTANCE);
     //TODO Not sure whether parsing this way is any useful. Maybe I should make it an enum
-    var condition = cli.parseOptional("Condition (optional) > ", StringParser.INSTANCE);
-    var sorting = cli.parseOptional("Sort by (optional) > ", EnumParser.of(CarSorting.class));
+    var condition = cli.parseOptional("Condition > ", StringParser.INSTANCE);
+    var sorting = cli.parseOptional("Sort by > ", EnumParser.of(CarSorting.class));
     var list = cars.lookupCars(brand.orElse(null),
                                model.orElse(null),
                                yearOfIssue.orElse(null),
@@ -74,7 +73,7 @@ public class CarController implements Controller {
     for (var car : list) {
       table.addRow(car.id(), car.brand(), car.model(), car.yearOfIssue(), car.price(), car.condition());
     }
-    return table.format();
+    return table.format(true);
   }
 
   String editCar(SessionService session, ConsoleIO cli, String... path) {

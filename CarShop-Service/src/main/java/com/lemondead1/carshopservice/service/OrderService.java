@@ -71,7 +71,7 @@ public class OrderService {
     return orders.getCustomerOrders(user, sorting);
   }
 
-  public List<Order> findAllOrders(String username, String carBrand, String carModel, OrderSorting sorting) {
-    return orders.find(username, carBrand, carModel, sorting);
+  public List<Order> findAllOrders(String username, String carBrand, String carModel, OrderState state, OrderSorting sorting) {
+    return orders.find(username, carBrand, carModel, state, sorting);
   }
 }

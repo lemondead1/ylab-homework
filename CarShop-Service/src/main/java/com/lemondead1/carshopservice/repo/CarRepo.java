@@ -80,7 +80,7 @@ public class CarRepo {
     }
     if (model != null) {
       var lowerCaseModel = model.toLowerCase();
-      stream = stream.filter(car -> car.brand().toLowerCase().contains(lowerCaseModel));
+      stream = stream.filter(car -> car.model().toLowerCase().contains(lowerCaseModel));
     }
     if (yearOfIssue != null) {
       stream = stream.filter(car -> car.yearOfIssue() == yearOfIssue);
