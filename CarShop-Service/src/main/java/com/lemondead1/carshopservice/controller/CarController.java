@@ -3,6 +3,7 @@ package com.lemondead1.carshopservice.controller;
 import com.lemondead1.carshopservice.cli.ConsoleIO;
 import com.lemondead1.carshopservice.cli.command.builders.TreeCommandBuilder;
 import com.lemondead1.carshopservice.cli.parsing.*;
+import com.lemondead1.carshopservice.enums.Availability;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.exceptions.WrongUsageException;
@@ -11,6 +12,8 @@ import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.util.IntRange;
 import com.lemondead1.carshopservice.util.TableFormatter;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
 
 import static com.lemondead1.carshopservice.enums.UserRole.*;
 
@@ -62,11 +65,15 @@ public class CarController implements Controller {
     var price = cli.parseOptional("Price > ", IntRangeParser.INSTANCE).orElse(IntRange.ALL);
     //TODO Not sure whether parsing this way is any useful. Maybe I should make it an enum
     var condition = cli.parseOptional("Condition > ", StringParser.INSTANCE).orElse("");
+    var availability = cli.parseOptional("Availability > ", IdListParser.of(Availability.class))
+                          .orElse(List.of(Availability.AVAILABLE));
     var sorting = cli.parseOptional("Sort by > ", IdParser.of(CarSorting.class)).orElse(CarSorting.NAME_ASC);
-    var list = cars.lookupCars(brand, model, productionYear, price, condition, sorting);
-    var table = new TableFormatter("ID", "Brand", "Model", "Prod. year", "Price", "Condition");
+    var list = cars.lookupCars(brand, model, productionYear, price, condition, availability, sorting);
+    var table =
+        new TableFormatter("ID", "Brand", "Model", "Prod. year", "Price", "Condition", "Available for purchase");
     for (var car : list) {
-      table.addRow(car.id(), car.brand(), car.model(), car.productionYear(), car.price(), car.condition());
+      table.addRow(car.id(), car.brand(), car.model(), car.productionYear(), car.price(), car.condition(),
+                   car.availableForPurchase() == Availability.AVAILABLE ? "Yes" : "No");
     }
     return table.format(true);
   }
