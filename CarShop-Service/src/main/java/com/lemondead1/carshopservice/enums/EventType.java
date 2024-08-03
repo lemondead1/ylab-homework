@@ -1,9 +1,11 @@
 package com.lemondead1.carshopservice.enums;
 
 import com.lemondead1.carshopservice.cli.parsing.HasId;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
+@RequiredArgsConstructor
 public enum EventType implements HasId {
   CAR_CREATED("car_created"),
   CAR_MODIFIED("car_edited"),
@@ -20,10 +22,6 @@ public enum EventType implements HasId {
   public static final List<EventType> ALL = List.of(values());
 
   private final String id;
-
-  EventType(String id) {
-    this.id = id;
-  }
 
   @Override
   public String getId() {

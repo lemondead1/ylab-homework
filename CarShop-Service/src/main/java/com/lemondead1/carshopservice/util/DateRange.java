@@ -1,11 +1,8 @@
 package com.lemondead1.carshopservice.util;
 
-import lombok.EqualsAndHashCode;
-
 import java.time.Instant;
 import java.util.function.Predicate;
 
-@EqualsAndHashCode
 public class DateRange implements Predicate<Instant> {
   public static final DateRange ALL = new DateRange(Instant.MIN, Instant.MAX);
 

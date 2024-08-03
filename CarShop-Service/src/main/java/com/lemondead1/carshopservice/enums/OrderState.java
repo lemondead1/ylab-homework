@@ -2,9 +2,11 @@ package com.lemondead1.carshopservice.enums;
 
 import com.lemondead1.carshopservice.cli.parsing.HasId;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
+@RequiredArgsConstructor
 public enum OrderState implements HasId {
   NEW("new", "New"),
   PERFORMING("performing", "Performing"),
@@ -16,11 +18,6 @@ public enum OrderState implements HasId {
   private final String id;
   @Getter
   private final String prettyName;
-
-  OrderState(String id, String prettyName) {
-    this.id = id;
-    this.prettyName = prettyName;
-  }
 
   @Override
   public String getId() {
