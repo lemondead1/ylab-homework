@@ -6,6 +6,7 @@ import com.lemondead1.carshopservice.enums.UserSorting;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.exceptions.WrongUsernamePasswordException;
 import com.lemondead1.carshopservice.repo.UserRepo;
+import com.lemondead1.carshopservice.util.IntRange;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
@@ -53,11 +54,13 @@ public class UserService {
     return users.findById(id);
   }
 
-  public List<User> searchUsers(String username, Collection<UserRole> roles, UserSorting sorting) {
-    return users.lookup(username, EnumSet.copyOf(roles), sorting);
+  public List<User> searchUsers(String username, Collection<UserRole> roles, String phoneNumber, String email,
+                                IntRange purchases, UserSorting sorting) {
+    return users.lookup(username, EnumSet.copyOf(roles), phoneNumber, email, purchases, sorting);
   }
 
-  public User createUser(int creatorId, String username, String phoneNumber, String email, String password, UserRole role) {
+  public User createUser(int creatorId, String username, String phoneNumber, String email, String password,
+                         UserRole role) {
     if (role == UserRole.ANONYMOUS) {
       throw new IllegalArgumentException("Role anonymous is not allowed");
     }

@@ -6,6 +6,7 @@ import com.lemondead1.carshopservice.enums.UserSorting;
 import com.lemondead1.carshopservice.exceptions.ForeignKeyException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
+import com.lemondead1.carshopservice.util.IntRange;
 import com.lemondead1.carshopservice.util.StringUtil;
 import lombok.Builder;
 import lombok.Setter;
@@ -17,19 +18,27 @@ public class UserRepo {
   @Setter
   private OrderRepo orders;
 
-  private final Map<Integer, User> map = new HashMap<>();
-  private final Map<String, User> usernameMap = new HashMap<>();
+  private record UserStore(int id, String username, String phoneNumber, String email, String password,
+                           UserRole role) { }
+
+  private final Map<Integer, UserStore> map = new HashMap<>();
+  private final Map<String, UserStore> usernameMap = new HashMap<>();
   private int lastId;
+
+  private User hydrate(UserStore store) {
+    return new User(store.id(), store.username(), store.phoneNumber(), store.email(), store.password(), store.role(),
+                    orders.getCustomerPurchaseCount(store.id()));
+  }
 
   public User create(String username, String phoneNumber, String email, String password, UserRole role) {
     if (usernameMap.containsKey(username)) {
       throw new UserAlreadyExistsException("Username '" + username + "' is already taken.");
     }
     lastId++;
-    var newUser = new User(lastId, username, phoneNumber, email, password, role);
+    var newUser = new UserStore(lastId, username, phoneNumber, email, password, role);
     usernameMap.put(username, newUser);
     map.put(lastId, newUser);
-    return newUser;
+    return hydrate(newUser);
   }
 
   @Builder(builderMethodName = "", buildMethodName = "apply", builderClassName = "EditBuilder")
@@ -50,11 +59,11 @@ public class UserRepo {
     } else if (usernameMap.containsKey(username)) {
       throw new UserAlreadyExistsException("Username '" + username + "' is already taken.");
     }
-    var newUser = new User(id, username, phoneNumber, email, password, role);
+    var newUser = new UserStore(id, username, phoneNumber, email, password, role);
     map.put(id, newUser);
     usernameMap.remove(Objects.requireNonNull(old).username());
     usernameMap.put(username, newUser);
-    return newUser;
+    return hydrate(newUser);
   }
 
   public EditBuilder edit(int id) {
@@ -70,7 +79,7 @@ public class UserRepo {
       throw new RowNotFoundException();
     }
     usernameMap.remove(old.username());
-    return old;
+    return hydrate(old);
   }
 
   public boolean existsUsername(String username) {
@@ -81,20 +90,25 @@ public class UserRepo {
     if (!usernameMap.containsKey(username)) {
       throw new RowNotFoundException();
     }
-    return usernameMap.get(username);
+    return hydrate(usernameMap.get(username));
   }
 
   public User findById(int id) {
     if (!map.containsKey(id)) {
       throw new RowNotFoundException("User " + id + " does not exist.");
     }
-    return map.get(id);
+    return hydrate(map.get(id));
   }
 
-  public List<User> lookup(String username, Set<UserRole> role, UserSorting sorting) {
+  public List<User> lookup(String username, Set<UserRole> role, String phoneNumber, String email,
+                           IntRange purchaseCount, UserSorting sorting) {
     return map.values()
               .stream()
+              .map(this::hydrate)
+              .filter(user -> purchaseCount.test(user.purchaseCount()))
               .filter(user -> StringUtil.containsIgnoreCase(user.username(), username))
+              .filter(user -> StringUtil.containsIgnoreCase(user.phoneNumber(), phoneNumber))
+              .filter(user -> StringUtil.containsIgnoreCase(user.email(), email))
               .filter(user -> role.contains(user.role()))
               .sorted(sorting.getSorter())
               .toList();

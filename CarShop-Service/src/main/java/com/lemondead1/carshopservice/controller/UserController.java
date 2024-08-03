@@ -2,16 +2,14 @@ package com.lemondead1.carshopservice.controller;
 
 import com.lemondead1.carshopservice.cli.ConsoleIO;
 import com.lemondead1.carshopservice.cli.command.builders.TreeCommandBuilder;
-import com.lemondead1.carshopservice.cli.parsing.IdListParser;
-import com.lemondead1.carshopservice.cli.parsing.IdParser;
-import com.lemondead1.carshopservice.cli.parsing.IntParser;
-import com.lemondead1.carshopservice.cli.parsing.StringParser;
+import com.lemondead1.carshopservice.cli.parsing.*;
 import com.lemondead1.carshopservice.cli.validation.PatternValidator;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.enums.UserSorting;
 import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.service.UserService;
+import com.lemondead1.carshopservice.util.IntRange;
 import com.lemondead1.carshopservice.util.TableFormatter;
 import lombok.RequiredArgsConstructor;
 
@@ -25,8 +23,8 @@ public class UserController implements Controller {
   public void registerEndpoints(TreeCommandBuilder<?> builder) {
     builder.push("user").describe("Use 'user' to access user database.").allow(MANAGER, ADMIN)
 
-           .accept("list", this::list)
-           .describe("Use 'user list' to query users.")
+           .accept("search", this::search)
+           .describe("Use 'user search' to query users.")
            .allow(MANAGER, ADMIN)
            .pop()
 
@@ -43,11 +41,14 @@ public class UserController implements Controller {
            .pop();
   }
 
-  String list(SessionService session, ConsoleIO cli, String... path) {
+  String search(SessionService session, ConsoleIO cli, String... path) {
     var username = cli.parseOptional("Username > ", StringParser.INSTANCE).orElse("");
     var role = cli.parseOptional("Role > ", IdListParser.of(UserRole.class)).orElse(UserRole.ALL);
+    var phoneNumber = cli.parseOptional("Phone number > ", StringParser.INSTANCE).orElse("");
+    var email = cli.parseOptional("Email > ",StringParser.INSTANCE).orElse("");
+    var purchases = cli.parseOptional("Purchases", IntRangeParser.INSTANCE).orElse(IntRange.ALL);
     var sort = cli.parseOptional("Sorting > ", IdParser.of(UserSorting.class)).orElse(UserSorting.USERNAME_ASC);
-    var list = users.searchUsers(username, role, sort);
+    var list = users.searchUsers(username, role, phoneNumber, email, purchases, sort);
     var table = new TableFormatter("ID", "Username", "Role");
     for (var row : list) {
       table.addRow(row.id(), row.username(), row.role().getPrettyName());

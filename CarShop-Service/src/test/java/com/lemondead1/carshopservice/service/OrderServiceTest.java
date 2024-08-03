@@ -87,7 +87,8 @@ public class OrderServiceTest {
 
     orders.create(now, OrderKind.PURCHASE, OrderState.DONE, 1, 1, "");
     orderService.orderService(1, 1, "None");
-    assertThat(orders.findById(2)).isEqualTo(new Order(2, now, OrderKind.SERVICE, OrderState.NEW, user, car, "None"));
+    assertThat(orders.findById(2)).isEqualTo(new Order(2, now, OrderKind.SERVICE, OrderState.NEW,
+                                                       users.findById(1), car, "None"));
     assertThat(events.listAll()).usingRecursiveFieldByFieldElementComparator()
                                 .contains(new OrderEvent.Created(now, 1, 2, now, OrderKind.SERVICE,
                                                                  OrderState.NEW, 1, 1, "None"));

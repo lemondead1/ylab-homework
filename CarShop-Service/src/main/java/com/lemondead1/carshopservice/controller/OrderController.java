@@ -65,7 +65,7 @@ public class OrderController implements Controller {
            .pop()
 
            .accept("create", this::create)
-           .describe("Use 'order create' to create order.")
+           .describe("Use 'order create <customer id> <car id>' to create order.")
            .allow(ADMIN)
            .pop()
 
@@ -107,7 +107,7 @@ public class OrderController implements Controller {
       throw new CommandException("Wrong order id.");
     }
     orders.cancel(session.getCurrentUserId(), order.id());
-    return "Cancelled " + order;
+    return "Cancelled " + order.prettyFormat();
   }
 
   String updateState(SessionService session, ConsoleIO cli, String... path) {
@@ -146,12 +146,14 @@ public class OrderController implements Controller {
     }
     int orderId = IntParser.INSTANCE.parse(path[0]);
     var order = orders.findById(orderId);
-    cli.printf("Deleting %s\n", order);
-    if (cli.parseOptional("Confirm [y/N] > ", BooleanParser.DEFAULT_TO_FALSE).orElse(false)) {
-      orders.deleteOrder(session.getCurrentUserId(), orderId);
-      return "Deleted";
+    cli.printf("Deleting %s\n", order.prettyFormat());
+
+    if (!cli.parseOptional("Confirm [y/N] > ", BooleanParser.DEFAULT_TO_FALSE).orElse(false)) {
+      return "Cancelled";
     }
-    return "Cancelled";
+
+    orders.deleteOrder(session.getCurrentUserId(), orderId);
+    return "Deleted";
   }
 
   String find(SessionService session, ConsoleIO cli, String... path) {
@@ -173,24 +175,15 @@ public class OrderController implements Controller {
   }
 
   String create(SessionService session, ConsoleIO cli, String... path) {
-    var customer = cli.parse("Customer id > ", IntParser.INSTANCE.map(id -> {
-      try {
-        return users.findById(id);
-      } catch (RowNotFoundException e) {
-        throw new ValidationException(e.getMessage(), e);
-      }
-    }));
-    var car = cli.parse("Car id > ", IntParser.INSTANCE.map(id -> {
-      try {
-        return cars.findById(id);
-      } catch (RowNotFoundException e) {
-        throw new ValidationException(e.getMessage(), e);
-      }
-    }));
+    if (path.length < 2) {
+      throw new WrongUsageException();
+    }
+    var customer = IntParser.INSTANCE.map(users::findById).parse(path[0]);
+    var car = IntParser.INSTANCE.map(cars::findById).parse(path[1]);
     var kind = cli.parse("Kind > ", IdParser.of(OrderKind.class));
     var state = cli.parseOptional("State > ", IdParser.of(OrderState.class)).orElse(OrderState.NEW);
     var comment = cli.parseOptional("Comments > ", StringParser.INSTANCE).orElse("");
     var order = orders.createOrder(session.getCurrentUserId(), customer.id(), car.id(), kind, state, comment);
-    return "Created " + order.prettyFormat();
+    return "Created " + order.prettyFormat() + ".";
   }
 }

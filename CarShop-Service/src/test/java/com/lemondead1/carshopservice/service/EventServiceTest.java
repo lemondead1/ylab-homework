@@ -84,7 +84,7 @@ public class EventServiceTest {
     var now = Instant.now();
     when(time.now()).thenReturn(now);
     service.onOrderCreated(6, new Order(10, Instant.EPOCH, OrderKind.PURCHASE, OrderState.NEW,
-                                        new User(42, "Uname", "880055535", "test@example.com", "pwd", UserRole.CLIENT),
+                                        new User(42, "Uname", "880055535", "test@ya.com", "pwd", UserRole.CLIENT, 0),
                                         new Car(64, "Brand", "Model", 1999, 4000000, "nice"),
                                         "No comment"));
     assertThat(events.listAll()).usingRecursiveFieldByFieldElementComparator()
@@ -98,7 +98,7 @@ public class EventServiceTest {
     var now = Instant.now();
     when(time.now()).thenReturn(now);
     service.onOrderEdited(6, new Order(10, Instant.EPOCH, OrderKind.PURCHASE, OrderState.NEW,
-                                       new User(39, "Uname", "88005553535", "test@example.com", "pwd", UserRole.CLIENT),
+                                       new User(39, "Uname", "88005553535", "test@ya.com", "pwd", UserRole.CLIENT, 0),
                                        new Car(82, "Brand", "Model", 1999, 4000000, "nice"),
                                        "Yes comment"));
     assertThat(events.listAll()).usingRecursiveFieldByFieldElementComparator()
@@ -120,7 +120,7 @@ public class EventServiceTest {
   void userCreatedTest() {
     var now = Instant.now();
     when(time.now()).thenReturn(now);
-    service.onUserCreated(43, new User(71, "alex", "880055535", "test@example.com", "password", UserRole.CLIENT));
+    service.onUserCreated(43, new User(71, "alex", "880055535", "test@example.com", "password", UserRole.CLIENT, 0));
     assertThat(events.listAll()).usingRecursiveFieldByFieldElementComparator()
                                 .containsExactly(new UserEvent.Created(now, 43, 71, "alex", "880055535",
                                                                        "test@example.com", UserRole.CLIENT));
@@ -131,8 +131,8 @@ public class EventServiceTest {
     var now = Instant.now();
     when(time.now()).thenReturn(now);
     service.onUserEdited(43,
-                         new User(71, "usr", "880055535", "test@example.com", "oldPassword", UserRole.CLIENT),
-                         new User(71, "alex", "880055535", "test@example.com", "password", UserRole.CLIENT));
+                         new User(71, "usr", "880055535", "test@example.com", "oldPassword", UserRole.CLIENT, 0),
+                         new User(71, "alex", "880055535", "test@example.com", "password", UserRole.CLIENT, 0));
     assertThat(service.findEvents(EventType.ALL, DateRange.ALL, "", EventSorting.TIMESTAMP_ASC))
         .usingRecursiveFieldByFieldElementComparator()
         .containsExactly(new UserEvent.Edited(now, 43, 71, "alex", "880055535",
@@ -183,13 +183,13 @@ public class EventServiceTest {
 
     when(time.now()).thenReturn(now.minusSeconds(76));
     service.onOrderCreated(6, new Order(10, Instant.EPOCH, OrderKind.PURCHASE, OrderState.NEW,
-                                        new User(42, "Uname", "880055535", "test@example.com", "pwd", UserRole.CLIENT),
+                                        new User(42, "Uname", "880055535", "test@ya.com", "pwd", UserRole.CLIENT, 0),
                                         new Car(64, "Brand", "Model", 1999, 4000000, "nice"),
                                         "No comment"));
 
     when(time.now()).thenReturn(now.minusSeconds(722));
     service.onOrderEdited(6, new Order(11, Instant.EPOCH, OrderKind.PURCHASE, OrderState.NEW,
-                                       new User(39, "Uname", "880055535", "test@example.com", "pwd", UserRole.CLIENT),
+                                       new User(39, "Uname", "880055535", "test@ya.com", "pwd", UserRole.CLIENT, 0),
                                        new Car(82, "Brand", "Model", 1999, 4000000, "nice"),
                                        "Yes comment"));
 
@@ -197,12 +197,12 @@ public class EventServiceTest {
     service.onOrderDeleted(53, 93);
 
     when(time.now()).thenReturn(now.minusSeconds(763));
-    service.onUserCreated(43, new User(71, "alex", "880055535", "test@example.com", "password", UserRole.CLIENT));
+    service.onUserCreated(43, new User(71, "alex", "880055535", "test@example.com", "password", UserRole.CLIENT, 0));
 
     when(time.now()).thenReturn(now.minusSeconds(754));
     service.onUserEdited(43,
-                         new User(71, "usr", "880055535", "test@example.com", "oldPassword", UserRole.CLIENT),
-                         new User(71, "alex", "880055535", "test@example.com", "password", UserRole.CLIENT));
+                         new User(71, "usr", "880055535", "test@example.com", "oldPassword", UserRole.CLIENT, 0),
+                         new User(71, "alex", "880055535", "test@example.com", "password", UserRole.CLIENT, 0));
 
     when(time.now()).thenReturn(now.minusSeconds(87));
     service.onUserDeleted(64, 12);

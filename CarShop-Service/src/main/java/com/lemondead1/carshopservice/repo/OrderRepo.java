@@ -156,6 +156,20 @@ public class OrderRepo {
                          .toList();
   }
 
+  public List<Order> findCustomerOrders(int customerId) {
+    return customerOrders.getOrDefault(customerId, Set.of())
+                         .stream()
+                         .map(this::hydrateOrder)
+                         .toList();
+  }
+
+  public int getCustomerPurchaseCount(int customerId) {
+    return (int) customerOrders.getOrDefault(customerId, Set.of())
+                               .stream()
+                               .filter(o -> o.kind == OrderKind.PURCHASE && o.state == OrderState.DONE)
+                               .count();
+  }
+
   public List<Order> lookup(String customerName,
                             String carBrand,
                             String carModel,

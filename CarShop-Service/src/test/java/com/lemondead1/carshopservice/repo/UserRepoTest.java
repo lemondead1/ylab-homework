@@ -8,6 +8,7 @@ import com.lemondead1.carshopservice.enums.UserSorting;
 import com.lemondead1.carshopservice.exceptions.ForeignKeyException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
+import com.lemondead1.carshopservice.util.IntRange;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -54,7 +55,7 @@ public class UserRepoTest {
     users.create("user", "88005553535", "test@example.com", "password", UserRole.CLIENT);
     users.create("admin", "88005553535", "test@example.com", "password", UserRole.ADMIN);
     assertThat(users.findById(2))
-        .isEqualTo(new User(2, "admin", "88005553535", "test@example.com", "password", UserRole.ADMIN));
+        .isEqualTo(new User(2, "admin", "88005553535", "test@example.com", "password", UserRole.ADMIN, 0));
   }
 
   @Test
@@ -69,7 +70,7 @@ public class UserRepoTest {
     users.create("user", "88005553535", "test@example.com", "password", UserRole.CLIENT);
     users.edit(1).password("newPassword").phoneNumber("8912536173").role(UserRole.ADMIN).apply();
     assertThat(users.findById(1))
-        .isEqualTo(new User(1, "user", "8912536173", "test@example.com", "newPassword", UserRole.ADMIN));
+        .isEqualTo(new User(1, "user", "8912536173", "test@example.com", "newPassword", UserRole.ADMIN, 0));
   }
 
   @Test
@@ -90,7 +91,7 @@ public class UserRepoTest {
   void deleteReturnsOldUser() {
     users.create("user", "88005553535", "test@example.com", "password", UserRole.CLIENT);
     assertThat(users.delete(1))
-        .isEqualTo(new User(1, "user", "88005553535", "test@example.com", "password", UserRole.CLIENT));
+        .isEqualTo(new User(1, "user", "88005553535", "test@example.com", "password", UserRole.CLIENT, 0));
   }
 
   @Test
@@ -116,14 +117,14 @@ public class UserRepoTest {
   void findByUsernameReturnsUser() {
     users.create("user", "88005553535", "test@example.com", "password", UserRole.CLIENT);
     assertThat(users.findByUsername("user"))
-        .isEqualTo(new User(1, "user", "88005553535", "test@example.com", "password", UserRole.CLIENT));
+        .isEqualTo(new User(1, "user", "88005553535", "test@example.com", "password", UserRole.CLIENT, 0));
   }
 
   @Test
   void findByIdReturnsUser() {
     users.create("user", "88005553535", "test@example.com", "password", UserRole.CLIENT);
     assertThat(users.findById(1))
-        .isEqualTo(new User(1, "user", "88005553535", "test@example.com", "password", UserRole.CLIENT));
+        .isEqualTo(new User(1, "user", "88005553535", "test@example.com", "password", UserRole.CLIENT, 0));
   }
 
   @Test
@@ -187,7 +188,7 @@ public class UserRepoTest {
         "'5,29,32,35', li"
     })
     void filterTest(String ids, String username) {
-      assertThat(users.lookup(username, Set.of(UserRole.values()), UserSorting.USERNAME_ASC))
+      assertThat(users.lookup(username, Set.of(UserRole.values()), "", "", IntRange.ALL, UserSorting.USERNAME_ASC))
           .isSortedAccordingTo(UserSorting.USERNAME_ASC.getSorter())
           .map(User::id).contains(Arrays.stream(ids.split(",")).map(Integer::parseInt).toArray(Integer[]::new));
     }
@@ -195,7 +196,7 @@ public class UserRepoTest {
     @ParameterizedTest
     @ValueSource(ints = { 0, 1, 2, 3 })
     void sortingTest(int sorterId) {
-      assertThat(users.lookup("", Set.of(UserRole.values()), UserSorting.values()[sorterId]))
+      assertThat(users.lookup("", Set.of(UserRole.values()), "", "", IntRange.ALL, UserSorting.values()[sorterId]))
           .isSortedAccordingTo(UserSorting.values()[sorterId].getSorter())
           .map(User::id).containsAll(IntStream.range(1, 36).boxed().toList());
     }
