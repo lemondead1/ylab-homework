@@ -18,11 +18,9 @@ public class CarShopServiceApplication {
   }
 
   public static void main(String[] args) {
-    LoggerService logger = new LoggerService();
-
     var userRepo = new UserRepo();
     var carRepo = new CarRepo();
-    var orderRepo = new OrderRepo(logger);
+    var orderRepo = new OrderRepo();
     var eventRepo = new EventRepo();
 
     userRepo.setOrders(orderRepo);

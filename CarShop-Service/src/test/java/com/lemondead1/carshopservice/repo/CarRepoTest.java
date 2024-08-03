@@ -2,14 +2,12 @@ package com.lemondead1.carshopservice.repo;
 
 import com.lemondead1.carshopservice.IntRangeConverter;
 import com.lemondead1.carshopservice.dto.Car;
-import com.lemondead1.carshopservice.dto.User;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.ForeignKeyException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
-import com.lemondead1.carshopservice.service.LoggerService;
 import com.lemondead1.carshopservice.util.IntRange;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -36,7 +34,7 @@ public class CarRepoTest {
   void beforeEach() {
     cars = new CarRepo();
     users = new UserRepo();
-    orders = new OrderRepo(new LoggerService());
+    orders = new OrderRepo();
     cars.setOrders(orders);
     users.setOrders(orders);
     orders.setCars(cars);

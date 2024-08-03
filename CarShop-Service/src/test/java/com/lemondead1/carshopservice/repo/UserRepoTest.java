@@ -8,7 +8,6 @@ import com.lemondead1.carshopservice.enums.UserSorting;
 import com.lemondead1.carshopservice.exceptions.ForeignKeyException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
-import com.lemondead1.carshopservice.service.LoggerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -36,7 +35,7 @@ public class UserRepoTest {
   void setup() {
     cars = new CarRepo();
     users = new UserRepo();
-    orders = new OrderRepo(new LoggerService());
+    orders = new OrderRepo();
     cars.setOrders(orders);
     users.setOrders(orders);
     orders.setCars(cars);

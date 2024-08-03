@@ -39,7 +39,7 @@ public class EventServiceTest {
   void beforeEach() {
     cars = new CarRepo();
     users = new UserRepo();
-    orders = new OrderRepo(new LoggerService());
+    orders = new OrderRepo();
     events = new EventRepo();
     cars.setOrders(orders);
     users.setOrders(orders);

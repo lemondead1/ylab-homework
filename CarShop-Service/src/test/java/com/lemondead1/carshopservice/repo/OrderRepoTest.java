@@ -7,7 +7,6 @@ import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.ForeignKeyException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
-import com.lemondead1.carshopservice.service.LoggerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +24,7 @@ public class OrderRepoTest {
   void beforeEach() {
     cars = new CarRepo();
     users = new UserRepo();
-    orders = new OrderRepo(new LoggerService());
+    orders = new OrderRepo();
     cars.setOrders(orders);
     users.setOrders(orders);
     orders.setCars(cars);

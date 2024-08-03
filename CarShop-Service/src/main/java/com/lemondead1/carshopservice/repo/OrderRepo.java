@@ -8,7 +8,6 @@ import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.exceptions.ForeignKeyException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
-import com.lemondead1.carshopservice.service.LoggerService;
 import com.lemondead1.carshopservice.util.StringUtil;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +21,6 @@ import java.util.*;
 public class OrderRepo {
   private record OrderStore(int id, Instant createdAt, OrderKind kind, OrderState state, int customerId, int carId,
                             String comments) { }
-
-  private final LoggerService logger;
 
   @Setter
   private UserRepo users;
@@ -104,7 +101,8 @@ public class OrderRepo {
 
     var clientOrdersSet = customerOrders.getOrDefault(old.customerId(), Collections.emptySet());
     if (!clientOrdersSet.remove(old)) {
-      logger.printf("Database is in an inconsistent state. %s is not in customerOrders.\n", old);
+      throw new RuntimeException(
+          String.format("Database is in an inconsistent state. %s is not in customerOrders.", old));
     }
     if (clientOrdersSet.isEmpty()) {
       customerOrders.remove(old.customerId());
@@ -112,7 +110,7 @@ public class OrderRepo {
 
     var carOrdersSet = carOrders.getOrDefault(old.carId(), Collections.emptySet());
     if (!carOrdersSet.remove(old)) {
-      logger.printf("Database is in an inconsistent state. %s is not in carOrders.\n", old);
+      throw new RuntimeException(String.format("Database is in an inconsistent state. %s is not in carOrders.", old));
     }
     if (carOrdersSet.isEmpty()) {
       carOrders.remove(old.carId());
@@ -175,6 +173,6 @@ public class OrderRepo {
   }
 
   public List<Order> findCarOrders(int carId) {
-    return carOrders.getOrDefault(carId,Set.of()).stream().map(this::hydrateOrder).toList();
+    return carOrders.getOrDefault(carId, Set.of()).stream().map(this::hydrateOrder).toList();
   }
 }
