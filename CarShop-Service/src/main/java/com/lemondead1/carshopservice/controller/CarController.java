@@ -61,13 +61,12 @@ public class CarController implements Controller {
   String listCars(SessionService session, ConsoleIO cli, String... path) {
     var brand = cli.parseOptional("Brand > ", StringParser.INSTANCE).orElse("");
     var model = cli.parseOptional("Model > ", StringParser.INSTANCE).orElse("");
-    var productionYear = cli.parseOptional("Production year > ", IntRangeParser.INSTANCE).orElse(IntRange.ALL);
+    var productionYear = cli.parseOptional("Prod. year > ", IntRangeParser.INSTANCE).orElse(IntRange.ALL);
     var price = cli.parseOptional("Price > ", IntRangeParser.INSTANCE).orElse(IntRange.ALL);
-    //TODO Not sure whether parsing this way is any useful. Maybe I should make it an enum
     var condition = cli.parseOptional("Condition > ", StringParser.INSTANCE).orElse("");
-    var availability = cli.parseOptional("Availability > ", IdListParser.of(Availability.class))
+    var availability = cli.parseOptional("Availability for purchase > ", IdListParser.of(Availability.class))
                           .orElse(List.of(Availability.AVAILABLE));
-    var sorting = cli.parseOptional("Sort by > ", IdParser.of(CarSorting.class)).orElse(CarSorting.NAME_ASC);
+    var sorting = cli.parseOptional("Sorting > ", IdParser.of(CarSorting.class)).orElse(CarSorting.NAME_ASC);
     var list = cars.lookupCars(brand, model, productionYear, price, condition, availability, sorting);
     var table =
         new TableFormatter("ID", "Brand", "Model", "Prod. year", "Price", "Condition", "Available for purchase");

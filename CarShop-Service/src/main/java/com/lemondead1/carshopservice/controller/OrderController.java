@@ -7,8 +7,6 @@ import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.exceptions.CommandException;
-import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
-import com.lemondead1.carshopservice.exceptions.ValidationException;
 import com.lemondead1.carshopservice.exceptions.WrongUsageException;
 import com.lemondead1.carshopservice.service.CarService;
 import com.lemondead1.carshopservice.service.OrderService;
@@ -66,7 +64,7 @@ public class OrderController implements Controller {
 
            .accept("create", this::create)
            .describe("Use 'order create <customer id> <car id>' to create order.")
-           .allow(ADMIN)
+           .allow(MANAGER, ADMIN)
            .pop()
 
            .pop();

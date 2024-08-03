@@ -1,19 +1,27 @@
 package com.lemondead1.carshopservice.controller;
 
 import com.lemondead1.carshopservice.dto.Car;
+import com.lemondead1.carshopservice.dto.CarWithAvailability;
+import com.lemondead1.carshopservice.enums.Availability;
+import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.exceptions.WrongUsageException;
-import com.lemondead1.carshopservice.service.*;
+import com.lemondead1.carshopservice.service.CarService;
+import com.lemondead1.carshopservice.service.SessionService;
+import com.lemondead1.carshopservice.service.UserService;
+import com.lemondead1.carshopservice.util.IntRange;
+import com.lemondead1.carshopservice.util.TableFormatter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
 public class CarControllerTest {
@@ -165,5 +173,33 @@ public class CarControllerTest {
     cli.assertMatchesHistory();
     verify(cars).createCar(6, "Brand", "Model", 2001, 1000000, "poor");
     verifyNoMoreInteractions(cars);
+  }
+
+  @Test
+  void listCarsTest() {
+    CarWithAvailability[] dummyCars = {
+        new CarWithAvailability(3, "Brand", "Model", 2001, 1000000, "poor", Availability.UNAVAILABLE),
+        new CarWithAvailability(64, "Toyota", "Corolla", 2009, 2000000, "ok", Availability.AVAILABLE)
+    };
+
+    cli.out("Brand > ").in("")
+       .out("Model > ").in("")
+       .out("Prod. year > ").in("2000 - 2010")
+       .out("Price > ").in("100000 - 10000000")
+       .out("Condition > ").in("o")
+       .out("Availability for purchase > ").in("available,unavailable")
+       .out("Sorting > ").in("");
+
+    when(cars.lookupCars(eq(""), eq(""), refEq(new IntRange(2000, 2010)), refEq(new IntRange(100000,10000000)), eq("o"),
+                         eq(List.of(Availability.AVAILABLE, Availability.UNAVAILABLE)), eq(CarSorting.NAME_ASC)))
+        .thenReturn(List.of(dummyCars));
+
+    var table = new TableFormatter("ID", "Brand", "Model", "Prod. year", "Price", "Condition", "Available for purchase");
+    table.addRow(3, "Brand", "Model", 2001, 1000000, "poor", "No");
+    table.addRow(64, "Toyota", "Corolla", 2009, 2000000, "ok", "Yes");
+
+    assertThat(car.listCars(session, cli)).isEqualTo(table.format(true));
+
+    cli.assertMatchesHistory();
   }
 }

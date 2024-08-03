@@ -6,7 +6,7 @@ import com.lemondead1.carshopservice.cli.parsing.*;
 import com.lemondead1.carshopservice.cli.validation.PatternValidator;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.enums.UserSorting;
-import com.lemondead1.carshopservice.exceptions.CommandException;
+import com.lemondead1.carshopservice.exceptions.WrongUsageException;
 import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.service.UserService;
 import com.lemondead1.carshopservice.util.IntRange;
@@ -45,8 +45,8 @@ public class UserController implements Controller {
     var username = cli.parseOptional("Username > ", StringParser.INSTANCE).orElse("");
     var role = cli.parseOptional("Role > ", IdListParser.of(UserRole.class)).orElse(UserRole.ALL);
     var phoneNumber = cli.parseOptional("Phone number > ", StringParser.INSTANCE).orElse("");
-    var email = cli.parseOptional("Email > ",StringParser.INSTANCE).orElse("");
-    var purchases = cli.parseOptional("Purchases", IntRangeParser.INSTANCE).orElse(IntRange.ALL);
+    var email = cli.parseOptional("Email > ", StringParser.INSTANCE).orElse("");
+    var purchases = cli.parseOptional("Purchases > ", IntRangeParser.INSTANCE).orElse(IntRange.ALL);
     var sort = cli.parseOptional("Sorting > ", IdParser.of(UserSorting.class)).orElse(UserSorting.USERNAME_ASC);
     var list = users.searchUsers(username, role, phoneNumber, email, purchases, sort);
     var table = new TableFormatter("ID", "Username", "Role");
@@ -61,25 +61,26 @@ public class UserController implements Controller {
     var phoneNumber = console.parse("Phone number > ", StringParser.INSTANCE, PatternValidator.PHONE_NUMBER);
     var email = console.parse("Email > ", StringParser.INSTANCE, PatternValidator.EMAIL);
     var password = console.parse("Password > ", StringParser.INSTANCE, PatternValidator.PASSWORD);
-    var role = console.parse("Role > ", IdParser.of(CLIENT, MANAGER, ADMIN));
+    var role = console.parseOptional("Role > ", IdParser.of(CLIENT, MANAGER, ADMIN)).orElse(CLIENT);
     var newUser = users.createUser(session.getCurrentUserId(), username, phoneNumber, email, password, role);
-    return "Created " + newUser;
+    return "Created " + newUser.prettyFormat();
   }
 
   String edit(SessionService session, ConsoleIO cli, String... path) {
     if (path.length == 0) {
-      throw new CommandException("Usage: user edit <id>");
+      throw new WrongUsageException();
     }
-    int id = IntParser.INSTANCE.parse(path[0]);
-    var old = users.findById(id);
+    var old = IntParser.INSTANCE.map(users::findById).parse(path[0]);
     var username = cli.parseOptional("Username (" + old.username() + ") > ", StringParser.INSTANCE).orElse(null);
-    var phoneNumber = cli.parseOptional("Phone number > ", StringParser.INSTANCE, PatternValidator.PHONE_NUMBER)
+    var phoneNumber = cli.parseOptional("Phone number (" + old.phoneNumber() + ") > ",
+                                        StringParser.INSTANCE, PatternValidator.PHONE_NUMBER)
                          .orElse(null);
-    var email = cli.parseOptional("Email > ", StringParser.INSTANCE, PatternValidator.EMAIL).orElse(null);
+    var email = cli.parseOptional("Email (" + old.email() + ") > ", StringParser.INSTANCE, PatternValidator.EMAIL)
+                   .orElse(null);
     var password = cli.parseOptional("Password > ", StringParser.INSTANCE).orElse(null);
     var role = cli.parseOptional("Role (" + old.role().getPrettyName() + ") > ", IdParser.of(CLIENT, MANAGER, ADMIN))
                   .orElse(null);
-    var newUser = users.editUser(session.getCurrentUserId(), id, username, phoneNumber, email, password, role);
-    return "Modified " + newUser;
+    var newUser = users.editUser(session.getCurrentUserId(), old.id(), username, phoneNumber, email, password, role);
+    return "Saved " + newUser.prettyFormat();
   }
 }
