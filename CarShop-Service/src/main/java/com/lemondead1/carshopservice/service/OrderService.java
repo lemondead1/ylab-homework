@@ -24,30 +24,42 @@ public class OrderService {
     this.time = time;
   }
 
-  public Car createPurchaseOrder(int user, int carId, String comments) {
-    if (orders.findCarOrders(carId).stream()
-              .anyMatch(o -> o.type() == OrderKind.PURCHASE &&
-                             o.state() != OrderState.CANCELLED)) {
-      throw new CarReservedException("Car " + carId + " is not available for purchase.");
-    }
-    var order = orders.create(time.now(), OrderKind.PURCHASE, OrderState.NEW, user, carId, comments);
-    events.onOrderCreated(user, order);
-    return order.car();
+  public Car purchase(int user, int carId, String comments) {
+    return createOrder(user, user, carId, OrderKind.PURCHASE, OrderState.NEW, comments).car();
   }
 
-  public Car createServiceOrder(int user, int carId, String comments) {
-    if (orders.findCarOrders(carId).stream()
-              .noneMatch(o -> o.type() == OrderKind.PURCHASE &&
-                              o.state() == OrderState.DONE &&
-                              o.customer().id() == user)) { //Check if the user has bought the car.
-      throw new CarReservedException("Car " + carId + " is not yours.");
-    }
-    var order = orders.create(time.now(), OrderKind.SERVICE, OrderState.NEW, user, carId, comments);
-    events.onOrderCreated(user, order);
-    return order.car();
+  public Car orderService(int user, int carId, String comments) {
+    return createOrder(user, user, carId, OrderKind.SERVICE, OrderState.NEW, comments).car();
   }
 
-  public Order find(int orderId) {
+  public Order createOrder(int user, int customer, int car, OrderKind kind, OrderState state, String comment) {
+    return switch (kind) {
+      case SERVICE -> {
+        if (orders.findCarOrders(car).stream()
+                  .noneMatch(o -> o.type() == OrderKind.PURCHASE &&
+                                  o.state() == OrderState.DONE &&
+                                  o.customer().id() == customer)) { //Check if the user has bought the car.
+          throw customer == user ? new CarReservedException("Car " + car + " is not yours.")
+                                 : new CarReservedException("Customer " + customer + " does not own car " + car + ".");
+        }
+        var order = orders.create(time.now(), OrderKind.SERVICE, state, customer, car, comment);
+        events.onOrderCreated(user, order);
+        yield order;
+      }
+      case PURCHASE -> {
+        if (orders.findCarOrders(car).stream()
+                  .anyMatch(o -> o.type() == OrderKind.PURCHASE &&
+                                 o.state() != OrderState.CANCELLED)) {
+          throw new CarReservedException("Car " + car + " is not available for purchase.");
+        }
+        var order = orders.create(time.now(), OrderKind.PURCHASE, OrderState.NEW, user, car, comment);
+        events.onOrderCreated(user, order);
+        yield order;
+      }
+    };
+  }
+
+  public Order findById(int orderId) {
     return orders.findById(orderId);
   }
 

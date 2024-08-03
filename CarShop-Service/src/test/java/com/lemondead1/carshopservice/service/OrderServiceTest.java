@@ -64,7 +64,7 @@ public class OrderServiceTest {
     var now = Instant.now();
     when(time.now()).thenReturn(now);
 
-    orderService.createPurchaseOrder(1, 1, "None");
+    orderService.purchase(1, 1, "None");
     assertThat(orders.findById(1)).isEqualTo(new Order(1, now, OrderKind.PURCHASE, OrderState.NEW, user, car, "None"));
     assertThat(events.listAll()).usingRecursiveFieldByFieldElementComparator()
                                 .containsExactly(new OrderEvent.Created(now, 1, 1, now, OrderKind.PURCHASE,
@@ -76,8 +76,8 @@ public class OrderServiceTest {
     var now = Instant.now();
     when(time.now()).thenReturn(now);
 
-    orderService.createPurchaseOrder(1, 1, "None");
-    assertThatThrownBy(() -> orderService.createPurchaseOrder(2, 1, "None")).isInstanceOf(CarReservedException.class);
+    orderService.purchase(1, 1, "None");
+    assertThatThrownBy(() -> orderService.purchase(2, 1, "None")).isInstanceOf(CarReservedException.class);
   }
 
   @Test
@@ -86,7 +86,7 @@ public class OrderServiceTest {
     when(time.now()).thenReturn(now);
 
     orders.create(now, OrderKind.PURCHASE, OrderState.DONE, 1, 1, "");
-    orderService.createServiceOrder(1, 1, "None");
+    orderService.orderService(1, 1, "None");
     assertThat(orders.findById(2)).isEqualTo(new Order(2, now, OrderKind.SERVICE, OrderState.NEW, user, car, "None"));
     assertThat(events.listAll()).usingRecursiveFieldByFieldElementComparator()
                                 .contains(new OrderEvent.Created(now, 1, 2, now, OrderKind.SERVICE,
@@ -95,7 +95,7 @@ public class OrderServiceTest {
 
   @Test
   void createServiceOrderThrowsCarReservedExceptionWhenNoPurchaseWasPerformed() {
-    assertThatThrownBy(() -> orderService.createServiceOrder(1, 1, "None")).isInstanceOf(CarReservedException.class);
+    assertThatThrownBy(() -> orderService.orderService(1, 1, "None")).isInstanceOf(CarReservedException.class);
   }
 
   @Test

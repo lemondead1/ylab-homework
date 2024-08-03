@@ -37,12 +37,12 @@ public class CarShopServiceApplication {
     var carService = new CarService(carRepo, orderRepo, eventService);
     var sessionService = new SessionService(userService);
 
-    var cli = new ConsoleIO(System.console(), System.out);
+    var cli = new ConsoleIO(System.console());
     var commandBuilder = new CommandRootBuilder();
     new LoginController(userService).registerEndpoints(commandBuilder);
-    new HomeController().registerEndpoints(commandBuilder);
+    new HomeController(() -> exited = true).registerEndpoints(commandBuilder);
     new CarController(carService).registerEndpoints(commandBuilder);
-    new OrderController(orderService).registerEndpoints(commandBuilder);
+    new OrderController(orderService, carService, userService).registerEndpoints(commandBuilder);
     new UserController(userService).registerEndpoints(commandBuilder);
     new EventController(eventService).registerEndpoints(commandBuilder);
 

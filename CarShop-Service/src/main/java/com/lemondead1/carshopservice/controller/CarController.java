@@ -5,7 +5,7 @@ import com.lemondead1.carshopservice.cli.command.builders.TreeCommandBuilder;
 import com.lemondead1.carshopservice.cli.parsing.*;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
-import com.lemondead1.carshopservice.exceptions.CommandException;
+import com.lemondead1.carshopservice.exceptions.WrongUsageException;
 import com.lemondead1.carshopservice.service.CarService;
 import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.util.IntRange;
@@ -51,8 +51,8 @@ public class CarController implements Controller {
     var productionYear = cli.parse("Production year > ", IntParser.INSTANCE);
     var price = cli.parse("Price > ", IntParser.INSTANCE);
     var condition = cli.parse("Condition > ", StringParser.INSTANCE);
-    var id = cars.createCar(session.getCurrentUserId(), brand, model, productionYear, price, condition);
-    return "Created a car with id " + id + ".";
+    var car = cars.createCar(session.getCurrentUserId(), brand, model, productionYear, price, condition);
+    return "Created " + car.prettyFormat();
   }
 
   String listCars(SessionService session, ConsoleIO cli, String... path) {
@@ -73,7 +73,7 @@ public class CarController implements Controller {
 
   String editCar(SessionService session, ConsoleIO cli, String... path) {
     if (path.length == 0) {
-      throw new CommandException("Usage: car edit <id>");
+      throw new WrongUsageException();
     }
     int id = IntParser.INSTANCE.parse(path[0]);
     var car = cars.findById(id);
@@ -83,18 +83,17 @@ public class CarController implements Controller {
                       .orElse(null);
     var newPrice = cli.parseOptional("Price (" + car.price() + ") > ", IntParser.INSTANCE).orElse(null);
     var newCondition = cli.parseOptional("Condition (" + car.condition() + ") > ", StringParser.INSTANCE).orElse(null);
-    cars.editCar(session.getCurrentUserId(), id, newBrand, newModel, prodYear, newPrice, newCondition);
-    return "Saved changes to the car '" + id + "'";
+    car = cars.editCar(session.getCurrentUserId(), id, newBrand, newModel, prodYear, newPrice, newCondition);
+    return "Saved changes to " + car.prettyFormat();
   }
 
   String deleteCar(SessionService session, ConsoleIO cli, String... path) {
     if (path.length == 0) {
-      throw new CommandException("Usage: car delete <id>");
+      throw new WrongUsageException();
     }
     int id = IntParser.INSTANCE.parse(path[0]);
     var car = cars.findById(id);
-    cli.printf("Deleting car: Brand=%s, Model=%s, Prod. year=%s, Price=%s, Condition=%s.",
-               car.brand(), car.model(), car.productionYear(), car.price(), car.price(), car.condition());
+    cli.printf("Deleting %s", car.prettyFormat());
     if (!cli.parseOptional("Confirm [y/N] > ", BooleanParser.DEFAULT_TO_FALSE).orElse(false)) {
       return "Cancelled";
     }

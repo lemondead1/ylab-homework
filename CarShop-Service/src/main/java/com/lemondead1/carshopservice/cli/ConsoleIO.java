@@ -7,38 +7,22 @@ import com.lemondead1.carshopservice.exceptions.ValidationException;
 import lombok.RequiredArgsConstructor;
 
 import java.io.Console;
-import java.io.IOException;
 import java.util.Optional;
 
 @RequiredArgsConstructor
 public class ConsoleIO {
-  private final Console scanner;
-  private final Appendable out;
+  private final Console io;
 
-  public void println(String line) {
-    try {
-      out.append(line);
-      out.append("\n");
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  public final void println(String line) {
+    printf(line + "\n");
   }
 
   public void printf(String pattern, Object... args) {
-    try {
-      out.append(String.format(pattern, args));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    io.printf(pattern, args);
   }
 
   public String readInteractive(String message) {
-    try {
-      out.append(message);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    return scanner.readLine();
+    return io.readLine(message);
   }
 
   @SafeVarargs

@@ -11,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.Console;
-import java.io.IOException;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,9 +25,6 @@ public class ConsoleIOTest {
   Console console;
 
   @Mock
-  Appendable out;
-
-  @Mock
   Parser<Object> parser;
 
   @Mock
@@ -38,40 +34,40 @@ public class ConsoleIOTest {
   ConsoleIO cli;
 
   @Test
-  void printlnCallsPrintln() throws IOException {
+  void printlnCallsPrintln() {
     cli.println("testString");
 
     var captor = ArgumentCaptor.forClass(String.class);
-    verify(out, atLeastOnce()).append(captor.capture());
+    verify(console, atLeastOnce()).printf(captor.capture());
     assertThat(String.join("", captor.getAllValues())).isEqualTo("testString\n");
   }
 
   @Test
-  void printfCallsPrintf() throws IOException {
+  void printfCallsPrintf() {
     var args = new Object[] { "Hello" };
     cli.printf("%s world", args);
-    verify(out).append("Hello world");
+    verify(console).printf("%s world", "Hello");
   }
 
   @Test
-  void readInteractiveCallsPrintlnAndReadsLine() throws IOException {
-    when(console.readLine()).thenReturn("testString");
+  void readInteractiveCallsPrintlnAndReadsLine() {
+    when(console.readLine("Message")).thenReturn("testString");
     assertThat(cli.readInteractive("Message")).isEqualTo("testString");
-    verify(out).append("Message");
+    verify(console).readLine("Message");
   }
 
   @Test
   void parseRetriesAfterEmptyString() {
-    when(console.readLine()).thenReturn("", "", "testString");
+    when(console.readLine("Message")).thenReturn("", "", "testString");
     when(parser.parse("testString")).thenReturn(o1);
     assertThat(cli.parse("Message", parser)).isEqualTo(o1);
-    verify(console, times(3)).readLine();
+    verify(console, times(3)).readLine("Message");
     verify(parser).parse("testString");
   }
 
   @Test
   void parseRetriesAfterException() {
-    when(console.readLine()).thenReturn("1", "2", "3");
+    when(console.readLine("Message")).thenReturn("1", "2", "3");
 
     when(parser.parse("1")).thenThrow(new ParsingException());
     when(parser.parse("2")).thenReturn(o1);
@@ -85,14 +81,14 @@ public class ConsoleIOTest {
 
   @Test
   void parseOptionalStopsOnEmptyString() {
-    when(console.readLine()).thenReturn("");
+    when(console.readLine("Message")).thenReturn("");
     assertThat(cli.parseOptional("Message", parser)).isEqualTo(Optional.empty());
-    verify(console, times(1)).readLine();
+    verify(console, times(1)).readLine("Message");
   }
 
   @Test
   void parseOptionalRetriesAfterException() {
-    when(console.readLine()).thenReturn("1", "2", "3");
+    when(console.readLine("Message")).thenReturn("1", "2", "3");
 
     when(parser.parse("1")).thenThrow(new ParsingException());
     when(parser.parse("2")).thenReturn(o1);

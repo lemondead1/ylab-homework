@@ -41,7 +41,7 @@ public class EventController implements Controller {
     var username = cli.parseOptional("User > ", StringParser.INSTANCE).orElse("");
     var sorting = cli.parseOptional("Sorting > ", IdParser.of(EventSorting.class)).orElse(EventSorting.TIMESTAMP_DESC);
     var list = events.findEvents(types, dateRange, username, sorting);
-    return list.stream().map(Event::serialize).collect(Collectors.joining("\n")) + "\nTotal rows: " + list.size();
+    return list.stream().map(Event::serialize).collect(Collectors.joining("\n")) + "\nRow count: " + list.size();
   }
 
   String dump(SessionService session, ConsoleIO cli, String... path) {
