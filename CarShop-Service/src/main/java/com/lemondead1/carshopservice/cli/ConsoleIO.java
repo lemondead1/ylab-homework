@@ -8,9 +8,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.io.Console;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 @RequiredArgsConstructor
 public class ConsoleIO {

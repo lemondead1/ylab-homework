@@ -3,7 +3,10 @@ package com.lemondead1.carshopservice.cli.command;
 import com.lemondead1.carshopservice.cli.ConsoleIO;
 import com.lemondead1.carshopservice.service.SessionService;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class CommandTreeRoot {
   private final Map<String, Command> subcommands = new LinkedHashMap<>();

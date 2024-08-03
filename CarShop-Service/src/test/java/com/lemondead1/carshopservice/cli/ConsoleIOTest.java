@@ -3,7 +3,6 @@ package com.lemondead1.carshopservice.cli;
 import com.lemondead1.carshopservice.cli.parsing.Parser;
 import com.lemondead1.carshopservice.cli.validation.Validator;
 import com.lemondead1.carshopservice.exceptions.ParsingException;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -11,14 +10,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.mockito.Mockito.*;
-import static org.assertj.core.api.Assertions.*;
-
 import java.io.Console;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.Optional;
-import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ConsoleIOTest {

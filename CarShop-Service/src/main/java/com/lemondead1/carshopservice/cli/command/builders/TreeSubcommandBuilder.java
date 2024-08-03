@@ -5,7 +5,6 @@ import com.lemondead1.carshopservice.cli.command.CommandTree;
 import com.lemondead1.carshopservice.cli.command.Endpoint;
 import com.lemondead1.carshopservice.enums.UserRole;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 

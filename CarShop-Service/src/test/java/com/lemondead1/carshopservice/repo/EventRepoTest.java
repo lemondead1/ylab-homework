@@ -2,8 +2,6 @@ package com.lemondead1.carshopservice.repo;
 
 import org.junit.jupiter.api.BeforeEach;
 
-import java.time.Instant;
-
 public class EventRepoTest {
   CarRepo cars;
   UserRepo users;

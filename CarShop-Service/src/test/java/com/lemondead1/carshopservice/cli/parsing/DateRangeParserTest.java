@@ -8,7 +8,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.time.Instant;
 import java.time.ZoneId;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class DateRangeParserTest {
   private final DateRangeParser parser = new DateRangeParser(() -> ZoneId.of("UTC"));

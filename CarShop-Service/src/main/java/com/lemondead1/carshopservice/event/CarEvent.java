@@ -2,7 +2,6 @@ package com.lemondead1.carshopservice.event;
 
 import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.util.JsonUtil;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import java.time.Instant;
