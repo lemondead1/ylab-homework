@@ -21,18 +21,19 @@ public class CarService {
     this.events = events;
   }
 
-  public int createCar(int user, String brand, String model, int productionYear, int price, String condition) {
+  public Car createCar(int user, String brand, String model, int productionYear, int price, String condition) {
     Car newCar = cars.create(brand, model, productionYear, price, condition);
     events.onCarCreated(user, newCar);
-    return newCar.id();
+    return newCar;
   }
 
-  public void editCar(int user, int carId, @Nullable String brand, @Nullable String model,
+  public Car editCar(int user, int carId, @Nullable String brand, @Nullable String model,
                       @Nullable Integer productionYear, @Nullable Integer price, @Nullable String condition) {
     var newCar = cars.edit(carId).brand(brand).model(model)
                      .productionYear(productionYear).price(price).condition(condition)
                      .apply();
     events.onCarEdited(user, newCar);
+    return newCar;
   }
 
   public void deleteCar(int user, int carId, boolean cascade) {
