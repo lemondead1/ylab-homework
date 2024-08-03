@@ -20,6 +20,10 @@ public class EventRepo {
     events.add(event);
   }
 
+  public List<Event> listAll() {
+    return Collections.unmodifiableList(events);
+  }
+
   private String findUsername(int user) {
     try {
       return users.findById(user).username();

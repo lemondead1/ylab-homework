@@ -122,7 +122,7 @@ public class OrderRepo {
 
   private Order hydrateOrder(OrderStore order) {
     return new Order(order.id, order.createdAt, order.kind, order.state,
-                     users.findById(order.id), cars.findById(order.carId), order.comments);
+                     users.findById(order.customerId), cars.findById(order.carId), order.comments);
   }
 
   public Order findById(int id) {

@@ -17,10 +17,12 @@ import java.util.List;
 public class OrderService {
   private final OrderRepo orders;
   private final EventService events;
+  private final TimeService time;
 
-  public OrderService(OrderRepo orders, EventService events) {
+  public OrderService(OrderRepo orders, EventService events, TimeService time) {
     this.orders = orders;
     this.events = events;
+    this.time = time;
   }
 
   public Car createPurchaseOrder(int user, int carId, String comments) {
@@ -29,19 +31,19 @@ public class OrderService {
                              o.state() != OrderState.CANCELLED)) {
       throw new CarReservedException("Car " + carId + " is not available for purchase.");
     }
-    var order = orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.NEW, user, carId, comments);
+    var order = orders.create(time.now(), OrderKind.PURCHASE, OrderState.NEW, user, carId, comments);
     events.onOrderCreated(user, order);
     return order.car();
   }
 
   public Car createServiceOrder(int user, int carId, String comments) {
     if (orders.findCarOrders(carId).stream()
-              .anyMatch(o -> o.type() == OrderKind.PURCHASE &&
-                             o.state() == OrderState.DONE &&
-                             o.customer().id() == user)) { //Check if the user has bought the car.
+              .noneMatch(o -> o.type() == OrderKind.PURCHASE &&
+                              o.state() == OrderState.DONE &&
+                              o.customer().id() == user)) { //Check if the user has bought the car.
       throw new CarReservedException("Car " + carId + " is not yours.");
     }
-    var order = orders.create(Instant.now(), OrderKind.SERVICE, OrderState.NEW, user, carId, comments);
+    var order = orders.create(time.now(), OrderKind.SERVICE, OrderState.NEW, user, carId, comments);
     events.onOrderCreated(user, order);
     return order.car();
   }

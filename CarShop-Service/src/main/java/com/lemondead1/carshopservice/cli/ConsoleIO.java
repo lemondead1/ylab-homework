@@ -7,6 +7,7 @@ import com.lemondead1.carshopservice.exceptions.ValidationException;
 import lombok.RequiredArgsConstructor;
 
 import java.io.Console;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -14,18 +15,31 @@ import java.util.function.Predicate;
 @RequiredArgsConstructor
 public class ConsoleIO {
   private final Console scanner;
-  private final PrintStream out;
+  private final Appendable out;
 
   public void println(String line) {
-    out.println(line);
+    try {
+      out.append(line);
+      out.append("\n");
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void printf(String pattern, Object... args) {
-    out.printf(pattern, args);
+    try {
+      out.append(String.format(pattern, args));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public String readInteractive(String message) {
-    out.print(message);
+    try {
+      out.append(message);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     return scanner.readLine();
   }
 

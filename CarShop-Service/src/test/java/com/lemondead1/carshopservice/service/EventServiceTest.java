@@ -87,10 +87,9 @@ public class EventServiceTest {
                                         new User(42, "Uname", "880055535", "test@example.com", "pwd", UserRole.CLIENT),
                                         new Car(64, "Brand", "Model", 1999, 4000000, "nice"),
                                         "No comment"));
-    assertThat(service.findEvents(EventType.ALL, DateRange.ALL, "", EventSorting.USERNAME_DESC))
-        .usingRecursiveFieldByFieldElementComparator()
-        .containsExactly(new OrderEvent.Created(now, 6, 10, Instant.EPOCH,
-                                                OrderKind.PURCHASE, OrderState.NEW, 42, 64, "No comment"));
+    assertThat(events.listAll()).usingRecursiveFieldByFieldElementComparator()
+                                .containsExactly(new OrderEvent.Created(now, 6, 10, Instant.EPOCH, OrderKind.PURCHASE,
+                                                                        OrderState.NEW, 42, 64, "No comment"));
 
   }
 
@@ -102,10 +101,9 @@ public class EventServiceTest {
                                        new User(39, "Uname", "88005553535", "test@example.com", "pwd", UserRole.CLIENT),
                                        new Car(82, "Brand", "Model", 1999, 4000000, "nice"),
                                        "Yes comment"));
-    assertThat(service.findEvents(EventType.ALL, DateRange.ALL, "", EventSorting.USERNAME_DESC))
-        .usingRecursiveFieldByFieldElementComparator()
-        .containsExactly(new OrderEvent.Modified(now, 6, 10, Instant.EPOCH,
-                                                 OrderKind.PURCHASE, OrderState.NEW, 39, 82, "Yes comment"));
+    assertThat(events.listAll()).usingRecursiveFieldByFieldElementComparator()
+                                .containsExactly(new OrderEvent.Modified(now, 6, 10, Instant.EPOCH, OrderKind.PURCHASE,
+                                                                         OrderState.NEW, 39, 82, "Yes comment"));
   }
 
   @Test
@@ -113,7 +111,7 @@ public class EventServiceTest {
     var now = Instant.now();
     when(time.now()).thenReturn(now);
     service.onOrderDeleted(53, 93);
-    assertThat(service.findEvents(EventType.ALL, DateRange.ALL, "", EventSorting.USERNAME_DESC))
+    assertThat(events.listAll())
         .usingRecursiveFieldByFieldElementComparator()
         .containsExactly(new OrderEvent.Deleted(now, 53, 93));
   }
@@ -123,9 +121,9 @@ public class EventServiceTest {
     var now = Instant.now();
     when(time.now()).thenReturn(now);
     service.onUserCreated(43, new User(71, "alex", "880055535", "test@example.com", "password", UserRole.CLIENT));
-    assertThat(service.findEvents(EventType.ALL, DateRange.ALL, "", EventSorting.TIMESTAMP_ASC))
-        .usingRecursiveFieldByFieldElementComparator()
-        .containsExactly(new UserEvent.Created(now, 43, 71, "alex", "880055535", "test@example.com", UserRole.CLIENT));
+    assertThat(events.listAll()).usingRecursiveFieldByFieldElementComparator()
+                                .containsExactly(new UserEvent.Created(now, 43, 71, "alex", "880055535",
+                                                                       "test@example.com", UserRole.CLIENT));
   }
 
   @Test

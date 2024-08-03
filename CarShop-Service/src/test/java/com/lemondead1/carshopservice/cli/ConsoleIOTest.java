@@ -3,8 +3,10 @@ package com.lemondead1.carshopservice.cli;
 import com.lemondead1.carshopservice.cli.parsing.Parser;
 import com.lemondead1.carshopservice.cli.validation.Validator;
 import com.lemondead1.carshopservice.exceptions.ParsingException;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -13,8 +15,10 @@ import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.Console;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @ExtendWith(MockitoExtension.class)
 public class ConsoleIOTest {
@@ -25,7 +29,7 @@ public class ConsoleIOTest {
   Console console;
 
   @Mock
-  PrintStream out;
+  Appendable out;
 
   @Mock
   Parser<Object> parser;
@@ -37,23 +41,26 @@ public class ConsoleIOTest {
   ConsoleIO cli;
 
   @Test
-  void printlnCallsPrintln() {
+  void printlnCallsPrintln() throws IOException {
     cli.println("testString");
-    verify(out).println("testString");
+
+    var captor = ArgumentCaptor.forClass(String.class);
+    verify(out, atLeastOnce()).append(captor.capture());
+    assertThat(String.join("", captor.getAllValues())).isEqualTo("testString\n");
   }
 
   @Test
-  void printfCallsPrintf() {
+  void printfCallsPrintf() throws IOException {
     var args = new Object[] { "Hello" };
     cli.printf("%s world", args);
-    verify(out).printf("%s world", args);
+    verify(out).append("Hello world");
   }
 
   @Test
-  void readInteractiveCallsPrintlnAndReadsLine() {
+  void readInteractiveCallsPrintlnAndReadsLine() throws IOException {
     when(console.readLine()).thenReturn("testString");
     assertThat(cli.readInteractive("Message")).isEqualTo("testString");
-    verify(out).print("Message");
+    verify(out).append("Message");
   }
 
   @Test

@@ -39,7 +39,7 @@ public class LoginController implements Controller {
       }
     });
     String phoneNumber = cli.parse("Phone number > ", StringParser.INSTANCE, PatternValidator.PHONE_NUMBER);
-    String email = cli.parse("Phone number > ", StringParser.INSTANCE, PatternValidator.EMAIL);
+    String email = cli.parse("Email > ", StringParser.INSTANCE, PatternValidator.EMAIL);
     String password = cli.parse("Password > ", StringParser.INSTANCE, PatternValidator.PASSWORD);
     users.signUserUp(username, phoneNumber, email, password);
     return "Signed up successfully!";
