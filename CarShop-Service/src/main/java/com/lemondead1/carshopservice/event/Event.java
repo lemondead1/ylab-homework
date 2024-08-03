@@ -1,12 +1,14 @@
 package com.lemondead1.carshopservice.event;
 
 import com.lemondead1.carshopservice.enums.EventType;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import java.time.Instant;
 import java.util.Objects;
 
 @Getter
+@EqualsAndHashCode
 public abstract class Event {
   private final Instant timestamp;
   private final int userId;

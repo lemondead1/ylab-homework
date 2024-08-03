@@ -24,32 +24,30 @@ public class OrderService {
   }
 
   public Car createPurchaseOrder(int user, int carId, String comments) {
-    if (orders.getCarOrders(carId).stream()
+    if (orders.findCarOrders(carId).stream()
               .anyMatch(o -> o.type() == OrderKind.PURCHASE &&
                              o.state() != OrderState.CANCELLED)) {
       throw new CarReservedException("Car " + carId + " is not available for purchase.");
     }
     var order = orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.NEW, user, carId, comments);
-    events.onOrderCreated(user, order.id(), order.createdAt(), order.type(), order.state(), order.id(), carId,
-                          comments);
+    events.onOrderCreated(user, order);
     return order.car();
   }
 
   public Car createServiceOrder(int user, int carId, String comments) {
-    if (orders.getCarOrders(carId).stream()
+    if (orders.findCarOrders(carId).stream()
               .anyMatch(o -> o.type() == OrderKind.PURCHASE &&
                              o.state() == OrderState.DONE &&
                              o.customer().id() == user)) { //Check if the user has bought the car.
       throw new CarReservedException("Car " + carId + " is not yours.");
     }
     var order = orders.create(Instant.now(), OrderKind.SERVICE, OrderState.NEW, user, carId, comments);
-    events.onOrderCreated(user, order.id(), order.createdAt(), order.type(), order.state(), order.id(), carId,
-                          comments);
+    events.onOrderCreated(user, order);
     return order.car();
   }
 
   public Order find(int orderId) {
-    return orders.lookup(orderId);
+    return orders.findById(orderId);
   }
 
   public void deleteOrder(int deleterId, int orderId) {
@@ -58,7 +56,7 @@ public class OrderService {
   }
 
   public Order cancel(int userId, int orderId) {
-    var order = orders.lookup(orderId);
+    var order = orders.findById(orderId);
     switch (order.state()) {
       case CANCELLED -> throw new CommandException("This order has already been cancelled.");
       case DONE -> throw new CommandException("You cannot cancel finished orders.");
@@ -69,13 +67,13 @@ public class OrderService {
   }
 
   public void updateState(int userId, int orderId, OrderState newState, String appendComment) {
-    var order = orders.lookup(orderId);
+    var order = orders.findById(orderId);
     var newRow = orders.edit(orderId).state(newState).comments(order.comments() + appendComment).apply();
     events.onOrderEdited(userId, newRow);
   }
 
   public List<Order> findMyOrders(int user, OrderSorting sorting) {
-    return orders.getCustomerOrders(user, sorting);
+    return orders.findCustomerOrders(user, sorting);
   }
 
   public List<Order> findAllOrders(String username, String carBrand, String carModel, Collection<OrderState> states,

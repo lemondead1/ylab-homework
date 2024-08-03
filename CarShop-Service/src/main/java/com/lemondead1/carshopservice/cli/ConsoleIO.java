@@ -4,47 +4,29 @@ import com.lemondead1.carshopservice.cli.parsing.Parser;
 import com.lemondead1.carshopservice.cli.validation.Validator;
 import com.lemondead1.carshopservice.exceptions.ParsingException;
 import com.lemondead1.carshopservice.exceptions.ValidationException;
+import lombok.RequiredArgsConstructor;
 
 import java.io.Console;
+import java.io.PrintStream;
 import java.util.Optional;
-import java.util.function.Function;
+import java.util.function.Predicate;
 
+@RequiredArgsConstructor
 public class ConsoleIO {
-  private final Console scanner = System.console();
-
-  {
-    if (scanner == null) {
-      throw new IllegalStateException("No console was found.");
-    }
-  }
+  private final Console scanner;
+  private final PrintStream out;
 
   public void println(String line) {
-    System.out.println(line);
-  }
-
-  public void print(String string) {
-    System.out.print(string);
+    out.println(line);
   }
 
   public void printf(String pattern, Object... args) {
-    System.out.printf(pattern, args);
+    out.printf(pattern, args);
   }
 
   public String readInteractive(String message) {
-    System.out.print(message);
+    out.print(message);
     return scanner.readLine();
-  }
-
-  public String readWhile(String message, Function<String, Optional<String>> feedback) {
-    while (true) {
-      var read = readInteractive(message);
-      var fb = feedback.apply(read);
-      if (fb.isEmpty()) {
-        return read;
-      } else {
-        println(fb.get());
-      }
-    }
   }
 
   @SafeVarargs

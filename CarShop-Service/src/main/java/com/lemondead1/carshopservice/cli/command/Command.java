@@ -11,7 +11,7 @@ public interface Command {
 
   String getDescription();
 
-  Collection<UserRole> allowedRoles();
+  Collection<UserRole> getAllowedRoles();
 
   void execute(SessionService currentUser, ConsoleIO cli, String... path);
 }

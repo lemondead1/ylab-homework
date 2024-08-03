@@ -3,20 +3,21 @@ package com.lemondead1.carshopservice.cli.command;
 import com.lemondead1.carshopservice.cli.ConsoleIO;
 import com.lemondead1.carshopservice.service.SessionService;
 
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 
 public class CommandTreeRoot {
-  private final Map<String, Command> subcommands;
+  private final Map<String, Command> subcommands = new LinkedHashMap<>();
 
-  public CommandTreeRoot(Map<String, Command> subcommands) {
-    this.subcommands = subcommands;
+  public CommandTreeRoot(Collection<Command> subcommands) {
+    for (var command : subcommands) {
+      this.subcommands.put(command.getName(), command);
+    }
   }
 
   private void printHelp(SessionService session, ConsoleIO cli) {
     cli.println("Subcommands:");
     for (var subcommand : subcommands.values()) {
-      if (subcommand.allowedRoles().contains(session.getCurrentUserRole())) {
+      if (subcommand.getAllowedRoles().contains(session.getCurrentUserRole())) {
         cli.println("  " + subcommand.getName() + ": " + subcommand.getDescription());
       }
     }
@@ -40,10 +41,6 @@ public class CommandTreeRoot {
       return;
     }
 
-    if (subcommand.allowedRoles().contains(currentUser.getCurrentUserRole())) {
-      subcommand.execute(currentUser, cli, Arrays.copyOfRange(path, 1, path.length));
-    } else {
-      cli.println("Insufficient permissions.");
-    }
+    subcommand.execute(currentUser, cli, Arrays.copyOfRange(path, 1, path.length));
   }
 }

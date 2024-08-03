@@ -2,7 +2,13 @@ package com.lemondead1.carshopservice.repo;
 
 import com.lemondead1.carshopservice.IntRangeConverter;
 import com.lemondead1.carshopservice.dto.Car;
+import com.lemondead1.carshopservice.dto.User;
 import com.lemondead1.carshopservice.enums.CarSorting;
+import com.lemondead1.carshopservice.enums.OrderKind;
+import com.lemondead1.carshopservice.enums.OrderState;
+import com.lemondead1.carshopservice.enums.UserRole;
+import com.lemondead1.carshopservice.exceptions.ForeignKeyException;
+import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.service.LoggerService;
 import com.lemondead1.carshopservice.util.IntRange;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,16 +19,18 @@ import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class CarRepoTest {
-  private CarRepo cars;
-  private UserRepo users;
-  private OrderRepo orders;
+  CarRepo cars;
+  UserRepo users;
+  OrderRepo orders;
 
   @BeforeEach
   void beforeEach() {
@@ -33,6 +41,47 @@ public class CarRepoTest {
     users.setOrders(orders);
     orders.setCars(cars);
     orders.setUsers(users);
+  }
+
+  @Test
+  void firstCreatedCarHasIdEqualToOne() {
+    assertThat(cars.create("BMW", "X5", 2015, 3000000, "good").id()).isEqualTo(1);
+    assertThat(cars.findById(1).id()).isEqualTo(1);
+  }
+
+  @Test
+  void createdCarMatchesSpec() {
+    assertThat(cars.create("BMW", "X5", 2015, 3000000, "good").id()).isEqualTo(1);
+    assertThat(cars.create("Lamborghini", "Diablo", 2017, 6000000, "fair").id()).isEqualTo(2);
+    assertThat(cars.findById(2)).isEqualTo(new Car(2, "Lamborghini", "Diablo", 2017, 6000000, "fair"));
+  }
+
+  @Test
+  void editedCarMatchesSpec() {
+    cars.create("BMW", "X5", 2015, 3000000, "good");
+    cars.edit(1).price(4000000).condition("mint").apply();
+    assertThat(cars.findById(1)).isEqualTo(new Car(1, "BMW", "X5", 2015, 4000000, "mint"));
+  }
+
+  @Test
+  void editNonExistingCarThrows() {
+    var builder = cars.edit(1).price(3000000);
+    assertThatThrownBy(builder::apply).isInstanceOf(RowNotFoundException.class);
+  }
+
+  @Test
+  void deleteTest() {
+    var created = cars.create("BMW", "X5", 2015, 3000000, "good");
+    assertThat(cars.delete(1)).isEqualTo(created);
+    assertThatThrownBy(() -> cars.findById(1)).isInstanceOf(RowNotFoundException.class);
+  }
+
+  @Test
+  void deletingCarWithExistingOrdersThrows() {
+    cars.create("BMW", "X5", 2015, 3000000, "good");
+    users.create("alex", "pwd", UserRole.CLIENT);
+    orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.NEW, 1, 1, "ASAP");
+    assertThatThrownBy(() -> cars.delete(1)).isInstanceOf(ForeignKeyException.class);
   }
 
   @Nested
@@ -63,7 +112,8 @@ public class CarRepoTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "NAME_ASC", "NAME_DESC", "PRODUCTION_YEAR_ASC", "PRODUCTION_YEAR_DESC", "PRICE_ASC", "PRICE_DESC" })
+    @ValueSource(
+        strings = { "NAME_ASC", "NAME_DESC", "PRODUCTION_YEAR_ASC", "PRODUCTION_YEAR_DESC", "PRICE_ASC", "PRICE_DESC" })
     void sortingTest(CarSorting sorting) {
       assertThat(cars.lookup("", "", IntRange.ALL, IntRange.ALL, "", sorting))
           .isSortedAccordingTo(sorting.getSorter())

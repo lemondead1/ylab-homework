@@ -38,11 +38,11 @@ public class CarService {
   public void deleteCar(int user, int carId, boolean cascade) {
     if (orders.existCarOrders(carId)) {
       if (cascade) {
-        for (var order : orders.getCarOrders(carId)) {
+        for (var order : orders.findCarOrders(carId)) {
           orders.delete(order.id());
         }
       } else {
-        throw new CascadingException(orders.getCarOrders(carId).size() + " order(s) reference this car.");
+        throw new CascadingException(orders.findCarOrders(carId).size() + " order(s) reference this car.");
       }
     }
     cars.delete(carId);

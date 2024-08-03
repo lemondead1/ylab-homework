@@ -6,23 +6,21 @@ import com.lemondead1.carshopservice.cli.command.Endpoint;
 import com.lemondead1.carshopservice.enums.UserRole;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class TreeSubcommandBuilder<PARENT> extends SubcommandBuilder<TreeSubcommandBuilder<PARENT>, PARENT>
     implements TreeCommandBuilder<TreeSubcommandBuilder<PARENT>> {
-  private final Map<String, SubcommandBuilder<?, ?>> subcommands = new HashMap<>();
+  private final Map<String, SubcommandBuilder<?, ?>> subcommands = new LinkedHashMap<>();
 
-  TreeSubcommandBuilder(PARENT parent, String name) {
+  public TreeSubcommandBuilder(PARENT parent, String name) {
     super(parent, name);
   }
 
   @Override
   Command build() {
-    Map<String, Command> subcommands = new HashMap<>();
-    for (var subcommand : this.subcommands.values()) {
-      subcommands.put(subcommand.name, subcommand.build());
-    }
-    return new CommandTree(subcommands, name, description, allowedRoles);
+    return new CommandTree(subcommands.values().stream().map(SubcommandBuilder::build).toList(), name, description,
+                           allowedRoles);
   }
 
   static <SELF extends TreeCommandBuilder<SELF>> TreeSubcommandBuilder<SELF> pushImpl(

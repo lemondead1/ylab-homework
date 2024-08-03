@@ -1,9 +1,12 @@
 package com.lemondead1.carshopservice.repo;
 
+import com.lemondead1.carshopservice.dto.Car;
 import com.lemondead1.carshopservice.dto.Order;
+import com.lemondead1.carshopservice.dto.User;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;
+import com.lemondead1.carshopservice.exceptions.ForeignKeyException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.service.LoggerService;
 import com.lemondead1.carshopservice.util.StringUtil;
@@ -33,9 +36,25 @@ public class OrderRepo {
   private final Map<Integer, Set<OrderStore>> carOrders = new HashMap<>();
   private int lastId = 0;
 
+  private User findUser(int userId) {
+    try {
+      return users.findById(userId);
+    } catch (RowNotFoundException e) {
+      throw new ForeignKeyException(e.getMessage(), e);
+    }
+  }
+
+  private Car findCar(int carId) {
+    try {
+      return cars.findById(carId);
+    } catch (RowNotFoundException e) {
+      throw new ForeignKeyException(e.getMessage(), e);
+    }
+  }
+
   public Order create(Instant createdAt, OrderKind kind, OrderState state, int customerId, int carId, String comments) {
-    var user = users.findById(customerId);
-    var car = cars.findById(carId);
+    var user = findUser(customerId);
+    var car = findCar(carId);
     lastId++;
     var newRow = new OrderStore(lastId, createdAt, kind, state, customerId, carId, comments);
     map.put(lastId, newRow);
@@ -55,8 +74,8 @@ public class OrderRepo {
                           @Nullable Integer customerId,
                           @Nullable Integer carId,
                           @Nullable String comments) {
-    var newCustomer = customerId == null ? null : users.findById(customerId);
-    var newCar = carId == null ? null : cars.findById(carId);
+    var newCustomer = customerId == null ? null : findUser(customerId);
+    var newCar = carId == null ? null : findCar(carId);
 
     var old = delete(id);
     newCustomer = customerId == null ? old.customer() : newCustomer;
@@ -108,7 +127,7 @@ public class OrderRepo {
                      users.findById(order.id), cars.findById(order.carId), order.comments);
   }
 
-  public Order lookup(int id) {
+  public Order findById(int id) {
     var order = map.get(id);
     if (order == null) {
       throw new RowNotFoundException("Order " + id + " not found.");
@@ -131,7 +150,7 @@ public class OrderRepo {
    * @param customerId id of a customer
    * @return List of orders done by that customer
    */
-  public List<Order> getCustomerOrders(int customerId, OrderSorting sorting) {
+  public List<Order> findCustomerOrders(int customerId, OrderSorting sorting) {
     return customerOrders.getOrDefault(customerId, Set.of())
                          .stream()
                          .map(this::hydrateOrder)
@@ -155,7 +174,7 @@ public class OrderRepo {
               .toList();
   }
 
-  public List<Order> getCarOrders(int carId) {
+  public List<Order> findCarOrders(int carId) {
     return carOrders.getOrDefault(carId,Set.of()).stream().map(this::hydrateOrder).toList();
   }
 }

@@ -25,15 +25,26 @@ public class IdListParser<T extends HasId> implements Parser<List<T>> {
 
   @Override
   public List<T> parse(String string) {
+    if (string.isBlank()) {
+      return List.of();
+    }
+
     List<T> result = new ArrayList<>();
 
-    for (var id : string.split("[ ,] *")) {
-      if (!map.containsKey(id.toLowerCase())) {
+    var split = string.split("( +)|( *, *)");
+
+    if (split.length == 0) {
+      throw new ParsingException("Invalid list '" + string + "'.");
+    }
+
+    for (var id : split) {
+      var prepared = id.toLowerCase().strip();
+      if (!map.containsKey(prepared)) {
         var valuesString = map.keySet().stream().map(k -> "'" + k + "'")
                               .collect(Collectors.joining(", "));
         throw new ParsingException("Invalid value '" + id + "'. Valid values: " + valuesString + ".");
       }
-      result.add(map.get(id.toLowerCase()));
+      result.add(map.get(prepared));
     }
 
     return result;

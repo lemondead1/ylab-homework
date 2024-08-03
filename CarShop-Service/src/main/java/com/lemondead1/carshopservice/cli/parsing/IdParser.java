@@ -28,11 +28,12 @@ public class IdParser<T extends HasId> implements Parser<T> {
 
   @Override
   public T parse(String string) {
-    if (!map.containsKey(string.toLowerCase())) {
+    var prepared = string.toLowerCase().strip();
+    if (!map.containsKey(prepared)) {
       var valuesString = map.keySet().stream().map(k -> "'" + k + "'")
                             .collect(Collectors.joining(", "));
       throw new ParsingException("Invalid value '" + string + "'. Valid values: " + valuesString  + ".");
     }
-    return map.get(string.toLowerCase());
+    return map.get(prepared);
   }
 }

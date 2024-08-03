@@ -40,7 +40,7 @@ public class CarShopServiceApplication {
     var carService = new CarService(carRepo, orderRepo, eventService);
     var sessionService = new SessionService(userService);
 
-    var cli = new ConsoleIO();
+    var cli = new ConsoleIO(System.console(), System.out);
     var commandBuilder = new CommandRootBuilder();
     new LoginController(userService).registerEndpoints(commandBuilder);
     new HomeController().registerEndpoints(commandBuilder);

@@ -2,6 +2,7 @@ package com.lemondead1.carshopservice.event;
 
 import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.util.JsonUtil;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import java.time.Instant;
@@ -27,9 +28,6 @@ public abstract class CarEvent extends Event {
     public Created(Instant timestamp, int userId, int carId, String brand, String model, int productionYear, int price,
                    String condition) {
       super(timestamp, userId, carId);
-      Objects.requireNonNull(brand);
-      Objects.requireNonNull(model);
-      Objects.requireNonNull(condition);
       this.brand = brand;
       this.model = model;
       this.productionYear = productionYear;
@@ -101,8 +99,8 @@ public abstract class CarEvent extends Event {
     @Override
     public String serialize() {
       String pattern = """
-          {"timestamp": "%s", "type": "%s", "user_id": %d}""";
-      return String.format(pattern, getTimestamp(), getType().getId(), getUserId());
+          {"timestamp": "%s", "type": "%s", "user_id": %d, "car_id": %d}""";
+      return String.format(pattern, getTimestamp(), getType().getId(), getUserId(), getCarId());
     }
   }
 }

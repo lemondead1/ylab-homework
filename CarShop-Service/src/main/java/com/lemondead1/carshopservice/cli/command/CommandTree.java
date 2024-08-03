@@ -4,19 +4,18 @@ import com.lemondead1.carshopservice.cli.ConsoleIO;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.service.SessionService;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class CommandTree implements Command {
-  private final Map<String, Command> subcommands;
+  private final Map<String, Command> subcommands = new LinkedHashMap<>();
   private final String name;
   private final String description;
   private final Set<UserRole> allowedRoles;
 
-  public CommandTree(Map<String, Command> subcommands, String name, String description, Set<UserRole> allowedRoles) {
-    this.subcommands = subcommands;
+  public CommandTree(Collection<Command> subcommands, String name, String description, Set<UserRole> allowedRoles) {
+    for (var subcommand : subcommands) {
+      this.subcommands.put(subcommand.getName(), subcommand);
+    }
     this.name = name;
     this.description = description;
     this.allowedRoles = allowedRoles;
@@ -33,17 +32,15 @@ public class CommandTree implements Command {
   }
 
   @Override
-  public Collection<UserRole> allowedRoles() {
+  public Collection<UserRole> getAllowedRoles() {
     return allowedRoles;
   }
 
   private void printHelp(SessionService session, ConsoleIO cli) {
-    if (description != null) {
-      cli.println(description);
-    }
+    cli.println(description);
     cli.println("Subcommands:");
     for (var subcommand : subcommands.values()) {
-      if (subcommand.allowedRoles().contains(session.getCurrentUserRole())) {
+      if (subcommand.getAllowedRoles().contains(session.getCurrentUserRole())) {
         cli.println("  " + subcommand.getName() + ": " + subcommand.getDescription());
       }
     }
@@ -51,6 +48,11 @@ public class CommandTree implements Command {
 
   @Override
   public void execute(SessionService currentUser, ConsoleIO cli, String... path) {
+    if (!getAllowedRoles().contains(currentUser.getCurrentUserRole())) {
+      cli.println("Insufficient permissions.");
+      return;
+    }
+
     if (path.length == 0) {
       printHelp(currentUser, cli);
       return;
@@ -68,10 +70,6 @@ public class CommandTree implements Command {
       return;
     }
 
-    if (subcommand.allowedRoles().contains(currentUser.getCurrentUserRole())) {
-      subcommand.execute(currentUser, cli, Arrays.copyOfRange(path, 1, path.length));
-    } else {
-      cli.println("Insufficient permissions.");
-    }
+    subcommand.execute(currentUser, cli, Arrays.copyOfRange(path, 1, path.length));
   }
 }

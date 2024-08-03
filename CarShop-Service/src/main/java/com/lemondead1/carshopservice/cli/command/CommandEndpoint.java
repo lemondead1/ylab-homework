@@ -5,22 +5,17 @@ import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.exceptions.WrongUsageException;
 import com.lemondead1.carshopservice.service.SessionService;
+import lombok.RequiredArgsConstructor;
 
 import java.util.Collection;
 import java.util.Set;
 
+@RequiredArgsConstructor
 public class CommandEndpoint implements Command {
   private final String name;
   private final String description;
   private final Set<UserRole> allowedRoles;
   private final Endpoint endpoint;
-
-  public CommandEndpoint(String name, String description, Set<UserRole> allowedRoles, Endpoint endpoint) {
-    this.name = name;
-    this.description = description;
-    this.allowedRoles = allowedRoles;
-    this.endpoint = endpoint;
-  }
 
   @Override
   public String getName() {
@@ -33,12 +28,17 @@ public class CommandEndpoint implements Command {
   }
 
   @Override
-  public Collection<UserRole> allowedRoles() {
+  public Collection<UserRole> getAllowedRoles() {
     return allowedRoles;
   }
 
   @Override
   public void execute(SessionService currentUser, ConsoleIO cli, String... path) {
+    if (!getAllowedRoles().contains(currentUser.getCurrentUserRole())) {
+      cli.println("Insufficient permissions.");
+      return;
+    }
+
     try {
       if (path.length >= 1 && "help".equals(path[0])) {
         cli.println(description);

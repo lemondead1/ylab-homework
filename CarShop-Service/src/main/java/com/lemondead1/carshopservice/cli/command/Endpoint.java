@@ -7,5 +7,5 @@ import javax.annotation.Nullable;
 
 public interface Endpoint {
   @Nullable
-  String execute(SessionService currentUserId, ConsoleIO cli, String[] parameters);
+  String execute(SessionService currentUserId, ConsoleIO cli, String... parameters);
 }

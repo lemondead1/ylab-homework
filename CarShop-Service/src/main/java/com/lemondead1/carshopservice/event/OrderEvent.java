@@ -48,7 +48,7 @@ public abstract class OrderEvent extends Event {
       var pattern = """
           {"timestamp": "%s", "type": "%s", "user_id": %d, "order_id": %d, "created_at": "%s", "kind": "%s", "state": "%s", "customer_id": %d, "car_id": %d, "comments": "%s"}""";
       return String.format(pattern, getTimestamp(), getType().getId(), getUserId(), getOrderId(), getCreatedAt(),
-                           getKind(), getState().getId(), getCustomerId(), getCarId());
+                           getKind().getId(), getState().getId(), getCustomerId(), getCarId(), getComments());
     }
   }
 

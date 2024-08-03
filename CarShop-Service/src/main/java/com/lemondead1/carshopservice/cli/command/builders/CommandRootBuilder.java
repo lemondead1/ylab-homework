@@ -1,21 +1,16 @@
 package com.lemondead1.carshopservice.cli.command.builders;
 
-import com.lemondead1.carshopservice.cli.command.Command;
 import com.lemondead1.carshopservice.cli.command.CommandTreeRoot;
 import com.lemondead1.carshopservice.cli.command.Endpoint;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class CommandRootBuilder implements TreeCommandBuilder<CommandRootBuilder> {
-  private final Map<String, SubcommandBuilder<?, ?>> subcommands = new HashMap<>();
+  private final Map<String, SubcommandBuilder<?, ?>> subcommands = new LinkedHashMap<>();
 
   public CommandTreeRoot build() {
-    Map<String, Command> subcommands = new HashMap<>();
-    for (var subcommand : this.subcommands.values()) {
-      subcommands.put(subcommand.name, subcommand.build());
-    }
-    return new CommandTreeRoot(subcommands);
+    return new CommandTreeRoot(subcommands.values().stream().map(SubcommandBuilder::build).toList());
   }
 
   @Override

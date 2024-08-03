@@ -75,4 +75,10 @@ public class UserService {
     events.onUserEdited(editorId, oldUser, newUser);
     return newUser;
   }
+
+  public User deleteUser(int deleterId, int id) {
+    var old = users.delete(id);
+    events.onUserDeleted(deleterId, id);
+    return old;
+  }
 }
