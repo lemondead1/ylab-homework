@@ -74,12 +74,14 @@ public class EventService {
   }
 
   public void onUserEdited(int editorId, User oldUser, User newUser) {
-    events.submitEvent(new UserEvent.Edited(time.now(), editorId, newUser.id(), newUser.username(),
-                                            !oldUser.password().equals(newUser.password()), newUser.role()));
+    events.submitEvent(
+        new UserEvent.Edited(time.now(), editorId, newUser.id(), newUser.username(), newUser.phoneNumber(),
+                             newUser.email(), !oldUser.password().equals(newUser.password()), newUser.role()));
   }
 
   public void onUserCreated(int creatorId, User created) {
-    events.submitEvent(new UserEvent.Created(time.now(), creatorId, created.id(), created.username(), created.role()));
+    events.submitEvent(new UserEvent.Created(time.now(), creatorId, created.id(), created.username(),
+                                             created.phoneNumber(), created.email(), created.role()));
   }
 
   public void onUserDeleted(int deleterId, int userId) {

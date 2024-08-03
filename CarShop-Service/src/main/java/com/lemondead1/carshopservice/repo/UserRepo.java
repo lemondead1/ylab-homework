@@ -21,12 +21,12 @@ public class UserRepo {
   private final Map<String, User> usernameMap = new HashMap<>();
   private int lastId;
 
-  public User create(String username, String password, UserRole role) {
+  public User create(String username, String phoneNumber, String email, String password, UserRole role) {
     if (usernameMap.containsKey(username)) {
       throw new UserAlreadyExistsException("Username '" + username + "' is already taken.");
     }
     lastId++;
-    var newUser = new User(lastId, username, password, role);
+    var newUser = new User(lastId, username, phoneNumber, email, password, role);
     usernameMap.put(username, newUser);
     map.put(lastId, newUser);
     return newUser;
@@ -35,10 +35,14 @@ public class UserRepo {
   @Builder(builderMethodName = "", buildMethodName = "apply", builderClassName = "EditBuilder")
   private User applyEdit(int id,
                          @Nullable String username,
+                         @Nullable String phoneNumber,
+                         @Nullable String email,
                          @Nullable String password,
                          @Nullable UserRole role) {
     var old = findById(id);
 
+    phoneNumber = phoneNumber == null ? old.phoneNumber() : phoneNumber;
+    email = email == null ? old.email() : email;
     password = password == null ? old.password() : password;
     role = role == null ? old.role() : role;
     if (username == null) {
@@ -46,7 +50,7 @@ public class UserRepo {
     } else if (usernameMap.containsKey(username)) {
       throw new UserAlreadyExistsException("Username '" + username + "' is already taken.");
     }
-    var newUser = new User(id, username, password, role);
+    var newUser = new User(id, username, phoneNumber, email, password, role);
     map.put(id, newUser);
     usernameMap.remove(Objects.requireNonNull(old).username());
     usernameMap.put(username, newUser);

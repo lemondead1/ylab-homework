@@ -44,29 +44,32 @@ public class UserRepoTest {
 
   @Test
   void firstCreatedUserHasIdEqualToOne() {
-    assertThat(users.create("username", "password", UserRole.CLIENT).id()).isEqualTo(1);
+    assertThat(users.create("username", "88005553535", "test@example.com", "password", UserRole.CLIENT).id()).isEqualTo(
+        1);
     assertThat(users.findById(1).id()).isEqualTo(1);
   }
 
   @Test
   void createdUserMatchesSpec() {
-    users.create("user", "password", UserRole.CLIENT);
-    users.create("admin", "password", UserRole.ADMIN);
-    assertThat(users.findById(2)).isEqualTo(new User(2, "admin", "password", UserRole.ADMIN));
+    users.create("user", "88005553535", "test@example.com", "password", UserRole.CLIENT);
+    users.create("admin", "88005553535", "test@example.com", "password", UserRole.ADMIN);
+    assertThat(users.findById(2))
+        .isEqualTo(new User(2, "admin", "88005553535", "test@example.com", "password", UserRole.ADMIN));
   }
 
   @Test
   void creatingUsersWithTheSameUsernameThrows() {
-    users.create("user", "password", UserRole.CLIENT);
-    assertThatThrownBy(() -> users.create("user", "password", UserRole.CLIENT))
+    users.create("user", "88005553535", "test@example.com", "password", UserRole.CLIENT);
+    assertThatThrownBy(() -> users.create("user", "88005553535", "test@example.com", "password", UserRole.CLIENT))
         .isInstanceOf(UserAlreadyExistsException.class);
   }
 
   @Test
   void editedUserMatchesSpec() {
-    users.create("user", "password", UserRole.CLIENT);
-    users.edit(1).password("newPassword").role(UserRole.ADMIN).apply();
-    assertThat(users.findById(1)).isEqualTo(new User(1, "user", "newPassword", UserRole.ADMIN));
+    users.create("user", "88005553535", "test@example.com", "password", UserRole.CLIENT);
+    users.edit(1).password("newPassword").phoneNumber("8912536173").role(UserRole.ADMIN).apply();
+    assertThat(users.findById(1))
+        .isEqualTo(new User(1, "user", "8912536173", "test@example.com", "newPassword", UserRole.ADMIN));
   }
 
   @Test
@@ -77,16 +80,17 @@ public class UserRepoTest {
 
   @Test
   void usernameConflictOnEditThrows() {
-    users.create("user_1", "password", UserRole.CLIENT);
-    users.create("user_2", "password", UserRole.ADMIN);
+    users.create("user_1", "88005553535", "test@example.com", "password", UserRole.CLIENT);
+    users.create("user_2", "88005553535", "test@example.com", "password", UserRole.ADMIN);
     var builder = users.edit(1).username("user_1").password("password").role(UserRole.ADMIN);
     assertThatThrownBy(builder::apply).isInstanceOf(UserAlreadyExistsException.class);
   }
 
   @Test
   void deleteReturnsOldUser() {
-    users.create("user", "password", UserRole.CLIENT);
-    assertThat(users.delete(1)).isEqualTo(new User(1, "user", "password", UserRole.CLIENT));
+    users.create("user", "88005553535", "test@example.com", "password", UserRole.CLIENT);
+    assertThat(users.delete(1))
+        .isEqualTo(new User(1, "user", "88005553535", "test@example.com", "password", UserRole.CLIENT));
   }
 
   @Test
@@ -96,34 +100,36 @@ public class UserRepoTest {
 
   @Test
   void findByIdThrowsAfterDelete() {
-    users.create("user", "password", UserRole.CLIENT);
+    users.create("user", "88005553535", "test@example.com", "password", UserRole.CLIENT);
     users.delete(1);
     assertThatThrownBy(() -> users.findById(1)).isInstanceOf(RowNotFoundException.class);
   }
 
   @Test
   void findByUsernameThrowsAfterDelete() {
-    users.create("user", "password", UserRole.CLIENT);
+    users.create("user", "88005553535", "test@example.com", "password", UserRole.CLIENT);
     users.delete(1);
     assertThatThrownBy(() -> users.findByUsername("user")).isInstanceOf(RowNotFoundException.class);
   }
 
   @Test
   void findByUsernameReturnsUser() {
-    users.create("user", "password", UserRole.CLIENT);
-    assertThat(users.findByUsername("user")).isEqualTo(new User(1, "user", "password", UserRole.CLIENT));
+    users.create("user", "88005553535", "test@example.com", "password", UserRole.CLIENT);
+    assertThat(users.findByUsername("user"))
+        .isEqualTo(new User(1, "user", "88005553535", "test@example.com", "password", UserRole.CLIENT));
   }
 
   @Test
   void findByIdReturnsUser() {
-    users.create("user", "password", UserRole.CLIENT);
-    assertThat(users.findById(1)).isEqualTo(new User(1, "user", "password", UserRole.CLIENT));
+    users.create("user", "88005553535", "test@example.com", "password", UserRole.CLIENT);
+    assertThat(users.findById(1))
+        .isEqualTo(new User(1, "user", "88005553535", "test@example.com", "password", UserRole.CLIENT));
   }
 
   @Test
   void deletingUserWithExistingOrdersThrows() {
     cars.create("BMW", "X5", 2015, 3000000, "good");
-    users.create("alex", "pwd", UserRole.CLIENT);
+    users.create("alex", "88005553535", "test@example.com", "pwd", UserRole.CLIENT);
     orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.NEW, 1, 1, "ASAP");
     assertThatThrownBy(() -> users.delete(1)).isInstanceOf(ForeignKeyException.class);
   }
@@ -171,7 +177,7 @@ public class UserRepoTest {
       var settings = Csv.parseRfc4180();
       settings.getFormat().setLineSeparator("\n");
       for (var row : new CsvParser(settings).iterate(new StringReader(csv))) {
-        users.create(row[1], row[2], UserRole.valueOf(row[3]));
+        users.create(row[1], row[2], "88005553535", "test@example.com", UserRole.valueOf(row[3]));
       }
     }
 

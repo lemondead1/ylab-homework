@@ -4,7 +4,6 @@ import com.lemondead1.carshopservice.cli.ConsoleIO;
 import com.lemondead1.carshopservice.cli.command.builders.TreeCommandBuilder;
 import com.lemondead1.carshopservice.cli.parsing.StringParser;
 import com.lemondead1.carshopservice.cli.validation.PatternValidator;
-import com.lemondead1.carshopservice.cli.validation.Validator;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.ValidationException;
 import com.lemondead1.carshopservice.service.SessionService;
@@ -33,17 +32,16 @@ public class LoginController implements Controller {
            .pop();
   }
 
-  private static final Validator<String> validUsername = new PatternValidator("[A-Za-z0-9_\\-.]{3,32}");
-  private static final Validator<String> validPassword = new PatternValidator("[ -~]{8,}");
-
   String signUp(SessionService session, ConsoleIO cli, String... params) {
-    String username = cli.parse("Username > ", StringParser.INSTANCE, validUsername, value -> {
+    String username = cli.parse("Username > ", StringParser.INSTANCE, PatternValidator.USERNAME, value -> {
       if (!users.checkUsernameFree(value)) {
         throw new ValidationException("Username '" + value + "' is already taken.");
       }
     });
-    String password = cli.parse("Password > ", StringParser.INSTANCE, validPassword);
-    users.signUserUp(username, password);
+    String phoneNumber = cli.parse("Phone number > ", StringParser.INSTANCE, PatternValidator.PHONE_NUMBER);
+    String email = cli.parse("Phone number > ", StringParser.INSTANCE, PatternValidator.EMAIL);
+    String password = cli.parse("Password > ", StringParser.INSTANCE, PatternValidator.PASSWORD);
+    users.signUserUp(username, phoneNumber, email, password);
     return "Signed up successfully!";
   }
 

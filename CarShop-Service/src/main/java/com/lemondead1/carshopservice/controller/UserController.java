@@ -6,6 +6,7 @@ import com.lemondead1.carshopservice.cli.parsing.IdListParser;
 import com.lemondead1.carshopservice.cli.parsing.IdParser;
 import com.lemondead1.carshopservice.cli.parsing.IntParser;
 import com.lemondead1.carshopservice.cli.parsing.StringParser;
+import com.lemondead1.carshopservice.cli.validation.PatternValidator;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.enums.UserSorting;
 import com.lemondead1.carshopservice.exceptions.CommandException;
@@ -42,10 +43,10 @@ public class UserController implements Controller {
            .pop();
   }
 
-  String list(SessionService session, ConsoleIO console, String... path) {
-    var username = console.parseOptional("Username > ", StringParser.INSTANCE).orElse("");
-    var role = console.parseOptional("Role > ", IdListParser.of(UserRole.class)).orElse(UserRole.ALL);
-    var sort = console.parseOptional("Sorting > ", IdParser.of(UserSorting.class)).orElse(UserSorting.USERNAME_ASC);
+  String list(SessionService session, ConsoleIO cli, String... path) {
+    var username = cli.parseOptional("Username > ", StringParser.INSTANCE).orElse("");
+    var role = cli.parseOptional("Role > ", IdListParser.of(UserRole.class)).orElse(UserRole.ALL);
+    var sort = cli.parseOptional("Sorting > ", IdParser.of(UserSorting.class)).orElse(UserSorting.USERNAME_ASC);
     var list = users.searchUsers(username, role, sort);
     var table = new TableFormatter("ID", "Username", "Role");
     for (var row : list) {
@@ -55,25 +56,29 @@ public class UserController implements Controller {
   }
 
   String create(SessionService session, ConsoleIO console, String... path) {
-    var username = console.parse("Username > ", StringParser.INSTANCE);
-    var password = console.parse("Password > ", StringParser.INSTANCE);
+    var username = console.parse("Username > ", StringParser.INSTANCE, PatternValidator.USERNAME);
+    var phoneNumber = console.parse("Phone number > ", StringParser.INSTANCE, PatternValidator.PHONE_NUMBER);
+    var email = console.parse("Email > ", StringParser.INSTANCE, PatternValidator.EMAIL);
+    var password = console.parse("Password > ", StringParser.INSTANCE, PatternValidator.PASSWORD);
     var role = console.parse("Role > ", IdParser.of(CLIENT, MANAGER, ADMIN));
-    var newUser = users.createUser(session.getCurrentUserId(), username, password, role);
+    var newUser = users.createUser(session.getCurrentUserId(), username, phoneNumber, email, password, role);
     return "Created " + newUser;
   }
 
-  String edit(SessionService session, ConsoleIO console, String... path) {
+  String edit(SessionService session, ConsoleIO cli, String... path) {
     if (path.length == 0) {
       throw new CommandException("Usage: user edit <id>");
     }
     int id = IntParser.INSTANCE.parse(path[0]);
     var old = users.findById(id);
-    var username = console.parseOptional("Username (" + old.username() + ") > ", StringParser.INSTANCE).orElse(null);
-    var password = console.parseOptional("Password > ", StringParser.INSTANCE).orElse(null);
-    var role = console.parseOptional("Role (" + old.role().getPrettyName() + ") > ",
-                                     IdParser.of(CLIENT, MANAGER, ADMIN))
-                      .orElse(null);
-    var newUser = users.editUser(session.getCurrentUserId(), id, username, password, role);
+    var username = cli.parseOptional("Username (" + old.username() + ") > ", StringParser.INSTANCE).orElse(null);
+    var phoneNumber = cli.parseOptional("Phone number > ", StringParser.INSTANCE, PatternValidator.PHONE_NUMBER)
+                         .orElse(null);
+    var email = cli.parseOptional("Email > ", StringParser.INSTANCE, PatternValidator.EMAIL).orElse(null);
+    var password = cli.parseOptional("Password > ", StringParser.INSTANCE).orElse(null);
+    var role = cli.parseOptional("Role (" + old.role().getPrettyName() + ") > ", IdParser.of(CLIENT, MANAGER, ADMIN))
+                  .orElse(null);
+    var newUser = users.editUser(session.getCurrentUserId(), id, username, phoneNumber, email, password, role);
     return "Modified " + newUser;
   }
 }

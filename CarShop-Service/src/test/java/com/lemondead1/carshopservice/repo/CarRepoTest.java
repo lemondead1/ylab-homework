@@ -77,7 +77,7 @@ public class CarRepoTest {
   @Test
   void deletingCarWithExistingOrdersThrows() {
     cars.create("BMW", "X5", 2015, 3000000, "good");
-    users.create("alex", "pwd", UserRole.CLIENT);
+    users.create("alex", "88005553535", "test@example.com", "pwd", UserRole.CLIENT);
     orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.NEW, 1, 1, "ASAP");
     assertThatThrownBy(() -> cars.delete(1)).isInstanceOf(ForeignKeyException.class);
   }

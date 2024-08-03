@@ -30,7 +30,7 @@ public class OrderRepoTest {
     orders.setCars(cars);
     orders.setUsers(users);
 
-    users.create("alex", "pwd", UserRole.CLIENT);
+    users.create("alex", "88005553535", "test@example.com", "pwd", UserRole.CLIENT);
     cars.create("BMW", "X5", 2015, 3000000, "good");
   }
 

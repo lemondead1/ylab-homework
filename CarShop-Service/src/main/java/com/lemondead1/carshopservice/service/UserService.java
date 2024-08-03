@@ -25,8 +25,8 @@ public class UserService {
     return !users.existsUsername(username);
   }
 
-  public void signUserUp(String username, String password) {
-    var user = users.create(username, password, UserRole.CLIENT);
+  public void signUserUp(String username, String phoneNumber, String email, String password) {
+    var user = users.create(username, phoneNumber, email, password, UserRole.CLIENT);
     events.onUserSignedUp(user.id(), username);
   }
 
@@ -56,22 +56,32 @@ public class UserService {
     return users.lookup(username, EnumSet.copyOf(roles), sorting);
   }
 
-  public User createUser(int creatorId, String username, String password, UserRole role) {
+  public User createUser(int creatorId, String phoneNumber, String email, String username, String password, UserRole role) {
     if (role == UserRole.ANONYMOUS) {
       throw new IllegalArgumentException("Role anonymous is not allowed");
     }
-    var user = users.create(username, password, role);
+    var user = users.create(username, phoneNumber, email, password, role);
     events.onUserCreated(creatorId, user);
     return user;
   }
 
-  public User editUser(int editorId, int id, @Nullable String username, @Nullable String password,
+  public User editUser(int editorId, int id,
+                       @Nullable String username,
+                       @Nullable String phoneNumber,
+                       @Nullable String email,
+                       @Nullable String password,
                        @Nullable UserRole role) {
     if (role == UserRole.ANONYMOUS) {
       throw new IllegalArgumentException("Role anonymous is not allowed");
     }
     var oldUser = users.findById(id);
-    var newUser = users.edit(id).username(username).password(password).role(role).apply();
+    var newUser = users.edit(id)
+                       .username(username)
+                       .phoneNumber(phoneNumber)
+                       .email(email)
+                       .password(password)
+                       .role(role)
+                       .apply();
     events.onUserEdited(editorId, oldUser, newUser);
     return newUser;
   }

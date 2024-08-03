@@ -81,7 +81,7 @@ public class EventServiceTest {
     var now = Instant.now();
     when(time.now()).thenReturn(now);
     service.onOrderCreated(6, new Order(10, Instant.EPOCH, OrderKind.PURCHASE, OrderState.NEW,
-                                        new User(42, "Uname", "pwd", UserRole.CLIENT),
+                                        new User(42, "Uname", "880055535", "test@example.com", "pwd", UserRole.CLIENT),
                                         new Car(64, "Brand", "Model", 1999, 4000000, "nice"),
                                         "No comment"));
     assertThat(service.findEvents(EventType.ALL, DateRange.ALL, "", EventSorting.USERNAME_DESC))
@@ -95,7 +95,7 @@ public class EventServiceTest {
     var now = Instant.now();
     when(time.now()).thenReturn(now);
     service.onOrderEdited(6, new Order(10, Instant.EPOCH, OrderKind.PURCHASE, OrderState.NEW,
-                                       new User(39, "Uname", "pwd", UserRole.CLIENT),
+                                       new User(39, "Uname", "88005553535", "test@example.com", "pwd", UserRole.CLIENT),
                                        new Car(82, "Brand", "Model", 1999, 4000000, "nice"),
                                        "Yes comment"));
     assertThat(service.findEvents(EventType.ALL, DateRange.ALL, "", EventSorting.USERNAME_DESC))
@@ -116,9 +116,9 @@ public class EventServiceTest {
   void userCreatedTest() {
     var now = Instant.now();
     when(time.now()).thenReturn(now);
-    service.onUserCreated(43, new User(71, "alex", "password", UserRole.CLIENT));
+    service.onUserCreated(43, new User(71, "alex", "880055535", "test@example.com", "password", UserRole.CLIENT));
     assertThat(service.findEvents(EventType.ALL, DateRange.ALL, "", EventSorting.TIMESTAMP_ASC))
-        .containsExactly(new UserEvent.Created(now, 43, 71, "alex", UserRole.CLIENT));
+        .containsExactly(new UserEvent.Created(now, 43, 71, "880055535", "test@example.com", "alex", UserRole.CLIENT));
   }
 
   @Test
@@ -126,10 +126,11 @@ public class EventServiceTest {
     var now = Instant.now();
     when(time.now()).thenReturn(now);
     service.onUserEdited(43,
-                         new User(71, "usr", "oldPassword", UserRole.CLIENT),
-                         new User(71, "alex", "password", UserRole.CLIENT));
+                         new User(71, "usr", "880055535", "test@example.com", "oldPassword", UserRole.CLIENT),
+                         new User(71, "alex", "880055535", "test@example.com", "password", UserRole.CLIENT));
     assertThat(service.findEvents(EventType.ALL, DateRange.ALL, "", EventSorting.TIMESTAMP_ASC))
-        .containsExactly(new UserEvent.Edited(now, 43, 71, "alex", false, UserRole.CLIENT));
+        .containsExactly(new UserEvent.Edited(now, 43, 71, "alex", "880055535",
+                                              "test@example.com", false, UserRole.CLIENT));
   }
 
   @Test
@@ -173,13 +174,13 @@ public class EventServiceTest {
 
     when(time.now()).thenReturn(now.minusSeconds(76));
     service.onOrderCreated(6, new Order(10, Instant.EPOCH, OrderKind.PURCHASE, OrderState.NEW,
-                                        new User(42, "Uname", "pwd", UserRole.CLIENT),
+                                        new User(42, "Uname", "880055535", "test@example.com", "pwd", UserRole.CLIENT),
                                         new Car(64, "Brand", "Model", 1999, 4000000, "nice"),
                                         "No comment"));
 
     when(time.now()).thenReturn(now.minusSeconds(722));
     service.onOrderEdited(6, new Order(11, Instant.EPOCH, OrderKind.PURCHASE, OrderState.NEW,
-                                       new User(39, "Uname", "pwd", UserRole.CLIENT),
+                                       new User(39, "Uname", "880055535", "test@example.com", "pwd", UserRole.CLIENT),
                                        new Car(82, "Brand", "Model", 1999, 4000000, "nice"),
                                        "Yes comment"));
 
@@ -187,12 +188,12 @@ public class EventServiceTest {
     service.onOrderDeleted(53, 93);
 
     when(time.now()).thenReturn(now.minusSeconds(763));
-    service.onUserCreated(43, new User(71, "alex", "password", UserRole.CLIENT));
+    service.onUserCreated(43, new User(71, "alex", "880055535", "test@example.com", "password", UserRole.CLIENT));
 
     when(time.now()).thenReturn(now.minusSeconds(754));
     service.onUserEdited(43,
-                         new User(71, "usr", "oldPassword", UserRole.CLIENT),
-                         new User(71, "alex", "password", UserRole.CLIENT));
+                         new User(71, "usr", "880055535", "test@example.com", "oldPassword", UserRole.CLIENT),
+                         new User(71, "alex", "880055535", "test@example.com", "password", UserRole.CLIENT));
 
     when(time.now()).thenReturn(now.minusSeconds(87));
     service.onUserDeleted(64, 12);
@@ -210,8 +211,8 @@ public class EventServiceTest {
                                      {"timestamp": "%s", "type": "order_created", "user_id": 6, "order_id": 10, "created_at": "1970-01-01T00:00:00Z", "kind": "purchase", "state": "new", "customer_id": 42, "car_id": 64, "comments": "No comment"}
                                      {"timestamp": "%s", "type": "order_edited", "user_id": 6, "order_id": 11, "new_created_at": "1970-01-01T00:00:00Z", "new_kind": "purchase", "new_state": "new", "new_customer_id": 39, "new_car_id": 82, "new_comments": "Yes comment"}
                                      {"timestamp": "%s", "type": "order_deleted", "user_id": 53, "order_id": 93}
-                                     {"timestamp": "%s", "type": "user_created", "user_id": 43, "created_user_id": 71, "username": "alex", "role": "client"}
-                                     {"timestamp": "%s", "type": "user_edited", "user_id": 43, "edited_user_id": 71, "new_username": "alex", "password_changed": true, "new_role": "client"}
+                                     {"timestamp": "%s", "type": "user_created", "user_id": 43, "created_user_id": 71, "username": "alex", "phone_number": "880055535", "email": "test@example.com", "role": "client"}
+                                     {"timestamp": "%s", "type": "user_edited", "user_id": 43, "edited_user_id": 71, "new_username": "alex", "new_phone_number": "880055535", "new_email": "test@example.com", "password_changed": true, "new_role": "client"}
                                      {"timestamp": "%s", "type": "user_deleted", "user_id": 64, "deleted_user_id": 12}
                                      {"timestamp": "%s", "type": "user_logged_in", "user_id": 22}
                                      {"timestamp": "%s", "type": "user_signed_up", "user_id": 87, "username": "alex"}

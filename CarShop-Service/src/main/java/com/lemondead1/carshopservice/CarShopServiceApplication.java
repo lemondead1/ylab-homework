@@ -29,7 +29,7 @@ public class CarShopServiceApplication {
     orderRepo.setUsers(userRepo);
     eventRepo.setUsers(userRepo);
 
-    userRepo.create("admin", "password", UserRole.ADMIN);
+    userRepo.create("admin", "88005553535", "test@example.com", "password", UserRole.ADMIN);
 
     var timeService = new TimeService();
     var eventService = new EventService(eventRepo, timeService);
