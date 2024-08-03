@@ -25,10 +25,14 @@ public class ConsoleIO {
     return io.readLine(message);
   }
 
+  public String readPassword(String message) {
+    return new String(io.readPassword(message));
+  }
+
   @SafeVarargs
-  public final <T> T parse(String message, Parser<T> parser, Validator<T>... validators) {
+  public final <T> T parse(String message, Parser<T> parser, boolean hideInput, Validator<T>... validators) {
     while (true) {
-      var read = readInteractive(message);
+      var read = hideInput ? readPassword(message) : readInteractive(message);
       if (read.isEmpty()) {
         continue;
       }
@@ -45,9 +49,15 @@ public class ConsoleIO {
   }
 
   @SafeVarargs
-  public final <T> Optional<T> parseOptional(String message, Parser<T> parser, Validator<T>... validators) {
+  public final <T> T parse(String message, Parser<T> parser, Validator<T>... validators) {
+    return parse(message, parser, false, validators);
+  }
+
+  @SafeVarargs
+  public final <T> Optional<T> parseOptional(String message, Parser<T> parser, boolean hideInput,
+                                             Validator<T>... validators) {
     while (true) {
-      var read = readInteractive(message);
+      var read = hideInput ? readPassword(message) : readInteractive(message);
       if (read.isEmpty()) {
         return Optional.empty();
       }
@@ -61,5 +71,10 @@ public class ConsoleIO {
         println(e.getMessage());
       }
     }
+  }
+
+  @SafeVarargs
+  public final <T> Optional<T> parseOptional(String message, Parser<T> parser, Validator<T>... validators) {
+    return parseOptional(message, parser, false, validators);
   }
 }

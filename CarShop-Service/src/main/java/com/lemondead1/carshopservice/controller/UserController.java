@@ -60,7 +60,7 @@ public class UserController implements Controller {
     var username = console.parse("Username > ", StringParser.INSTANCE, PatternValidator.USERNAME);
     var phoneNumber = console.parse("Phone number > ", StringParser.INSTANCE, PatternValidator.PHONE_NUMBER);
     var email = console.parse("Email > ", StringParser.INSTANCE, PatternValidator.EMAIL);
-    var password = console.parse("Password > ", StringParser.INSTANCE, PatternValidator.PASSWORD);
+    var password = console.parse("Password > ", StringParser.INSTANCE, true, PatternValidator.PASSWORD);
     var role = console.parseOptional("Role > ", IdParser.of(CLIENT, MANAGER, ADMIN)).orElse(CLIENT);
     var newUser = users.createUser(session.getCurrentUserId(), username, phoneNumber, email, password, role);
     return "Created " + newUser.prettyFormat();
@@ -77,7 +77,7 @@ public class UserController implements Controller {
                          .orElse(null);
     var email = cli.parseOptional("Email (" + old.email() + ") > ", StringParser.INSTANCE, PatternValidator.EMAIL)
                    .orElse(null);
-    var password = cli.parseOptional("Password > ", StringParser.INSTANCE).orElse(null);
+    var password = cli.parseOptional("Password > ", StringParser.INSTANCE, true).orElse(null);
     var role = cli.parseOptional("Role (" + old.role().getPrettyName() + ") > ", IdParser.of(CLIENT, MANAGER, ADMIN))
                   .orElse(null);
     var newUser = users.editUser(session.getCurrentUserId(), old.id(), username, phoneNumber, email, password, role);

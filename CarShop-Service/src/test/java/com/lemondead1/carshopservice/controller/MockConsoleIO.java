@@ -37,6 +37,11 @@ public class MockConsoleIO extends ConsoleIO {
     return inputs.get(currentInputIndex++);
   }
 
+  @Override
+  public String readPassword(String message) {
+    return readInteractive(message);
+  }
+
   public MockConsoleIO in(String input) {
     expectedHistory.add(new Item(input, true));
     inputs.add(input);

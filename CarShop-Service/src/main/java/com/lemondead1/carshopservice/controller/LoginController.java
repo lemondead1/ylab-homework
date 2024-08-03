@@ -40,14 +40,14 @@ public class LoginController implements Controller {
     });
     String phoneNumber = cli.parse("Phone number > ", StringParser.INSTANCE, PatternValidator.PHONE_NUMBER);
     String email = cli.parse("Email > ", StringParser.INSTANCE, PatternValidator.EMAIL);
-    String password = cli.parse("Password > ", StringParser.INSTANCE, PatternValidator.PASSWORD);
+    String password = cli.parse("Password > ", StringParser.INSTANCE, true, PatternValidator.PASSWORD);
     users.signUserUp(username, phoneNumber, email, password);
     return "Signed up successfully!";
   }
 
   String login(SessionService session, ConsoleIO cli, String... params) {
     String username = cli.parse("Username > ", StringParser.INSTANCE);
-    String password = cli.parse("Password > ", StringParser.INSTANCE);
+    String password = cli.parse("Password > ", StringParser.INSTANCE, true);
     users.login(username, password, session);
     return "Welcome, " + username + "!";
   }

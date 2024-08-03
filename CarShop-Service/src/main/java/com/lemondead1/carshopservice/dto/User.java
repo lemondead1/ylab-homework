@@ -6,7 +6,7 @@ public record User(int id, String username, String phoneNumber, String email, St
                    int purchaseCount) {
   public String prettyFormat() {
     var format = """
-        user #%d named "%s" with phone number "%s" and email "%s" and %d purchases at role %s""";
+        user #%d named "%s" with phone number "%s" and email "%s" and %d purchases on role %s""";
     return String.format(format, id, username, phoneNumber, email, purchaseCount, role.getPrettyName());
   }
 }
