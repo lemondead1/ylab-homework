@@ -3,4 +3,4 @@ package com.lemondead1.carshopservice.exceptions;
 import lombok.experimental.StandardException;
 
 @StandardException
-public class WrongUsernamePassword extends CommandException { }
+public class WrongUsernamePasswordException extends CommandException { }

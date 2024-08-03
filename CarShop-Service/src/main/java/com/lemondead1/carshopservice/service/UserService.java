@@ -4,7 +4,7 @@ import com.lemondead1.carshopservice.dto.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.enums.UserSorting;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
-import com.lemondead1.carshopservice.exceptions.WrongUsernamePassword;
+import com.lemondead1.carshopservice.exceptions.WrongUsernamePasswordException;
 import com.lemondead1.carshopservice.repo.UserRepo;
 
 import javax.annotation.Nullable;
@@ -25,9 +25,10 @@ public class UserService {
     return !users.existsUsername(username);
   }
 
-  public void signUserUp(String username, String phoneNumber, String email, String password) {
+  public User signUserUp(String username, String phoneNumber, String email, String password) {
     var user = users.create(username, phoneNumber, email, password, UserRole.CLIENT);
     events.onUserSignedUp(user.id(), username);
+    return user;
   }
 
   public UserRole getUserRole(int userId) {
@@ -39,10 +40,10 @@ public class UserService {
     try {
       user = users.findByUsername(username);
     } catch (RowNotFoundException e) {
-      throw new WrongUsernamePassword("Wrong username or password.");
+      throw new WrongUsernamePasswordException("Wrong username or password.");
     }
     if (!user.password().equals(password)) {
-      throw new WrongUsernamePassword("Wrong username or password.");
+      throw new WrongUsernamePasswordException("Wrong username or password.");
     }
     session.setCurrentUserId(user.id());
     events.onUserLoggedIn(user.id());
@@ -56,7 +57,7 @@ public class UserService {
     return users.lookup(username, EnumSet.copyOf(roles), sorting);
   }
 
-  public User createUser(int creatorId, String phoneNumber, String email, String username, String password, UserRole role) {
+  public User createUser(int creatorId, String username, String phoneNumber, String email, String password, UserRole role) {
     if (role == UserRole.ANONYMOUS) {
       throw new IllegalArgumentException("Role anonymous is not allowed");
     }
