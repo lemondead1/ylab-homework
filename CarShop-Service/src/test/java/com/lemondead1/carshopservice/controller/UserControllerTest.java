@@ -33,6 +33,25 @@ public class UserControllerTest {
   }
 
   @Test
+  void byIdThrowsWithoutArguments() {
+    assertThatThrownBy(() -> user.byId(session, cli)).isInstanceOf(WrongUsageException.class);
+
+    verifyNoInteractions(users);
+  }
+
+  @Test
+  void byIdSuccess() {
+    var dummyUser = new User(123, "username", "+7324123145", "test@example.com", "password", UserRole.CLIENT, 0);
+
+    when(users.findById(123)).thenReturn(dummyUser);
+
+    assertThat(user.byId(session, cli, "123")).isEqualTo("Found " + dummyUser.prettyFormat());
+
+    cli.assertMatchesHistory();
+    verify(users).findById(123);
+  }
+
+  @Test
   void createUserSuccess() {
     var dummyUser = new User(123, "username", "+7324123145", "test@example.com", "password", UserRole.CLIENT, 0);
 

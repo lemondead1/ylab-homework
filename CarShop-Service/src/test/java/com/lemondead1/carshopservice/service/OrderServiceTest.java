@@ -8,6 +8,7 @@ import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.event.OrderEvent;
 import com.lemondead1.carshopservice.exceptions.CarReservedException;
+import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.repo.CarRepo;
@@ -110,6 +111,27 @@ public class OrderServiceTest {
     assertThatThrownBy(() -> orders.findById(1)).isInstanceOf(RowNotFoundException.class);
     assertThat(events.listAll()).usingRecursiveFieldByFieldElementComparator()
                                 .contains(new OrderEvent.Deleted(now, 64, 1));
+  }
+
+  @Test
+  void deleteOrderThrowsOnOwnershipConstraintViolation() {
+    var now = Instant.now();
+
+    orders.create(now, OrderKind.PURCHASE, OrderState.DONE, 1, 1, "");
+    orders.create(now, OrderKind.SERVICE, OrderState.NEW, 1, 1, "");
+
+    assertThatThrownBy(() -> orderService.deleteOrder(64, 1)).isInstanceOf(CascadingException.class);
+  }
+
+  @Test
+  void updateOrderStateThrowsOnOwnershipConstraintViolation() {
+    var now = Instant.now();
+
+    orders.create(now, OrderKind.PURCHASE, OrderState.DONE, 1, 1, "");
+    orders.create(now, OrderKind.SERVICE, OrderState.NEW, 1, 1, "");
+
+    assertThatThrownBy(() -> orderService.updateState(64, 1, OrderState.PERFORMING, ""))
+        .isInstanceOf(CascadingException.class);
   }
 
   @Test

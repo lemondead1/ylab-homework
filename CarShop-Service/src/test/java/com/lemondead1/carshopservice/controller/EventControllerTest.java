@@ -39,7 +39,7 @@ public class EventControllerTest {
   }
 
   @Test
-  void eventControllerListReturnsSerializedEvents() {
+  void eventControllerSearchReturnsSerializedEvents() {
     var now = Instant.now();
     var event = new UserEvent.Deleted(now, 5, 7);
     when(events.findEvents(EventType.ALL, DateRange.ALL, "", EventSorting.TIMESTAMP_DESC)).thenReturn(List.of(event));
@@ -49,7 +49,7 @@ public class EventControllerTest {
        .out("User > ").in("")
        .out("Sorting > ").in("newer_first");
 
-    assertThat(this.event.list(session, cli)).isEqualTo(event.serialize() + "\nRow count: 1");
+    assertThat(this.event.search(session, cli)).isEqualTo(event.serialize() + "\nRow count: 1");
 
     cli.assertMatchesHistory();
     verify(events).findEvents(EventType.ALL, DateRange.ALL, "", EventSorting.TIMESTAMP_DESC);

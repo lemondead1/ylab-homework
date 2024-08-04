@@ -45,7 +45,20 @@ public class CarController implements Controller {
            .allow(MANAGER, ADMIN)
            .pop()
 
+           .accept("by-id", this::byId)
+           .describe("Use 'car by-id <id>' to lookup cars by id.")
+           .allow(MANAGER, ADMIN)
+           .pop()
+
            .pop();
+  }
+
+  String byId(SessionService session, ConsoleIO cli, String... path) {
+    if (path.length == 0) {
+      throw new WrongUsageException();
+    }
+    var car = IntParser.INSTANCE.map(cars::findById).parse(path[0]);
+    return "Found " + car.prettyFormat();
   }
 
   String createCar(SessionService session, ConsoleIO cli, String... path) {

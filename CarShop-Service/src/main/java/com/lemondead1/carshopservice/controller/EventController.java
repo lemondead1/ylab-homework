@@ -22,8 +22,8 @@ public class EventController implements Controller {
   public void registerEndpoints(TreeCommandBuilder<?> builder) {
     builder.push("event").describe("Use 'event' to access event database.").allow(UserRole.ADMIN)
 
-           .accept("list", this::list)
-           .describe("Use 'event list' to list events.")
+           .accept("search", this::search)
+           .describe("Use 'event search' to list events.")
            .allow(UserRole.ADMIN)
            .pop()
 
@@ -35,7 +35,7 @@ public class EventController implements Controller {
            .pop();
   }
 
-  String list(SessionService session, ConsoleIO cli, String... path) {
+  String search(SessionService session, ConsoleIO cli, String... path) {
     var types = cli.parseOptional("Type > ", IdListParser.of(EventType.values())).orElse(EventType.ALL);
     var dateRange = cli.parseOptional("Date > ", DateRangeParser.INSTANCE).orElse(DateRange.ALL);
     var username = cli.parseOptional("User > ", StringParser.INSTANCE).orElse("");

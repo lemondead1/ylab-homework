@@ -46,11 +46,30 @@ public class CarControllerTest {
   }
 
   @Test
+  void byIdThrowsWithoutArguments() {
+    assertThatThrownBy(() -> car.byId(session, cli)).isInstanceOf(WrongUsageException.class);
+
+    verifyNoInteractions(cars, users);
+  }
+
+  @Test
+  void byIdSuccess() {
+    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+
+    when(cars.findById(3)).thenReturn(mockCar);
+
+    assertThat(car.byId(session, cli, "3")).isEqualTo("Found " + mockCar.prettyFormat());
+
+    cli.assertMatchesHistory();
+    verify(cars).findById(3);
+  }
+
+  @Test
   void carDeleteFailsWhenNoParameterIsPresent() {
     assertThatThrownBy(() -> car.deleteCar(session, cli)).isInstanceOf(WrongUsageException.class);
 
     cli.assertMatchesHistory();
-    verifyNoInteractions(users);
+    verifyNoInteractions(cars, users);
   }
 
   @Test

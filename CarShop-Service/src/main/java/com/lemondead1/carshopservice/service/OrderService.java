@@ -6,6 +6,7 @@ import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.exceptions.CarReservedException;
+import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.repo.OrderRepo;
 
@@ -33,7 +34,7 @@ public class OrderService {
   }
 
   public Order createOrder(int user, int customer, int car, OrderKind kind, OrderState state, String comment) {
-    return switch (kind) {
+    switch (kind) {
       case SERVICE -> {
         if (orders.findCarOrders(car).stream()
                   .noneMatch(o -> o.type() == OrderKind.PURCHASE &&
@@ -42,9 +43,6 @@ public class OrderService {
           throw customer == user ? new CarReservedException("Car " + car + " is not yours.")
                                  : new CarReservedException("Customer " + customer + " does not own car " + car + ".");
         }
-        var order = orders.create(time.now(), OrderKind.SERVICE, state, customer, car, comment);
-        events.onOrderCreated(user, order);
-        yield order;
       }
       case PURCHASE -> {
         if (orders.findCarOrders(car).stream()
@@ -52,18 +50,32 @@ public class OrderService {
                                  o.state() != OrderState.CANCELLED)) {
           throw new CarReservedException("Car " + car + " is not available for purchase.");
         }
-        var order = orders.create(time.now(), OrderKind.PURCHASE, state, user, car, comment);
-        events.onOrderCreated(user, order);
-        yield order;
       }
-    };
+    }
+    var order = orders.create(time.now(), kind, state, customer, car, comment);
+    events.onOrderCreated(user, order);
+    return order;
   }
 
   public Order findById(int orderId) {
     return orders.findById(orderId);
   }
 
+  private void validateNoServiceOrdersExist(int customerId, int carId) {
+    if (orders.findCarOrders(carId)
+              .stream()
+              .filter(o -> o.customer().id() == customerId)
+              .anyMatch(o -> o.type() == OrderKind.SERVICE)) {
+      throw new CascadingException("Purchase order removal violates service order ownership constraints.");
+    }
+  }
+
   public void deleteOrder(int deleterId, int orderId) {
+    var old = orders.findById(orderId);
+    if (old.type() == OrderKind.PURCHASE) {
+      validateNoServiceOrdersExist(old.customer().id(), old.car().id());
+    }
+
     orders.delete(orderId);
     events.onOrderDeleted(deleterId, orderId);
   }
@@ -81,6 +93,11 @@ public class OrderService {
 
   public void updateState(int userId, int orderId, OrderState newState, String appendComment) {
     var order = orders.findById(orderId);
+
+    if (newState != OrderState.DONE && order.state() == OrderState.DONE && order.type() == OrderKind.PURCHASE) {
+      validateNoServiceOrdersExist(order.customer().id(), order.car().id());
+    }
+
     var newRow = orders.edit(orderId).state(newState).comments(order.comments() + appendComment).apply();
     events.onOrderEdited(userId, newRow);
   }

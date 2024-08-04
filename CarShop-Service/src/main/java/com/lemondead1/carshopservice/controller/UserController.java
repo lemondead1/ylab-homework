@@ -34,11 +34,24 @@ public class UserController implements Controller {
            .pop()
 
            .accept("edit", this::edit)
-           .describe("Use 'user edit <id>' to change user fields.")
+           .describe("Use 'user edit <id>' to edit user fields.")
            .allow(ADMIN)
            .pop()
 
+           .accept("by-id", this::byId)
+           .describe("Use 'user by-id <id>' to lookup users by id.")
+           .allow(MANAGER, ADMIN)
+           .pop()
+
            .pop();
+  }
+
+  String byId(SessionService session, ConsoleIO cli, String... path) {
+    if (path.length == 0) {
+      throw new WrongUsageException();
+    }
+    var user = IntParser.INSTANCE.map(users::findById).parse(path[0]);
+    return "Found " + user.prettyFormat();
   }
 
   String search(SessionService session, ConsoleIO cli, String... path) {
@@ -51,7 +64,8 @@ public class UserController implements Controller {
     var list = users.searchUsers(username, role, phoneNumber, email, purchases, sort);
     var table = new TableFormatter("ID", "Username", "Phone number", "Email", "Purchase count", "Role");
     for (var row : list) {
-      table.addRow(row.id(), row.username(), row.phoneNumber(), row.email(), row.purchaseCount(), row.role().getPrettyName());
+      table.addRow(row.id(), row.username(), row.phoneNumber(), row.email(), row.purchaseCount(),
+                   row.role().getPrettyName());
     }
     return table.format(true);
   }

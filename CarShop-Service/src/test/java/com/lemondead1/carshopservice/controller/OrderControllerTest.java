@@ -8,7 +8,10 @@ import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.exceptions.WrongUsageException;
-import com.lemondead1.carshopservice.service.*;
+import com.lemondead1.carshopservice.service.CarService;
+import com.lemondead1.carshopservice.service.OrderService;
+import com.lemondead1.carshopservice.service.SessionService;
+import com.lemondead1.carshopservice.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,9 +22,7 @@ import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.InstanceOfAssertFactories.atomicIntegerFieldUpdater;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderControllerTest {
@@ -46,6 +47,27 @@ public class OrderControllerTest {
     order = new OrderController(orders, cars, users);
 
     cli = new MockConsoleIO();
+  }
+
+  @Test
+  void byIdThrowsWithoutArguments() {
+    assertThatThrownBy(() -> order.byId(session, cli)).isInstanceOf(WrongUsageException.class);
+
+    verifyNoInteractions(orders);
+  }
+
+  @Test
+  void byIdSuccess() {
+    var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
+    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
+
+    when(orders.findById(10)).thenReturn(dummyOrder);
+
+    assertThat(order.byId(session, cli, "10")).isEqualTo("Found " + dummyOrder.prettyFormat());
+
+    cli.assertMatchesHistory();
+    verify(orders).findById(10);
   }
 
   @Test

@@ -57,8 +57,8 @@ public class OrderController implements Controller {
            .allow(MANAGER, ADMIN)
            .pop()
 
-           .accept("find", this::find)
-           .describe("Use 'order find' to find orders.")
+           .accept("search", this::search)
+           .describe("Use 'order search' to search orders.")
            .allow(MANAGER, ADMIN)
            .pop()
 
@@ -67,8 +67,21 @@ public class OrderController implements Controller {
            .allow(MANAGER, ADMIN)
            .pop()
 
+           .accept("by-id", this::byId)
+           .describe("Use 'order by-id <id>' to lookup orders by id.")
+           .allow(MANAGER, ADMIN)
+           .pop()
+
            .pop();
 
+  }
+
+  String byId(SessionService session, ConsoleIO cli, String... path) {
+    if (path.length == 0) {
+      throw new WrongUsageException();
+    }
+    var order = IntParser.INSTANCE.map(orders::findById).parse(path[0]);
+    return "Found " + order.prettyFormat();
   }
 
   String purchase(SessionService session, ConsoleIO cli, String... path) {
@@ -154,7 +167,7 @@ public class OrderController implements Controller {
     return "Deleted";
   }
 
-  String find(SessionService session, ConsoleIO cli, String... path) {
+  String search(SessionService session, ConsoleIO cli, String... path) {
     var username = cli.parseOptional("Customer > ", StringParser.INSTANCE).orElse("");
     var carBrand = cli.parseOptional("Car brand > ", StringParser.INSTANCE).orElse("");
     var carModel = cli.parseOptional("Car model > ", StringParser.INSTANCE).orElse("");
