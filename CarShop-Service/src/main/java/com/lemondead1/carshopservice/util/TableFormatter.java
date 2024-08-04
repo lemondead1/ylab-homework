@@ -1,19 +1,19 @@
 package com.lemondead1.carshopservice.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Formats equal length rows into tables
+ */
 public class TableFormatter {
   private final String[] columnsNames;
   private final List<String[]> rows = new ArrayList<>();
-  private final int[] maxColWidths;
+
 
   public TableFormatter(String... columnsNames) {
     this.columnsNames = columnsNames;
-    maxColWidths = new int[columnsNames.length];
-    for (int i = 0; i < columnsNames.length; i++) {
-      maxColWidths[i] = columnsNames[i].length();
-    }
   }
 
   public void addRow(Object... row) {
@@ -23,7 +23,6 @@ public class TableFormatter {
     var rowSerialized = new String[row.length];
     for (int i = 0; i < row.length; i++) {
       rowSerialized[i] = row[i].toString();
-      maxColWidths[i] = Math.max(maxColWidths[i], rowSerialized[i].length());
     }
     rows.add(rowSerialized);
   }
@@ -32,6 +31,45 @@ public class TableFormatter {
     int cols = columnsNames.length;
 
     StringBuilder builder = new StringBuilder();
+
+    List<String[]> actualRows = new ArrayList<>();
+
+    for (var row : rows) {
+      int currIndex = actualRows.size();
+
+      for (int i = 0; i < cols; i++) {
+        var lines = row[i].split("\n");
+        for (int j = 0; j < lines.length; j++) {
+          var line = lines[j];
+
+          int actualRowIndex = currIndex + j;
+
+          String[] actualRow;
+
+          if (actualRowIndex < actualRows.size()) {
+            actualRow = actualRows.get(actualRowIndex);
+          } else {
+            actualRow = new String[cols];
+            Arrays.fill(actualRow, "");
+            actualRows.add(actualRow);
+          }
+
+          actualRow[i] = line;
+        }
+      }
+    }
+
+    int[] maxColWidths = new int[cols];
+
+    for (int i = 0; i < cols; i++) {
+      maxColWidths[i] = columnsNames[i].length();
+    }
+
+    for (var row : actualRows) {
+      for (int i = 0; i < cols; i++) {
+        maxColWidths[i] = Math.max(maxColWidths[i], row[i].length());
+      }
+    }
 
     for (int i = 0; i < cols; i++) {
       if (i > 0) {
@@ -52,11 +90,11 @@ public class TableFormatter {
 
     builder.append('\n');
 
-    for (int j = 0; j < rows.size(); j++) {
+    for (int j = 0; j < actualRows.size(); j++) {
       if (j > 0) {
         builder.append('\n');
       }
-      var row = rows.get(j);
+      var row = actualRows.get(j);
       for (int i = 0; i < cols; i++) {
         if (i > 0) {
           builder.append('|');
