@@ -68,8 +68,8 @@ public class CarService {
                .map(c -> {
                  var available = orders.findCarOrders(c.id())
                                        .stream()
-                                       .anyMatch(o -> o.type() == OrderKind.PURCHASE &&
-                                                      o.state() != OrderState.CANCELLED);
+                                       .noneMatch(o -> o.type() == OrderKind.PURCHASE &&
+                                                       o.state() != OrderState.CANCELLED);
                  return new CarWithAvailability(c.id(), c.brand(), c.model(),
                                                 c.productionYear(), c.price(), c.condition(),
                                                 available ? Availability.AVAILABLE : Availability.UNAVAILABLE);

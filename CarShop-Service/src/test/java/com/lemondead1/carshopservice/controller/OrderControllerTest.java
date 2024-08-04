@@ -61,7 +61,7 @@ public class OrderControllerTest {
     var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
 
     cli.out("Comments > ").in("")
-       .out("Ordering " + mockCar.prettyFormat() + ".")
+       .out("Ordering " + mockCar.prettyFormat() + ".\n")
        .out("Confirm [y/N] > ").in("n");
 
     when(cars.findById(3)).thenReturn(mockCar);
@@ -80,7 +80,7 @@ public class OrderControllerTest {
     var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
 
     cli.out("Comments > ").in("ASAP")
-       .out("Ordering " + mockCar.prettyFormat() + ".")
+       .out("Ordering " + mockCar.prettyFormat() + ".\n")
        .out("Confirm [y/N] > ").in("y");
 
     when(session.getCurrentUserId()).thenReturn(50);

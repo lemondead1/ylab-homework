@@ -52,7 +52,7 @@ public class OrderService {
                                  o.state() != OrderState.CANCELLED)) {
           throw new CarReservedException("Car " + car + " is not available for purchase.");
         }
-        var order = orders.create(time.now(), OrderKind.PURCHASE, OrderState.NEW, user, car, comment);
+        var order = orders.create(time.now(), OrderKind.PURCHASE, state, user, car, comment);
         events.onOrderCreated(user, order);
         yield order;
       }

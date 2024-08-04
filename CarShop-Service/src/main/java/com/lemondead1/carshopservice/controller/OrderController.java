@@ -78,7 +78,7 @@ public class OrderController implements Controller {
     int carId = IntParser.INSTANCE.parse(path[0]);
     var car = cars.findById(carId);
     var comments = cli.parseOptional("Comments > ", StringParser.INSTANCE).orElse("");
-    cli.printf("Ordering %s.", car.prettyFormat());
+    cli.printf("Ordering %s.\n", car.prettyFormat());
     if (!cli.parseOptional("Confirm [y/N] > ", BooleanParser.DEFAULT_TO_FALSE).orElse(false)) {
       return "Cancelled";
     }

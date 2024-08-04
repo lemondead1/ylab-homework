@@ -49,9 +49,9 @@ public class UserController implements Controller {
     var purchases = cli.parseOptional("Purchases > ", IntRangeParser.INSTANCE).orElse(IntRange.ALL);
     var sort = cli.parseOptional("Sorting > ", IdParser.of(UserSorting.class)).orElse(UserSorting.USERNAME_ASC);
     var list = users.searchUsers(username, role, phoneNumber, email, purchases, sort);
-    var table = new TableFormatter("ID", "Username", "Role");
+    var table = new TableFormatter("ID", "Username", "Phone number", "Email", "Purchase count", "Role");
     for (var row : list) {
-      table.addRow(row.id(), row.username(), row.role().getPrettyName());
+      table.addRow(row.id(), row.username(), row.phoneNumber(), row.email(), row.purchaseCount(), row.role().getPrettyName());
     }
     return table.format(true);
   }
