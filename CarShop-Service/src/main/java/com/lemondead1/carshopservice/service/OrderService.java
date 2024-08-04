@@ -33,6 +33,17 @@ public class OrderService {
     return createOrder(user, user, carId, OrderKind.SERVICE, OrderState.NEW, comments).car();
   }
 
+  /**
+   * Checks for car status and creates an order.
+   *
+   * @param user     user that performed the action
+   * @param customer the recipient of the order
+   * @param car      car
+   * @param kind     type
+   * @param state    initial order state
+   * @param comment  comment
+   * @return the order created
+   */
   public Order createOrder(int user, int customer, int car, OrderKind kind, OrderState state, String comment) {
     switch (kind) {
       case SERVICE -> {
@@ -61,6 +72,12 @@ public class OrderService {
     return orders.findById(orderId);
   }
 
+  /**
+   * Checks there are no service orders
+   *
+   * @param customerId customer id
+   * @param carId      car id
+   */
   private void validateNoServiceOrdersExist(int customerId, int carId) {
     if (orders.findCarOrders(carId)
               .stream()
@@ -70,6 +87,12 @@ public class OrderService {
     }
   }
 
+  /**
+   * Deletes the order verifying consistency
+   *
+   * @param deleterId id of the user that performed the action
+   * @param orderId   order to be deleted
+   */
   public void deleteOrder(int deleterId, int orderId) {
     var old = orders.findById(orderId);
     if (old.type() == OrderKind.PURCHASE) {
@@ -91,6 +114,14 @@ public class OrderService {
     return newRow;
   }
 
+  /**
+   * Updates order state verifying consistency
+   *
+   * @param userId        id of the user that performed the action
+   * @param orderId       id of the order
+   * @param newState      new state
+   * @param appendComment string that is appended to comment
+   */
   public void updateState(int userId, int orderId, OrderState newState, String appendComment) {
     var order = orders.findById(orderId);
 

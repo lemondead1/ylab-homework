@@ -9,6 +9,9 @@ import lombok.RequiredArgsConstructor;
 import java.io.Console;
 import java.util.Optional;
 
+/**
+ * Console decorator with support for parsing
+ */
 @RequiredArgsConstructor
 public class ConsoleIO {
   private final Console io;

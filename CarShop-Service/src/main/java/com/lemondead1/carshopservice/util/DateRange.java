@@ -3,6 +3,9 @@ package com.lemondead1.carshopservice.util;
 import java.time.Instant;
 import java.util.function.Predicate;
 
+/**
+ * Inclusive range of timestamps.
+ */
 public class DateRange implements Predicate<Instant> {
   public static final DateRange ALL = new DateRange(Instant.MIN, Instant.MAX);
 

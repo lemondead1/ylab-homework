@@ -21,6 +21,15 @@ public class CarRepo {
   private final Map<Integer, Car> cars = new HashMap<>();
   private int lastId;
 
+  /**
+   * Creates a new car
+   * @param brand brand
+   * @param model model
+   * @param productionYear production year
+   * @param price price
+   * @param condition condition
+   * @return car that was created
+   */
   public Car create(String brand, String model, int productionYear, int price, String condition) {
     lastId++;
     Car newRow = new Car(lastId, brand, model, productionYear, price, condition);
@@ -28,6 +37,16 @@ public class CarRepo {
     return newRow;
   }
 
+  /**
+   * Performs edit on an existing row
+   * @param id id
+   * @param brand new brand
+   * @param model new model
+   * @param productionYear new production year
+   * @param price new price
+   * @param condition new condition
+   * @return edited row
+   */
   @Builder(builderMethodName = "", buildMethodName = "apply", builderClassName = "EditBuilder")
   private Car applyEdit(int id,
                         @Nullable String brand,
@@ -52,6 +71,11 @@ public class CarRepo {
     return new EditBuilder().id(id);
   }
 
+  /**
+   * Validates foreign key constraints and deletes the car
+   * @param carId id to be deleted
+   * @return old row
+   */
   public Car delete(int carId) {
     if (orders.existCarOrders(carId)) {
       throw new ForeignKeyException("Cannot delete car " + carId + " as there are orders referencing it.");

@@ -6,6 +6,9 @@ import com.lemondead1.carshopservice.service.SessionService;
 
 import java.util.*;
 
+/**
+ * Dispatches commands to appropriate subcommands and checks permissions.
+ */
 public class CommandTree implements Command {
   private final Map<String, Command> subcommands = new LinkedHashMap<>();
   private final String name;

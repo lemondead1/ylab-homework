@@ -8,6 +8,11 @@ import com.lemondead1.carshopservice.enums.UserRole;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Class for constructing a subcommand tree.
+ *
+ * @param <PARENT> The type of parent TreeCommandBuilder
+ */
 public class TreeSubcommandBuilder<PARENT> extends SubcommandBuilder<TreeSubcommandBuilder<PARENT>, PARENT>
     implements TreeCommandBuilder<TreeSubcommandBuilder<PARENT>> {
   private final Map<String, SubcommandBuilder<?, ?>> subcommands = new LinkedHashMap<>();
@@ -25,12 +30,7 @@ public class TreeSubcommandBuilder<PARENT> extends SubcommandBuilder<TreeSubcomm
   static <SELF extends TreeCommandBuilder<SELF>> TreeSubcommandBuilder<SELF> pushImpl(
       SELF self, Map<String, SubcommandBuilder<?, ?>> subcommands, String name
   ) {
-    if ("help".equals(name)) {
-      throw new IllegalArgumentException("help is a reserved command name");
-    }
-    if (subcommands.containsKey(name)) {
-      throw new IllegalArgumentException("Subcommand with name " + name + " already exists");
-    }
+    checkSubcommandNameValid(subcommands, name);
     var subcommand = new TreeSubcommandBuilder<>(self, name);
     subcommands.put(name, subcommand);
     return subcommand;
@@ -39,15 +39,19 @@ public class TreeSubcommandBuilder<PARENT> extends SubcommandBuilder<TreeSubcomm
   static <SELF extends TreeCommandBuilder<SELF>> EndpointSubcommandBuilder<SELF> acceptImpl(
       SELF self, Map<String, SubcommandBuilder<?, ?>> subcommands, String name, Endpoint endpoint
   ) {
+    checkSubcommandNameValid(subcommands, name);
+    var subcommand = new EndpointSubcommandBuilder<>(self, name, endpoint);
+    subcommands.put(name, subcommand);
+    return subcommand;
+  }
+
+  static void checkSubcommandNameValid(Map<String, SubcommandBuilder<?, ?>> subcommands, String name) {
     if ("help".equals(name)) {
       throw new IllegalArgumentException("help is a reserved command name");
     }
     if (subcommands.containsKey(name)) {
       throw new IllegalArgumentException("Subcommand with name " + name + " already exists");
     }
-    var subcommand = new EndpointSubcommandBuilder<>(self, name, endpoint);
-    subcommands.put(name, subcommand);
-    return subcommand;
   }
 
   public TreeSubcommandBuilder<TreeSubcommandBuilder<PARENT>> push(String name) {

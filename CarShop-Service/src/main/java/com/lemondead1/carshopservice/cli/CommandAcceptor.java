@@ -6,6 +6,9 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.function.BooleanSupplier;
 
+/**
+ * Polls console for input and passes it to rootCommand
+ */
 @RequiredArgsConstructor
 public class CommandAcceptor {
   private final BooleanSupplier doContinue;

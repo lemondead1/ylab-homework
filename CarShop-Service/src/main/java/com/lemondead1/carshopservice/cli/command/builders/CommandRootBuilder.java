@@ -6,6 +6,9 @@ import com.lemondead1.carshopservice.cli.command.Endpoint;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Builds {@link CommandTreeRoot}
+ */
 public class CommandRootBuilder implements TreeCommandBuilder<CommandRootBuilder> {
   private final Map<String, SubcommandBuilder<?, ?>> subcommands = new LinkedHashMap<>();
 

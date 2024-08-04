@@ -8,6 +8,7 @@ import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.exceptions.ForeignKeyException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
+import com.lemondead1.carshopservice.service.OrderService;
 import com.lemondead1.carshopservice.util.StringUtil;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +50,12 @@ public class OrderRepo {
     }
   }
 
+
+  /**
+   * Checks foreign key constraints and creates a new order
+   *
+   * @return the created order
+   */
   public Order create(Instant createdAt, OrderKind kind, OrderState state, int customerId, int carId, String comments) {
     var user = findUser(customerId);
     var car = findCar(carId);
@@ -61,6 +68,8 @@ public class OrderRepo {
   }
 
   /**
+   * Checks foreign key constraints and modifies an existing order
+   *
    * @return order after edit
    */
   @Builder(builderMethodName = "", buildMethodName = "apply", builderClassName = "EditBuilder")
@@ -93,6 +102,14 @@ public class OrderRepo {
     return new EditBuilder().id(id);
   }
 
+  /**
+   * Deletes an order. WARNING! Does not check for consistency between orders.
+   * For example, deleting a purchase can result in service orders that are performed on a car that the customer no longer owns.
+   * Use {@link OrderService#deleteOrder(int, int)} instead
+   *
+   * @param id id to be deleted
+   * @return the deleted order
+   */
   public Order delete(int id) {
     var old = map.remove(id);
     if (old == null) {
@@ -142,7 +159,7 @@ public class OrderRepo {
   }
 
   /**
-   * Fetches order done by that customer.
+   * Fetches orders done by that customer.
    * Does not check whether the customer exists and in that case returns an empty list.
    *
    * @param customerId id of a customer
@@ -153,13 +170,6 @@ public class OrderRepo {
                          .stream()
                          .map(this::hydrateOrder)
                          .sorted(sorting.getSorter())
-                         .toList();
-  }
-
-  public List<Order> findCustomerOrders(int customerId) {
-    return customerOrders.getOrDefault(customerId, Set.of())
-                         .stream()
-                         .map(this::hydrateOrder)
                          .toList();
   }
 

@@ -10,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import java.util.Collection;
 import java.util.Set;
 
+/**
+ * Checks user permissions and performs command specified by endpoint.
+ */
 @RequiredArgsConstructor
 public class CommandEndpoint implements Command {
   private final String name;

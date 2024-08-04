@@ -2,6 +2,9 @@ package com.lemondead1.carshopservice.util;
 
 import java.util.function.IntPredicate;
 
+/**
+ * Inclusive range of integers.
+ */
 public class IntRange implements IntPredicate {
   public static IntRange ALL = new IntRange(Integer.MIN_VALUE, Integer.MAX_VALUE);
 

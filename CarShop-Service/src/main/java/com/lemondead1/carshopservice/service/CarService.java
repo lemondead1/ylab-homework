@@ -66,8 +66,7 @@ public class CarService {
     var set = EnumSet.copyOf(availability);
     return cars.lookup(brand, model, productionYear, price, condition, sorting).stream()
                .map(c -> {
-                 var available = orders.findCarOrders(c.id())
-                                       .stream()
+                 var available = orders.findCarOrders(c.id()).stream()
                                        .noneMatch(o -> o.type() == OrderKind.PURCHASE &&
                                                        o.state() != OrderState.CANCELLED);
                  return new CarWithAvailability(c.id(), c.brand(), c.model(),
