@@ -11,8 +11,12 @@ import java.util.Comparator;
 public enum UserSorting implements HasId {
   USERNAME_DESC("username_reversed", Comparator.comparing(User::username, String::compareToIgnoreCase).reversed()),
   USERNAME_ASC("username", Comparator.comparing(User::username, String::compareToIgnoreCase)),
+  EMAIL_DESC("email_reversed", Comparator.comparing(User::email, String::compareToIgnoreCase).reversed()),
+  EMAIL_ASC("email", Comparator.comparing(User::email, String::compareToIgnoreCase)),
   ROLE_DESC("role", Comparator.comparing(User::role).reversed()),
-  ROLE_ASC("role_reversed", Comparator.comparing(User::role));
+  ROLE_ASC("role_reversed", Comparator.comparing(User::role)),
+  PURCHASES_DESC("more_purchases_first", Comparator.comparing(User::purchaseCount).reversed()),
+  PURCHASES_ASC("less_purchases_first", Comparator.comparing(User::purchaseCount));
 
   private final String id;
   @Getter

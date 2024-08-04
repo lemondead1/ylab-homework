@@ -194,7 +194,7 @@ public class UserRepoTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = { 0, 1, 2, 3 })
+    @ValueSource(ints = { 0, 1, 2, 3, 4, 5, 6, 7 })
     void sortingTest(int sorterId) {
       assertThat(users.lookup("", Set.of(UserRole.values()), "", "", IntRange.ALL, UserSorting.values()[sorterId]))
           .isSortedAccordingTo(UserSorting.values()[sorterId].getSorter())
