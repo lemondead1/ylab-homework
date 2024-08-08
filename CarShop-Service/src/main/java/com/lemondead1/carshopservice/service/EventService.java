@@ -1,8 +1,8 @@
 package com.lemondead1.carshopservice.service;
 
-import com.lemondead1.carshopservice.dto.Car;
-import com.lemondead1.carshopservice.dto.Order;
-import com.lemondead1.carshopservice.dto.User;
+import com.lemondead1.carshopservice.entity.Car;
+import com.lemondead1.carshopservice.entity.Order;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.EventSorting;
 import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.event.CarEvent;

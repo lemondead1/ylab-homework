@@ -1,7 +1,7 @@
 package com.lemondead1.carshopservice.service;
 
-import com.lemondead1.carshopservice.dto.Car;
-import com.lemondead1.carshopservice.dto.CarWithAvailability;
+import com.lemondead1.carshopservice.entity.Car;
+import com.lemondead1.carshopservice.entity.CarWithAvailability;
 import com.lemondead1.carshopservice.enums.Availability;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.enums.OrderKind;

@@ -1,6 +1,6 @@
 package com.lemondead1.carshopservice.repo;
 
-import com.lemondead1.carshopservice.dto.Order;
+import com.lemondead1.carshopservice.entity.Order;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;

@@ -1,6 +1,6 @@
 package com.lemondead1.carshopservice.service;
 
-import com.lemondead1.carshopservice.dto.Car;
+import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.enums.*;
 import com.lemondead1.carshopservice.event.CarEvent;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;

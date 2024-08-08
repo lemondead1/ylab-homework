@@ -1,0 +1,147 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-1
+      author: Olexy
+      changes:
+        - sql:
+            sql: create type order_kind as enum ('purchase', 'service')
+        - sql:
+            sql: create type order_state as enum ('new', 'performing', 'done', 'cancelled')
+        - sql:
+            sql: create type user_role as enum ('client', 'manager', 'admin')
+        - sql:
+            sql: create type event_type as enum ('car_created', 'car_edited', 'car_deleted', 'order_created', 'order_edited', 'order_deleted', 'user_created', 'user_edited', 'user_deleted', 'user_logged_in', 'user_signed_up')
+        - createTable:
+            tableName: cars
+            columns:
+              - column:
+                  name: id
+                  type: integer
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: brand
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: model
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: production_year
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: price
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: condition
+                  type: text
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: integer
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: username
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: phone_number
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: password
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: user_role
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: orders
+            columns:
+              - column:
+                  name: id
+                  type: integer
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: kind
+                  type: order_kind
+                  constraints:
+                    nullable: false
+              - column:
+                  name: state
+                  type: order_state
+                  constraints:
+                    nullable: false
+              - column:
+                  name: client_id
+                  type: integer
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_order_user
+                    references: users(id)
+              - column:
+                  name: car_id
+                  type: integer
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_order_car
+                    references: car(id)
+              - column:
+                  name: comment
+                  type: text
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: events
+            columns:
+              - column:
+                  name: timestamp
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: event_type
+                  constraints:
+                    nullable: false
+              - column:
+                  name: data
+                  type: jsonb
+                  constraints:
+                    nullable: false

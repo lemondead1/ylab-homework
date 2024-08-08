@@ -1,6 +1,6 @@
 package com.lemondead1.carshopservice.controller;
 
-import com.lemondead1.carshopservice.dto.User;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.WrongUsageException;
 import com.lemondead1.carshopservice.service.*;

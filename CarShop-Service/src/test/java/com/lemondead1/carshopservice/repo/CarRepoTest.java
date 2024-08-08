@@ -1,7 +1,7 @@
 package com.lemondead1.carshopservice.repo;
 
 import com.lemondead1.carshopservice.IntRangeConverter;
-import com.lemondead1.carshopservice.dto.Car;
+import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderState;

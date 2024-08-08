@@ -1,4 +1,4 @@
-package com.lemondead1.carshopservice.dto;
+package com.lemondead1.carshopservice.entity;
 
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderState;
