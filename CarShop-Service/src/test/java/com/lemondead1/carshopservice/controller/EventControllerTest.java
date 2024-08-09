@@ -1,8 +1,8 @@
 package com.lemondead1.carshopservice.controller;
 
+import com.lemondead1.carshopservice.entity.Event;
 import com.lemondead1.carshopservice.enums.EventSorting;
 import com.lemondead1.carshopservice.enums.EventType;
-import com.lemondead1.carshopservice.event.UserEvent;
 import com.lemondead1.carshopservice.service.*;
 import com.lemondead1.carshopservice.util.DateRange;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +41,7 @@ public class EventControllerTest {
   @Test
   void eventControllerSearchReturnsSerializedEvents() {
     var now = Instant.now();
-    var event = new UserEvent.Deleted(now, 5, 7);
+    var event = new Event(6, now, 6, EventType.USER_DELETED, "{\"abacaba\": \"something\"}");
     when(events.findEvents(EventType.ALL, DateRange.ALL, "", EventSorting.TIMESTAMP_DESC)).thenReturn(List.of(event));
 
     cli.out("Type > ").in("")
@@ -49,7 +49,7 @@ public class EventControllerTest {
        .out("User > ").in("")
        .out("Sorting > ").in("newer_first");
 
-    assertThat(this.event.search(session, cli)).isEqualTo(event.serialize() + "\nRow count: 1");
+    assertThat(this.event.search(session, cli)).isEqualTo(event.json() + "\nRow count: 1");
 
     cli.assertMatchesHistory();
     verify(events).findEvents(EventType.ALL, DateRange.ALL, "", EventSorting.TIMESTAMP_DESC);

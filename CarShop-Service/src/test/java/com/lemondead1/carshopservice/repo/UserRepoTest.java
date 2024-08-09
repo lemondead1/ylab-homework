@@ -1,26 +1,26 @@
 package com.lemondead1.carshopservice.repo;
 
+import com.lemondead1.carshopservice.IntegerArrayConverter;
+import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.enums.UserSorting;
-import com.lemondead1.carshopservice.exceptions.ForeignKeyException;
+import com.lemondead1.carshopservice.exceptions.DBException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
-import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
 import com.lemondead1.carshopservice.util.IntRange;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.params.shadow.com.univocity.parsers.csv.Csv;
 import org.junit.jupiter.params.shadow.com.univocity.parsers.csv.CsvParser;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.io.StringReader;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.IntStream;
 
@@ -28,25 +28,40 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class UserRepoTest {
-  private CarRepo cars;
-  private UserRepo users;
-  private OrderRepo orders;
+  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres");
+
+  static DBManager dbManager;
+  static CarRepo cars;
+  static UserRepo users;
+  static OrderRepo orders;
+
+  @BeforeAll
+  static void beforeAll() {
+    postgres.start();
+    dbManager = new DBManager(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword(), "data", "infra");
+    cars = new CarRepo(dbManager);
+    users = new UserRepo(dbManager);
+    orders = new OrderRepo(dbManager);
+  }
+
+  @AfterAll
+  static void afterAll() {
+    postgres.stop();
+  }
 
   @BeforeEach
-  void setup() {
-    cars = new CarRepo();
-    users = new UserRepo();
-    orders = new OrderRepo();
-    cars.setOrders(orders);
-    users.setOrders(orders);
-    orders.setCars(cars);
-    orders.setUsers(users);
+  void beforeEach() {
+    dbManager.init();
+  }
+
+  @AfterEach
+  void afterEach() {
+    dbManager.dropAll();
   }
 
   @Test
   void firstCreatedUserHasIdEqualToOne() {
-    assertThat(users.create("username", "88005553535", "test@example.com", "password", UserRole.CLIENT).id()).isEqualTo(
-        1);
+    assertThat(users.create("username", "88005553535", "test@ya.com", "password", UserRole.CLIENT).id()).isEqualTo(1);
     assertThat(users.findById(1).id()).isEqualTo(1);
   }
 
@@ -62,29 +77,29 @@ public class UserRepoTest {
   void creatingUsersWithTheSameUsernameThrows() {
     users.create("user", "88005553535", "test@example.com", "password", UserRole.CLIENT);
     assertThatThrownBy(() -> users.create("user", "88005553535", "test@example.com", "password", UserRole.CLIENT))
-        .isInstanceOf(UserAlreadyExistsException.class);
+        .isInstanceOf(DBException.class);
   }
 
   @Test
   void editedUserMatchesSpec() {
     users.create("user", "88005553535", "test@example.com", "password", UserRole.CLIENT);
-    users.edit(1).password("newPassword").phoneNumber("8912536173").role(UserRole.ADMIN).apply();
+    users.edit(1, null, "8912536173", null, "newPassword", UserRole.ADMIN);
     assertThat(users.findById(1))
         .isEqualTo(new User(1, "user", "8912536173", "test@example.com", "newPassword", UserRole.ADMIN, 0));
   }
 
   @Test
   void editNotExistingUserThrows() {
-    var builder = users.edit(1).username("username").password("password").role(UserRole.ADMIN);
-    assertThatThrownBy(builder::apply).isInstanceOf(RowNotFoundException.class);
+    assertThatThrownBy(() -> users.edit(1, "username", null, null, "password", UserRole.ADMIN))
+        .isInstanceOf(RowNotFoundException.class);
   }
 
   @Test
   void usernameConflictOnEditThrows() {
     users.create("user_1", "88005553535", "test@example.com", "password", UserRole.CLIENT);
     users.create("user_2", "88005553535", "test@example.com", "password", UserRole.ADMIN);
-    var builder = users.edit(1).username("user_1").password("password").role(UserRole.ADMIN);
-    assertThatThrownBy(builder::apply).isInstanceOf(UserAlreadyExistsException.class);
+    assertThatThrownBy(() -> users.edit(2, "user_1", null, null, null, null))
+        .isInstanceOf(DBException.class);
   }
 
   @Test
@@ -132,7 +147,7 @@ public class UserRepoTest {
     cars.create("BMW", "X5", 2015, 3000000, "good");
     users.create("alex", "88005553535", "test@example.com", "pwd", UserRole.CLIENT);
     orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.NEW, 1, 1, "ASAP");
-    assertThatThrownBy(() -> users.delete(1)).isInstanceOf(ForeignKeyException.class);
+    assertThatThrownBy(() -> users.delete(1)).isInstanceOf(DBException.class);
   }
 
   @Nested
@@ -185,20 +200,20 @@ public class UserRepoTest {
     @ParameterizedTest
     @CsvSource({
         "'1', lquarry",
-        "'5,29,32,35', li"
+        "'5, 29, 32, 35', li"
     })
-    void filterTest(String ids, String username) {
-      assertThat(users.lookup(username, Set.of(UserRole.values()), "", "", IntRange.ALL, UserSorting.USERNAME_ASC))
-          .isSortedAccordingTo(UserSorting.USERNAME_ASC.getSorter())
-          .map(User::id).contains(Arrays.stream(ids.split(",")).map(Integer::parseInt).toArray(Integer[]::new));
+    void filterTest(@ConvertWith(IntegerArrayConverter.class) Integer[] ids, String username) {
+      var got = users.lookup(username, Set.copyOf(UserRole.AUTHORIZED), "", "", IntRange.ALL, UserSorting.USERNAME_ASC);
+      assertThat(got).isSortedAccordingTo(UserSorting.USERNAME_ASC.getSorter())
+                     .map(User::id).containsExactlyInAnyOrder(ids);
     }
 
     @ParameterizedTest
     @ValueSource(ints = { 0, 1, 2, 3, 4, 5, 6, 7 })
     void sortingTest(int sorterId) {
-      assertThat(users.lookup("", Set.of(UserRole.values()), "", "", IntRange.ALL, UserSorting.values()[sorterId]))
-          .isSortedAccordingTo(UserSorting.values()[sorterId].getSorter())
-          .map(User::id).containsAll(IntStream.range(1, 36).boxed().toList());
+      var got = users.lookup("", Set.copyOf(UserRole.AUTHORIZED), "", "", IntRange.ALL, UserSorting.values()[sorterId]);
+      assertThat(got).isSortedAccordingTo(UserSorting.values()[sorterId].getSorter())
+                     .map(User::id).containsExactlyInAnyOrder(IntStream.range(1, 36).boxed().toArray(Integer[]::new));
     }
   }
 }

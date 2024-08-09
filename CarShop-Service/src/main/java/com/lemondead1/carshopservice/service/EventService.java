@@ -1,17 +1,16 @@
 package com.lemondead1.carshopservice.service;
 
 import com.lemondead1.carshopservice.entity.Car;
+import com.lemondead1.carshopservice.entity.Event;
 import com.lemondead1.carshopservice.entity.Order;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.EventSorting;
 import com.lemondead1.carshopservice.enums.EventType;
-import com.lemondead1.carshopservice.event.CarEvent;
-import com.lemondead1.carshopservice.event.Event;
-import com.lemondead1.carshopservice.event.OrderEvent;
-import com.lemondead1.carshopservice.event.UserEvent;
 import com.lemondead1.carshopservice.exceptions.DumpException;
 import com.lemondead1.carshopservice.repo.EventRepo;
 import com.lemondead1.carshopservice.util.DateRange;
+import com.lemondead1.carshopservice.util.JsonUtil;
+import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -25,67 +24,151 @@ import java.util.List;
  * This class is responsible for interfacing with the event database.
  * It provides convenience methods for both submitting and querying events.
  */
+@RequiredArgsConstructor
 public class EventService {
   private final EventRepo events;
   private final TimeService time;
 
-  public EventService(EventRepo events, TimeService time) {
-    this.events = events;
-    this.time = time;
+  public void onCarCreated(int userId, Car car) {
+    var now = time.now();
+    var json = JsonUtil.jsonBuilder()
+                       .append("timestamp", now)
+                       .append("type", EventType.CAR_CREATED)
+                       .append("user_id", userId)
+                       .append("car_id", car.id())
+                       .append("brand", car.brand())
+                       .append("model", car.model())
+                       .append("production_year", car.productionYear())
+                       .append("price", car.price())
+                       .append("condition", car.condition()).build();
+    events.create(now, userId, EventType.CAR_CREATED, json);
   }
 
-  public void onCarCreated(int creatorId, Car car) {
-    events.submitEvent(new CarEvent.Created(time.now(), creatorId, car.id(), car.brand(), car.model(),
-                                            car.productionYear(), car.price(), car.condition()));
+  public void onCarEdited(int userId, Car newCar) {
+    var now = time.now();
+    var json = JsonUtil.jsonBuilder()
+                       .append("timestamp", now)
+                       .append("type", EventType.CAR_MODIFIED)
+                       .append("user_id", userId)
+                       .append("car_id", newCar.id())
+                       .append("new_brand", newCar.brand())
+                       .append("new_model", newCar.model())
+                       .append("new_production_year", newCar.productionYear())
+                       .append("new_price", newCar.price())
+                       .append("new_condition", newCar.condition()).build();
+    events.create(now, userId, EventType.CAR_MODIFIED, json);
   }
 
-  public void onCarEdited(int editorId, Car newCar) {
-    events.submitEvent(new CarEvent.Modified(time.now(), editorId, newCar.id(), newCar.brand(),
-                                             newCar.model(), newCar.productionYear(), newCar.price(),
-                                             newCar.condition()));
+  public void onCarDeleted(int userId, int carId) {
+    var now = time.now();
+    var json = JsonUtil.jsonBuilder()
+                       .append("timestamp", now)
+                       .append("type", EventType.CAR_DELETED)
+                       .append("user_id", userId)
+                       .append("car_id", carId).build();
+    events.create(now, userId, EventType.CAR_DELETED, json);
   }
 
-  public void onCarDeleted(int deleterId, int carId) {
-    events.submitEvent(new CarEvent.Deleted(time.now(), deleterId, carId));
+  public void onOrderCreated(int userId, Order order) {
+    var now = time.now();
+    var json = JsonUtil.jsonBuilder()
+                       .append("timestamp", now)
+                       .append("type", EventType.ORDER_CREATED)
+                       .append("user_id", userId)
+                       .append("order_id", order.id())
+                       .append("created_at", order.createdAt())
+                       .append("order_type", order.type())
+                       .append("state", order.state())
+                       .append("customer_id", order.customer().id())
+                       .append("car_id", order.car().id())
+                       .append("comments", order.comments()).build();
+    events.create(now, userId, EventType.ORDER_CREATED, json);
   }
 
-  public void onOrderCreated(int creatorId, Order order) {
-    events.submitEvent(new OrderEvent.Created(time.now(), creatorId, order.id(), order.createdAt(), order.type(),
-                                              order.state(), order.customer().id(), order.car().id(),
-                                              order.comments()));
+  public void onOrderEdited(int userId, Order newOrder) {
+    var now = time.now();
+    var json = JsonUtil.jsonBuilder()
+                       .append("timestamp", now)
+                       .append("type", EventType.ORDER_MODIFIED)
+                       .append("user_id", userId)
+                       .append("order_id", newOrder.id())
+                       .append("new_created_at", newOrder.createdAt())
+                       .append("new_order_type", newOrder.type())
+                       .append("new_state", newOrder.state())
+                       .append("new_customer_id", newOrder.customer().id())
+                       .append("new_car_id", newOrder.car().id())
+                       .append("new_comments", newOrder.comments()).build();
+    events.create(now, userId, EventType.ORDER_MODIFIED, json);
   }
 
-  public void onOrderEdited(int editorId, Order newOrder) {
-    events.submitEvent(new OrderEvent.Modified(time.now(), editorId, newOrder.id(), newOrder.createdAt(),
-                                               newOrder.type(), newOrder.state(), newOrder.customer().id(),
-                                               newOrder.car().id(), newOrder.comments()));
-  }
-
-  public void onOrderDeleted(int deleterId, int orderId) {
-    events.submitEvent(new OrderEvent.Deleted(time.now(), deleterId, orderId));
+  public void onOrderDeleted(int userId, int orderId) {
+    var now = time.now();
+    var json = JsonUtil.jsonBuilder()
+                       .append("timestamp", now)
+                       .append("type", EventType.ORDER_DELETED)
+                       .append("user_id", userId)
+                       .append("order_id", orderId).build();
+    events.create(now, userId, EventType.ORDER_DELETED, json);
   }
 
   public void onUserLoggedIn(int userId) {
-    events.submitEvent(new UserEvent.Login(time.now(), userId));
+    var now = time.now();
+    var json = JsonUtil.jsonBuilder()
+                       .append("timestamp", now)
+                       .append("type", EventType.USER_LOGGED_IN)
+                       .append("user_id", userId).build();
+    events.create(now, userId, EventType.USER_LOGGED_IN, json);
   }
 
-  public void onUserSignedUp(int userId, String username) {
-    events.submitEvent(new UserEvent.SignUp(time.now(), userId, username));
+  public void onUserSignedUp(User user) {
+    var now = time.now();
+    var json = JsonUtil.jsonBuilder()
+                       .append("timestamp", now)
+                       .append("type", EventType.USER_SIGNED_UP)
+                       .append("user_id", user.id())
+                       .append("username", user.username())
+                       .append("phone_number", user.phoneNumber())
+                       .append("email", user.email()).build();
+    events.create(now, user.id(), EventType.USER_SIGNED_UP, json);
   }
 
-  public void onUserEdited(int editorId, User oldUser, User newUser) {
-    events.submitEvent(
-        new UserEvent.Edited(time.now(), editorId, newUser.id(), newUser.username(), newUser.phoneNumber(),
-                             newUser.email(), !oldUser.password().equals(newUser.password()), newUser.role()));
+  public void onUserEdited(int userId, User oldUser, User newUser) {
+    var now = time.now();
+    var json = JsonUtil.jsonBuilder()
+                       .append("timestamp", now)
+                       .append("type", EventType.USER_MODIFIED)
+                       .append("user_id", userId)
+                       .append("edited_user_id", newUser.id())
+                       .append("new_username", newUser.username())
+                       .append("new_phone_number", newUser.phoneNumber())
+                       .append("new_email", newUser.email())
+                       .append("password_changed", !oldUser.password().equals(newUser.password()))
+                       .append("new_role", newUser.role()).build();
+    events.create(now, userId, EventType.USER_MODIFIED, json);
   }
 
-  public void onUserCreated(int creatorId, User created) {
-    events.submitEvent(new UserEvent.Created(time.now(), creatorId, created.id(), created.username(),
-                                             created.phoneNumber(), created.email(), created.role()));
+  public void onUserCreated(int userId, User user) {
+    var now = time.now();
+    var json = JsonUtil.jsonBuilder()
+                       .append("timestamp", now)
+                       .append("type", EventType.USER_CREATED)
+                       .append("user_id", userId)
+                       .append("edited_user_id", user.id())
+                       .append("username", user.username())
+                       .append("phone_number", user.phoneNumber())
+                       .append("email", user.email())
+                       .append("role", user.role()).build();
+    events.create(now, userId, EventType.USER_CREATED, json);
   }
 
-  public void onUserDeleted(int deleterId, int userId) {
-    events.submitEvent(new UserEvent.Deleted(time.now(), deleterId, userId));
+  public void onUserDeleted(int userId, int deletedUserId) {
+    var now = time.now();
+    var json = JsonUtil.jsonBuilder()
+                       .append("timestamp", now)
+                       .append("type", EventType.USER_DELETED)
+                       .append("user_id", userId)
+                       .append("deleted_user_id", deletedUserId).build();
+    events.create(now, userId, EventType.USER_DELETED, json);
   }
 
   public List<Event> findEvents(Collection<EventType> types, DateRange range, String username, EventSorting sorting) {
@@ -108,7 +191,7 @@ public class EventService {
     var list = findEvents(types, range, username, sorting);
     try {
       for (var ev : list) {
-        writer.write(ev.serialize());
+        writer.write(ev.json());
         writer.write('\n');
       }
     } catch (IOException e) {

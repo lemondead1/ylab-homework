@@ -5,19 +5,13 @@ import java.util.function.IntPredicate;
 /**
  * Inclusive range of integers.
  */
-public class IntRange implements IntPredicate {
-  public static IntRange ALL = new IntRange(Integer.MIN_VALUE, Integer.MAX_VALUE);
+public record IntRange(int min, int max) implements IntPredicate {
+  public static final IntRange ALL = new IntRange(Integer.MIN_VALUE, Integer.MAX_VALUE);
 
-  private final int min;
-  private final int max;
-
-  public IntRange(int min, int max) {
+  public IntRange {
     if (min > max) {
       throw new IllegalArgumentException(min + " is greater than " + max);
     }
-
-    this.min = min;
-    this.max = max;
   }
 
   @Override

@@ -1,7 +1,6 @@
 package com.lemondead1.carshopservice.controller;
 
 import com.lemondead1.carshopservice.entity.Car;
-import com.lemondead1.carshopservice.entity.CarWithAvailability;
 import com.lemondead1.carshopservice.enums.Availability;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
@@ -54,7 +53,7 @@ public class CarControllerTest {
 
   @Test
   void byIdSuccess() {
-    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", true);
 
     when(cars.findById(3)).thenReturn(mockCar);
 
@@ -74,7 +73,7 @@ public class CarControllerTest {
 
   @Test
   void carDeleteCancelled() {
-    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", true);
 
     cli.out("Deleting \"Brand\" \"Model\" of 2001 p/y priced 1000000 in \"poor\" condition with id 3")
        .out("Confirm [y/N] > ").in("not");
@@ -88,7 +87,7 @@ public class CarControllerTest {
 
   @Test
   void carDeleteCascadeCancelled() {
-    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", true);
 
     cli.out("Deleting \"Brand\" \"Model\" of 2001 p/y priced 1000000 in \"poor\" condition with id 3")
        .out("Confirm [y/N] > ").in("yes")
@@ -107,7 +106,7 @@ public class CarControllerTest {
 
   @Test
   void carDeleteSuccess() {
-    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", true);
 
     cli.out("Deleting \"Brand\" \"Model\" of 2001 p/y priced 1000000 in \"poor\" condition with id 3")
        .out("Confirm [y/N] > ").in("yes");
@@ -124,7 +123,7 @@ public class CarControllerTest {
 
   @Test
   void carDeleteCascadingSuccess() {
-    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", false);
 
     cli.out("Deleting \"Brand\" \"Model\" of 2001 p/y priced 1000000 in \"poor\" condition with id 3")
        .out("Confirm [y/N] > ").in("yes")
@@ -153,8 +152,8 @@ public class CarControllerTest {
 
   @Test
   void carEditSuccess() {
-    var oldCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
-    var newCar = new Car(3, "Brand", "Model", 2001, 2000000, "ok");
+    var oldCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", true);
+    var newCar = new Car(3, "Brand", "Model", 2001, 2000000, "ok", true);
 
     cli.out("Brand (Brand) > ").in("")
        .out("Model (Model) > ").in("")
@@ -176,7 +175,7 @@ public class CarControllerTest {
 
   @Test
   void createCarSuccess() {
-    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", true);
 
     cli.out("Brand > ").in("Brand")
        .out("Model > ").in("Model")
@@ -196,9 +195,9 @@ public class CarControllerTest {
 
   @Test
   void listCarsTest() {
-    CarWithAvailability[] dummyCars = {
-        new CarWithAvailability(3, "Brand", "Model", 2001, 1000000, "poor", Availability.UNAVAILABLE),
-        new CarWithAvailability(64, "Toyota", "Corolla", 2009, 2000000, "ok", Availability.AVAILABLE)
+    Car[] dummyCars = {
+        new Car(3, "Brand", "Model", 2001, 1000000, "poor", false),
+        new Car(64, "Toyota", "Corolla", 2009, 2000000, "ok", true)
     };
 
     cli.out("Brand > ").in("")
@@ -209,8 +208,8 @@ public class CarControllerTest {
        .out("Availability for purchase > ").in("available,unavailable")
        .out("Sorting > ").in("");
 
-    when(cars.lookupCars(eq(""), eq(""), refEq(new IntRange(2000, 2010)), refEq(new IntRange(100000,10000000)), eq("o"),
-                         eq(List.of(Availability.AVAILABLE, Availability.UNAVAILABLE)), eq(CarSorting.NAME_ASC)))
+    when(cars.lookupCars("", "", new IntRange(2000, 2010), new IntRange(100000,10000000), "o",
+                         List.of(Availability.AVAILABLE, Availability.UNAVAILABLE), CarSorting.NAME_ASC))
         .thenReturn(List.of(dummyCars));
 
     var table = new TableFormatter("ID", "Brand", "Model", "Prod. year", "Price", "Condition", "Available for purchase");

@@ -59,6 +59,7 @@ databaseChangeLog:
                   type: text
                   constraints:
                     nullable: false
+                    unique: true
               - column:
                   name: phone_number
                   type: text
@@ -116,7 +117,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                     foreignKeyName: fk_order_car
-                    references: car(id)
+                    references: cars(id)
               - column:
                   name: comment
                   type: text
@@ -125,6 +126,12 @@ databaseChangeLog:
         - createTable:
             tableName: events
             columns:
+              - column:
+                  name: id
+                  type: integer
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
               - column:
                   name: timestamp
                   type: timestamp with time zone
@@ -145,3 +152,12 @@ databaseChangeLog:
                   type: jsonb
                   constraints:
                     nullable: false
+      rollback:
+        - sql:
+            sql: drop type order_kind
+        - sql:
+            sql: drop type order_state
+        - sql:
+            sql: drop type user_role
+        - sql:
+            sql: drop type event_type

@@ -12,6 +12,7 @@ import com.lemondead1.carshopservice.service.CarService;
 import com.lemondead1.carshopservice.service.OrderService;
 import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.service.UserService;
+import com.lemondead1.carshopservice.util.DateRange;
 import com.lemondead1.carshopservice.util.TableFormatter;
 import lombok.RequiredArgsConstructor;
 
@@ -105,8 +106,8 @@ public class OrderController implements Controller {
     }
     int carId = IntParser.INSTANCE.parse(path[0]);
     var comments = cli.parseOptional("Comments > ", StringParser.INSTANCE).orElse("");
-    var car = orders.orderService(session.getCurrentUserId(), carId, comments);
-    return "Scheduled service for " + car.prettyFormat();
+    var order = orders.orderService(session.getCurrentUserId(), carId, comments);
+    return "Scheduled service for " + order.car().prettyFormat();
   }
 
   String cancel(SessionService session, ConsoleIO cli, String... path) {
@@ -168,12 +169,14 @@ public class OrderController implements Controller {
   }
 
   String search(SessionService session, ConsoleIO cli, String... path) {
+    var dates = cli.parseOptional("Date > ", DateRangeParser.INSTANCE).orElse(DateRange.ALL);
+    var kind = cli.parseOptional("Kind > ", IdListParser.of(OrderKind.class)).orElse(OrderKind.ALL);
     var username = cli.parseOptional("Customer > ", StringParser.INSTANCE).orElse("");
     var carBrand = cli.parseOptional("Car brand > ", StringParser.INSTANCE).orElse("");
     var carModel = cli.parseOptional("Car model > ", StringParser.INSTANCE).orElse("");
     var state = cli.parseOptional("State > ", IdListParser.of(OrderState.class)).orElse(OrderState.ALL);
     var sorting = cli.parseOptional("Sorting > ", IdParser.of(OrderSorting.class)).orElse(OrderSorting.LATEST_FIRST);
-    var list = orders.findAllOrders(username, carBrand, carModel, state, sorting);
+    var list = orders.lookupOrders(dates, username, carBrand, carModel, kind, state, sorting);
     var table = new TableFormatter("Order ID", "Creation date", "Type", "Status",
                                    "Customer ID", "Customer name", "Car ID", "Car brand", "Car model",
                                    "Comments");

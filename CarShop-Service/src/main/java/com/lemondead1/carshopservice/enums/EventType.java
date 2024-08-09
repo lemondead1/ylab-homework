@@ -3,7 +3,11 @@ package com.lemondead1.carshopservice.enums;
 import com.lemondead1.carshopservice.cli.parsing.HasId;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public enum EventType implements HasId {
@@ -19,6 +23,8 @@ public enum EventType implements HasId {
   USER_LOGGED_IN("user_logged_in"),
   USER_SIGNED_UP("user_signed_up");
 
+  private static final Map<String, EventType> idToEnum =
+      Arrays.stream(values()).collect(Collectors.toMap(EventType::getId, Function.identity()));
   public static final List<EventType> ALL = List.of(values());
 
   private final String id;
@@ -26,5 +32,13 @@ public enum EventType implements HasId {
   @Override
   public String getId() {
     return id;
+  }
+
+  public static EventType parse(String id) {
+    var value = idToEnum.get(id);
+    if (value == null) {
+      throw new IllegalArgumentException();
+    }
+    return value;
   }
 }

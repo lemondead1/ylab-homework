@@ -13,25 +13,31 @@ import com.lemondead1.carshopservice.repo.UserRepo;
 import com.lemondead1.carshopservice.service.*;
 import lombok.Setter;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Properties;
+
 public class CarShopServiceApplication {
   @Setter
   private static boolean exited = false;
 
-  public static void main(String[] args) {
-    var dbManager = new DBManager("jdbc:postgresql://localhost:5433/car_shop", "user", "password", "car_shop");
+  public static void main(String[] args) throws IOException {
+    if (args.length == 0) {
+      throw new IllegalStateException("Config path expected as an argument.");
+    }
 
-    var userRepo = new UserRepo();
-    var carRepo = new CarRepo();
-    var orderRepo = new OrderRepo();
-    var eventRepo = new EventRepo();
+    var dbManager = createDBManager(args[0]);
+    dbManager.init();
 
-    userRepo.setOrders(orderRepo);
-    carRepo.setOrders(orderRepo);
-    orderRepo.setCars(carRepo);
-    orderRepo.setUsers(userRepo);
-    eventRepo.setUsers(userRepo);
+    var userRepo = new UserRepo(dbManager);
+    var carRepo = new CarRepo(dbManager);
+    var orderRepo = new OrderRepo(dbManager);
+    var eventRepo = new EventRepo(dbManager);
 
-    userRepo.create("admin", "88005553535", "test@example.com", "password", UserRole.ADMIN);
+    if (!userRepo.existsUsername("admin")) {
+      userRepo.create("admin", "88005553535", "test@example.com", "password", UserRole.ADMIN);
+    }
 
     var timeService = new TimeService();
     var eventService = new EventService(eventRepo, timeService);
@@ -52,5 +58,18 @@ public class CarShopServiceApplication {
     var rootCommand = commandBuilder.build();
 
     new CommandAcceptor(() -> !exited, cli, sessionService, rootCommand).acceptCommands();
+  }
+
+  private static DBManager createDBManager(String configPath) throws IOException {
+    var path = Path.of(configPath);
+    var cfg = new Properties();
+    try (var reader = Files.newBufferedReader(path)) {
+      cfg.load(reader);
+    }
+    return new DBManager(cfg.getProperty("jdbc_url"),
+                         cfg.getProperty("database_user"),
+                         cfg.getProperty("database_password"),
+                         cfg.getProperty("data_schema"),
+                         cfg.getProperty("infra_schema"));
   }
 }

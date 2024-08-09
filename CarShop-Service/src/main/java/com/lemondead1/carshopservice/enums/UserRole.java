@@ -13,7 +13,7 @@ public enum UserRole implements HasId {
   MANAGER("manager", "Manager"),
   ADMIN("admin", "Admin");
 
-  public static final List<UserRole> ALL = List.of(values());
+  public static final List<UserRole> AUTHORIZED = List.of(CLIENT, MANAGER, ADMIN);
 
   private final String id;
   @Getter
@@ -22,5 +22,15 @@ public enum UserRole implements HasId {
   @Override
   public String getId() {
     return id;
+  }
+
+  public static UserRole parse(String id) {
+    return switch (id) {
+      case "anonymous" -> ANONYMOUS;
+      case "client" -> CLIENT;
+      case "manager" -> MANAGER;
+      case "admin" -> ADMIN;
+      default -> throw new IllegalArgumentException();
+    };
   }
 }

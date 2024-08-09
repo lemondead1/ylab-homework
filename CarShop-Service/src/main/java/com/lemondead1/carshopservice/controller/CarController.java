@@ -85,7 +85,7 @@ public class CarController implements Controller {
         new TableFormatter("ID", "Brand", "Model", "Prod. year", "Price", "Condition", "Available for purchase");
     for (var car : list) {
       table.addRow(car.id(), car.brand(), car.model(), car.productionYear(), car.price(), car.condition(),
-                   car.availableForPurchase() == Availability.AVAILABLE ? "Yes" : "No");
+                   car.availableForPurchase() ? "Yes" : "No");
     }
     return table.format(true);
   }

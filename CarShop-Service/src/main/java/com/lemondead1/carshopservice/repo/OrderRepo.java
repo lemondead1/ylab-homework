@@ -1,161 +1,230 @@
 package com.lemondead1.carshopservice.repo;
 
+import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.entity.Order;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;
-import com.lemondead1.carshopservice.exceptions.ForeignKeyException;
+import com.lemondead1.carshopservice.enums.UserRole;
+import com.lemondead1.carshopservice.exceptions.DBException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
-import com.lemondead1.carshopservice.service.OrderService;
+import com.lemondead1.carshopservice.util.DateRange;
+import com.lemondead1.carshopservice.util.SqlUtil;
 import com.lemondead1.carshopservice.util.StringUtil;
-import lombok.Builder;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 
 import javax.annotation.Nullable;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.Instant;
-import java.util.*;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 @RequiredArgsConstructor
 public class OrderRepo {
-  private record OrderStore(int id, Instant createdAt, OrderKind kind, OrderState state, int customerId, int carId,
-                            String comments) { }
-
-  @Setter
-  private UserRepo users;
-
-  @Setter
-  private CarRepo cars;
-
-  private final Map<Integer, OrderStore> map = new HashMap<>();
-  private final Map<Integer, Set<OrderStore>> customerOrders = new HashMap<>();
-  private final Map<Integer, Set<OrderStore>> carOrders = new HashMap<>();
-  private int lastId = 0;
-
-  private User findUser(int userId) {
-    try {
-      return users.findById(userId);
-    } catch (RowNotFoundException e) {
-      throw new ForeignKeyException(e.getMessage(), e);
-    }
-  }
-
-  private Car findCar(int carId) {
-    try {
-      return cars.findById(carId);
-    } catch (RowNotFoundException e) {
-      throw new ForeignKeyException(e.getMessage(), e);
-    }
-  }
-
+  private final DBManager db;
 
   /**
    * Checks foreign key constraints and creates a new order
    *
    * @return the created order
    */
-  public Order create(Instant createdAt, OrderKind kind, OrderState state, int customerId, int carId, String comments) {
-    var user = findUser(customerId);
-    var car = findCar(carId);
-    lastId++;
-    var newRow = new OrderStore(lastId, createdAt, kind, state, customerId, carId, comments);
-    map.put(lastId, newRow);
-    customerOrders.computeIfAbsent(customerId, i -> new HashSet<>()).add(newRow);
-    carOrders.computeIfAbsent(carId, i -> new HashSet<>()).add(newRow);
-    return new Order(lastId, createdAt, kind, state, user, car, comments);
+  public Order create(Instant createdAt, OrderKind kind, OrderState state, int clientId, int carId, String comments) {
+    var sql = """
+        with o as (
+          insert into orders (created_at, kind, state, client_id, car_id, comment)
+          values (?, ?::order_kind, ?::order_state, ?, ?, ?)
+          returning id, created_at, kind, state, client_id, car_id, comment
+        ),
+        all_o as (
+        	select * from orders union all select * from o
+        )
+        select o.id, o.created_at, o.kind, o.state, o.comment,
+        
+        u.id, u.username, u.phone_number, u.email, u.password, u.role,
+        (select count(*) from all_o where client_id=u.id and kind='purchase' and state='done') as purchase_count,
+        
+        c.id, c.brand, c.model, c.production_year, c.price, c.condition,
+        c.id not in (select car_id from all_o where state!='cancelled' and kind='purchase') as available_for_purchase
+        
+        from o
+        join users u on o.client_id=u.id
+        join cars c on o.car_id=c.id""";
+
+    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
+      stmt.setObject(1, createdAt.atOffset(ZoneOffset.UTC));
+      stmt.setString(2, kind.getId());
+      stmt.setString(3, state.getId());
+      stmt.setInt(4, clientId);
+      stmt.setInt(5, carId);
+      stmt.setString(6, comments);
+      stmt.execute();
+
+      var results = stmt.getResultSet();
+      results.next();
+      return readOrder(results);
+    } catch (SQLException e) {
+      throw new DBException("Failed to create order", e);
+    }
   }
 
-  /**
-   * Checks foreign key constraints and modifies an existing order
-   *
-   * @return order after edit
-   */
-  @Builder(builderMethodName = "", buildMethodName = "apply", builderClassName = "EditBuilder")
-  private Order applyEdit(int id,
-                          @Nullable Instant createdAt,
-                          @Nullable OrderKind kind,
-                          @Nullable OrderState state,
-                          @Nullable Integer customerId,
-                          @Nullable Integer carId,
-                          @Nullable String comments) {
-    var newCustomer = customerId == null ? null : findUser(customerId);
-    var newCar = carId == null ? null : findCar(carId);
+  public Order edit(int id,
+                    @Nullable Instant createdAt,
+                    @Nullable OrderKind kind,
+                    @Nullable OrderState state,
+                    @Nullable Integer clientId,
+                    @Nullable Integer carId,
+                    @Nullable String comments) {
+    var sql = """
+        with o as (
+          update orders set created_at=coalesce(?, created_at),
+                            kind=coalesce(?::order_kind, kind),
+                            state=coalesce(?::order_state, state),
+                            client_id=coalesce(?, client_id),
+                            car_id=coalesce(?, car_id),
+                            comment=coalesce(?, comment)
+          where id=?
+          returning id, created_at, kind, state, client_id, car_id, comment
+        ),
+        all_o as (
+          select * from orders where id not in (select id from o) union all select * from o
+        )
+        select o.id, o.created_at, o.kind, o.state, o.comment,
+        
+        u.id, u.username, u.phone_number, u.email, u.password, u.role,
+        (select count(*) from all_o where client_id=id and kind='purchase' and state='done') as purchase_count,
+        
+        c.id, c.brand, c.model, c.production_year, c.price, c.condition,
+        c.id not in (select car_id from all_o where state!='cancelled' and kind='purchase') as available_for_purchase
+        
+        from o
+        join users u on o.client_id=u.id
+        join cars c on o.car_id=c.id""";
 
-    var old = delete(id);
-    newCustomer = customerId == null ? old.customer() : newCustomer;
-    newCar = carId == null ? old.car() : newCar;
-    createdAt = createdAt == null ? old.createdAt() : createdAt;
-    kind = kind == null ? old.type() : kind;
-    state = state == null ? old.state() : state;
-    comments = comments == null ? old.comments() : comments;
+    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
+      stmt.setObject(1, createdAt);
+      stmt.setString(2, kind == null ? null : kind.getId());
+      stmt.setString(3, state == null ? null : state.getId());
+      stmt.setObject(4, clientId);
+      stmt.setObject(5, carId);
+      stmt.setString(6, comments);
+      stmt.setInt(7, id);
+      stmt.execute();
 
-    var newRow = new OrderStore(id, createdAt, kind, state, newCustomer.id(), newCar.id(), comments);
-    map.put(id, newRow);
-    customerOrders.computeIfAbsent(newCustomer.id(), i -> new HashSet<>()).add(newRow);
-    carOrders.computeIfAbsent(newCar.id(), i -> new HashSet<>()).add(newRow);
-    return new Order(id, createdAt, kind, state, newCustomer, newCar, comments);
+      var results = stmt.getResultSet();
+      if (!results.next()) {
+        throw new RowNotFoundException("Order #" + id + " not found.");
+      }
+
+      return readOrder(results);
+    } catch (SQLException e) {
+      throw new DBException("Failed to edit order", e);
+    }
   }
 
-  public EditBuilder edit(int id) {
-    return new EditBuilder().id(id);
-  }
-
-  /**
-   * Deletes an order. WARNING! Does not check for consistency between orders.
-   * For example, deleting a purchase can result in service orders that are performed on a car that the customer no longer owns.
-   * Use {@link OrderService#deleteOrder(int, int)} instead
-   *
-   * @param id id to be deleted
-   * @return the deleted order
-   */
   public Order delete(int id) {
-    var old = map.remove(id);
-    if (old == null) {
-      throw new RowNotFoundException();
-    }
+    var sql = """
+        with o as (
+          delete from orders
+          where id=?
+          returning id, created_at, kind, state, client_id, car_id, comment
+        ),
+        all_o as (
+          select * from orders where id not in (select id from o)
+        )
+        select o.id, o.created_at, o.kind, o.state, o.comment,
+        
+        u.id, u.username, u.phone_number, u.email, u.password, u.role,
+        (select count(*) from all_o where client_id=id and kind='purchase' and state='done') as purchase_count,
+        
+        c.id, c.brand, c.model, c.production_year, c.price, c.condition,
+        c.id not in (select car_id from all_o where state!='cancelled' and kind='purchase') as available_for_purchase
+        
+        from o
+        join users u on o.client_id=u.id
+        join cars c on o.car_id=c.id""";
 
-    var clientOrdersSet = customerOrders.getOrDefault(old.customerId(), Collections.emptySet());
-    if (!clientOrdersSet.remove(old)) {
-      throw new RuntimeException(
-          String.format("Database is in an inconsistent state. %s is not in customerOrders.", old));
-    }
-    if (clientOrdersSet.isEmpty()) {
-      customerOrders.remove(old.customerId());
-    }
+    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
+      stmt.setInt(1, id);
+      stmt.execute();
 
-    var carOrdersSet = carOrders.getOrDefault(old.carId(), Collections.emptySet());
-    if (!carOrdersSet.remove(old)) {
-      throw new RuntimeException(String.format("Database is in an inconsistent state. %s is not in carOrders.", old));
+      var results = stmt.getResultSet();
+      results.next();
+      return readOrder(results);
+    } catch (SQLException e) {
+      throw new DBException("Failed to delete order", e);
     }
-    if (carOrdersSet.isEmpty()) {
-      carOrders.remove(old.carId());
-    }
-
-    return new Order(old.id, old.createdAt, old.kind, old.state,
-                     users.findById(old.id), cars.findById(old.carId), old.comments);
-  }
-
-  private Order hydrateOrder(OrderStore order) {
-    return new Order(order.id, order.createdAt, order.kind, order.state,
-                     users.findById(order.customerId), cars.findById(order.carId), order.comments);
   }
 
   public Order findById(int id) {
-    var order = map.get(id);
-    if (order == null) {
-      throw new RowNotFoundException("Order " + id + " not found.");
+    var sql = """
+        select
+        o.id, o.created_at, o.kind, o.state, o.comment,
+        u.id, u.username, u.phone_number, u.email, u.password, u.role, (select count(*) from orders where client_id=id and kind='purchase' and state='done') as purchase_count,
+        c.id, c.brand, c.model, c.production_year, c.price, c.condition, c.id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase
+        from orders o
+        join users u on o.client_id=u.id
+        join cars c on o.car_id=c.id
+        where o.id=?""";
+
+    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
+      stmt.setInt(1, id);
+      stmt.execute();
+
+      var results = stmt.getResultSet();
+
+      if (!results.next()) {
+        throw new RowNotFoundException("Order #" + id + " not found.");
+      }
+
+      return readOrder(results);
+    } catch (SQLException e) {
+      throw new DBException("Failed to find order", e);
     }
-    return hydrateOrder(order);
   }
 
-  public boolean existCustomerOrders(int customerId) {
-    return customerOrders.containsKey(customerId);
+  public boolean existCustomerOrders(int clientId) {
+    var sql = "select ? in (select client_id from orders)";
+
+    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
+      stmt.setInt(1, clientId);
+      stmt.execute();
+
+      var results = stmt.getResultSet();
+      results.next();
+      return results.getBoolean(1);
+    } catch (SQLException e) {
+      throw new DBException(e);
+    }
   }
 
   public boolean existCarOrders(int carId) {
-    return carOrders.containsKey(carId);
+    var sql = "select ? in (select car_id from orders)";
+
+    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
+      stmt.setInt(1, carId);
+      stmt.execute();
+
+      var results = stmt.getResultSet();
+      results.next();
+      return results.getBoolean(1);
+    } catch (SQLException e) {
+      throw new DBException(e);
+    }
+  }
+
+  private String getOrdering(OrderSorting sorting) {
+    return switch (sorting) {
+      case LATEST_FIRST -> "o.created_at desc";
+      case OLDEST_FIRST -> "o.created_at asc";
+      case CAR_NAME_DESC -> "c.brand || ' ' || c.model desc";
+      case CAR_NAME_ASC -> "c.brand || ' ' || c.model asc";
+    };
   }
 
   /**
@@ -166,37 +235,140 @@ public class OrderRepo {
    * @return List of orders done by that customer
    */
   public List<Order> findCustomerOrders(int customerId, OrderSorting sorting) {
-    return customerOrders.getOrDefault(customerId, Set.of())
-                         .stream()
-                         .map(this::hydrateOrder)
-                         .sorted(sorting.getSorter())
-                         .toList();
-  }
+    var sql = StringUtil.format("""
+                                    select
+                                    o.id, o.created_at, o.kind, o.state, o.comment,
+                                    u.id, u.username, u.phone_number, u.email, u.password, u.role,
+                                    (select count(*) from orders where client_id=id and kind='purchase' and state='done') as purchase_count,
+                                    c.id, c.brand, c.model, c.production_year, c.price, c.condition,
+                                    c.id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase
+                                    from orders o
+                                    join users u on o.client_id=u.id
+                                    join cars c on o.car_id=c.id
+                                    where o.client_id=?
+                                    order by {}""", getOrdering(sorting));
 
-  public int getCustomerPurchaseCount(int customerId) {
-    return (int) customerOrders.getOrDefault(customerId, Set.of())
-                               .stream()
-                               .filter(o -> o.kind == OrderKind.PURCHASE && o.state == OrderState.DONE)
-                               .count();
-  }
+    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
+      stmt.setInt(1, customerId);
+      stmt.execute();
 
-  public List<Order> lookup(String customerName,
-                            String carBrand,
-                            String carModel,
-                            Set<OrderState> states,
-                            OrderSorting sorting) {
-    return map.values()
-              .stream()
-              .map(this::hydrateOrder)
-              .filter(o -> StringUtil.containsIgnoreCase(o.customer().username(), customerName))
-              .filter(o -> StringUtil.containsIgnoreCase(o.car().brand(), carBrand))
-              .filter(o -> StringUtil.containsIgnoreCase(o.car().model(), carModel))
-              .filter(o -> states.contains(o.state()))
-              .sorted(sorting.getSorter())
-              .toList();
+      List<Order> list = new ArrayList<>();
+
+      var results = stmt.getResultSet();
+
+      while (results.next()) {
+        list.add(readOrder(results));
+      }
+
+      return list;
+    } catch (SQLException e) {
+      throw new DBException(e);
+    }
   }
 
   public List<Order> findCarOrders(int carId) {
-    return carOrders.getOrDefault(carId, Set.of()).stream().map(this::hydrateOrder).toList();
+    var sql = """
+        select
+        o.id, o.created_at, o.kind, o.state, o.comment,
+        u.id, u.username, u.phone_number, u.email, u.password, u.role, (select count(*) from orders where client_id=id and kind='purchase' and state='done') as purchase_count,
+        c.id, c.brand, c.model, c.production_year, c.price, c.condition, c.id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase
+        from orders o
+        join users u on o.client_id=u.id
+        join cars c on o.car_id=c.id
+        where o.car_id=?""";
+
+    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
+      stmt.setInt(1, carId);
+      stmt.execute();
+
+      List<Order> list = new ArrayList<>();
+
+      var results = stmt.getResultSet();
+
+      while (results.next()) {
+        list.add(readOrder(results));
+      }
+
+      return list;
+    } catch (SQLException e) {
+      throw new DBException(e);
+    }
   }
+
+  public List<Order> lookup(DateRange dates,
+                            String customerName,
+                            String carBrand,
+                            String carModel,
+                            Set<OrderKind> kinds,
+                            Set<OrderState> states,
+                            OrderSorting sorting) {
+    var template = """
+        select o.id, o.created_at, o.kind, o.state, o.comment,
+        
+        u.id, u.username, u.phone_number, u.email, u.password, u.role,
+        (select count(*) from orders where client_id=id and kind='purchase' and state='done') as purchase_count,
+        
+        c.id, c.brand, c.model, c.production_year, c.price, c.condition,
+        c.id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase
+        
+        from orders o
+        join users u on o.client_id=u.id
+        join cars c on o.car_id=c.id
+        where o.created_at between ? and ? and
+        upper(u.username) like '%' || upper(?) || '%' and
+        upper(c.brand) like '%' || upper(?) || '%' and
+        upper(c.model) like '%' || upper(?) || '%' and
+        o.state in (%s) and
+        o.kind in (%s) and
+        order by %s""";
+
+    var sql = String.format(template, SqlUtil.serializeSet(states), SqlUtil.serializeSet(kinds), getOrdering(sorting));
+
+    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
+      stmt.setObject(1, dates.min());
+      stmt.setObject(2, dates.max());
+      stmt.setString(3, customerName);
+      stmt.setString(4, carBrand);
+      stmt.setString(5, carModel);
+      stmt.execute();
+
+      List<Order> list = new ArrayList<>();
+
+      var results = stmt.getResultSet();
+
+      while (results.next()) {
+        list.add(readOrder(results));
+      }
+
+      return list;
+    } catch (SQLException e) {
+      throw new DBException(e);
+    }
+  }
+
+  private Order readOrder(ResultSet results) throws SQLException {
+    var id = results.getInt(1);
+    var createdAt = results.getObject(2, OffsetDateTime.class).toInstant();
+    var kind = OrderKind.parse(results.getString(3));
+    var state = OrderState.parse(results.getString(4));
+    var comment = results.getString(5);
+    var clientId = results.getInt(6);
+    var username = results.getString(7);
+    var phoneNumber = results.getString(8);
+    var email = results.getString(9);
+    var password = results.getString(10);
+    var role = UserRole.parse(results.getString(11));
+    var purchaseCount = results.getInt(12);
+    var carId = results.getInt(13);
+    var brand = results.getString(14);
+    var model = results.getString(15);
+    var productionYear = results.getInt(16);
+    var price = results.getInt(17);
+    var condition = results.getString(18);
+    var availableForPurchase = results.getBoolean(19);
+    var client = new User(clientId, username, phoneNumber, email, password, role, purchaseCount);
+    var car = new Car(carId, brand, model, productionYear, price, condition, availableForPurchase);
+    return new Order(id, createdAt, kind, state, client, car, comment);
+  }
+
 }

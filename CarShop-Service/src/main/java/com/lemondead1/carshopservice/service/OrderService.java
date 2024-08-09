@@ -1,6 +1,5 @@
 package com.lemondead1.carshopservice.service;
 
-import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.entity.Order;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderSorting;
@@ -9,6 +8,7 @@ import com.lemondead1.carshopservice.exceptions.CarReservedException;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.repo.OrderRepo;
+import com.lemondead1.carshopservice.util.DateRange;
 
 import java.util.Collection;
 import java.util.EnumSet;
@@ -25,12 +25,12 @@ public class OrderService {
     this.time = time;
   }
 
-  public Car purchase(int user, int carId, String comments) {
-    return createOrder(user, user, carId, OrderKind.PURCHASE, OrderState.NEW, comments).car();
+  public Order purchase(int user, int carId, String comments) {
+    return createOrder(user, user, carId, OrderKind.PURCHASE, OrderState.NEW, comments);
   }
 
-  public Car orderService(int user, int carId, String comments) {
-    return createOrder(user, user, carId, OrderKind.SERVICE, OrderState.NEW, comments).car();
+  public Order orderService(int user, int carId, String comments) {
+    return createOrder(user, user, carId, OrderKind.SERVICE, OrderState.NEW, comments);
   }
 
   /**
@@ -57,8 +57,7 @@ public class OrderService {
       }
       case PURCHASE -> {
         if (orders.findCarOrders(car).stream()
-                  .anyMatch(o -> o.type() == OrderKind.PURCHASE &&
-                                 o.state() != OrderState.CANCELLED)) {
+                  .anyMatch(o -> o.type() == OrderKind.PURCHASE && o.state() != OrderState.CANCELLED)) {
           throw new CarReservedException("Car " + car + " is not available for purchase.");
         }
       }
@@ -109,7 +108,7 @@ public class OrderService {
       case CANCELLED -> throw new CommandException("This order has already been cancelled.");
       case DONE -> throw new CommandException("You cannot cancel finished orders.");
     }
-    var newRow = orders.edit(orderId).state(OrderState.CANCELLED).apply();
+    var newRow = orders.edit(orderId, null, null, OrderState.CANCELLED, null, null, null);
     events.onOrderEdited(userId, newRow);
     return newRow;
   }
@@ -129,7 +128,7 @@ public class OrderService {
       validateNoServiceOrdersExist(order.customer().id(), order.car().id());
     }
 
-    var newRow = orders.edit(orderId).state(newState).comments(order.comments() + appendComment).apply();
+    var newRow = orders.edit(orderId, null, null, newState, null, null, order.comments() + appendComment);
     events.onOrderEdited(userId, newRow);
   }
 
@@ -137,8 +136,13 @@ public class OrderService {
     return orders.findCustomerOrders(user, sorting);
   }
 
-  public List<Order> findAllOrders(String username, String carBrand, String carModel, Collection<OrderState> states,
-                                   OrderSorting sorting) {
-    return orders.lookup(username, carBrand, carModel, EnumSet.copyOf(states), sorting);
+  public List<Order> lookupOrders(DateRange dates,
+                                  String username,
+                                  String carBrand,
+                                  String carModel,
+                                  Collection<OrderKind> kinds,
+                                  Collection<OrderState> states,
+                                  OrderSorting sorting) {
+    return orders.lookup(dates, username, carBrand, carModel, EnumSet.copyOf(kinds), EnumSet.copyOf(states), sorting);
   }
 }

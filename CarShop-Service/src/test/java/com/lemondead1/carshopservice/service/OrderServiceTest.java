@@ -1,12 +1,12 @@
 package com.lemondead1.carshopservice.service;
 
+import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.entity.Order;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.event.OrderEvent;
 import com.lemondead1.carshopservice.exceptions.CarReservedException;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.exceptions.CommandException;
@@ -15,44 +15,61 @@ import com.lemondead1.carshopservice.repo.CarRepo;
 import com.lemondead1.carshopservice.repo.EventRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
 import com.lemondead1.carshopservice.repo.UserRepo;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderServiceTest {
+  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres");
+
+  static DBManager dbManager;
+  static CarRepo cars;
+  static UserRepo users;
+  static OrderRepo orders;
+  static EventRepo events;
+
+  @Mock
+  EventService eventService;
+
   @Mock
   TimeService time;
-  CarRepo cars;
-  UserRepo users;
-  OrderRepo orders;
-  EventRepo events;
-  EventService eventService;
+
   OrderService orderService;
+
   Car car;
   User user;
   User user2;
 
+  @BeforeAll
+  static void beforeAll() {
+    postgres.start();
+    dbManager = new DBManager(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword(), "data", "infra");
+    cars = new CarRepo(dbManager);
+    users = new UserRepo(dbManager);
+    orders = new OrderRepo(dbManager);
+    events = new EventRepo(dbManager);
+  }
+
+  @AfterAll
+  static void afterAll() {
+    postgres.stop();
+  }
+
   @BeforeEach
   void beforeEach() {
-    cars = new CarRepo();
-    users = new UserRepo();
-    orders = new OrderRepo();
-    events = new EventRepo();
-    cars.setOrders(orders);
-    users.setOrders(orders);
-    orders.setCars(cars);
-    orders.setUsers(users);
-    events.setUsers(users);
-    eventService = new EventService(events, time);
+    dbManager.init();
+
     orderService = new OrderService(orders, eventService, time);
 
     car = cars.create("Chevrolet", "Camaro", 2000, 8000000, "like new");
@@ -60,16 +77,19 @@ public class OrderServiceTest {
     user2 = users.create("Username2", "+74326735354", "test@example.com", "pwd", UserRole.CLIENT);
   }
 
+  @AfterEach
+  void afterEach() {
+    dbManager.dropAll();
+  }
+
   @Test
   void createPurchaseOrderCreatesOrderAndSubmitsEvent() {
-    var now = Instant.now();
+    var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
     when(time.now()).thenReturn(now);
 
-    orderService.purchase(1, 1, "None");
-    assertThat(orders.findById(1)).isEqualTo(new Order(1, now, OrderKind.PURCHASE, OrderState.NEW, user, car, "None"));
-    assertThat(events.listAll()).usingRecursiveFieldByFieldElementComparator()
-                                .containsExactly(new OrderEvent.Created(now, 1, 1, now, OrderKind.PURCHASE,
-                                                                        OrderState.NEW, 1, 1, "None"));
+    var order = orderService.purchase(user.id(), car.id(), "None");
+    assertThat(orders.findById(order.id())).isEqualTo(order);
+    verify(eventService).onOrderCreated(user.id(), order);
   }
 
   @Test
@@ -87,12 +107,12 @@ public class OrderServiceTest {
     when(time.now()).thenReturn(now);
 
     orders.create(now, OrderKind.PURCHASE, OrderState.DONE, 1, 1, "");
-    orderService.orderService(1, 1, "None");
-    assertThat(orders.findById(2)).isEqualTo(new Order(2, now, OrderKind.SERVICE, OrderState.NEW,
-                                                       users.findById(1), car, "None"));
-    assertThat(events.listAll()).usingRecursiveFieldByFieldElementComparator()
-                                .contains(new OrderEvent.Created(now, 1, 2, now, OrderKind.SERVICE,
-                                                                 OrderState.NEW, 1, 1, "None"));
+
+    var order = orderService.orderService(1, 1, "None");
+
+    assertThat(order).isEqualTo(orders.findById(2));
+
+    verify(eventService).onOrderCreated(1, order);
   }
 
   @Test
@@ -102,15 +122,13 @@ public class OrderServiceTest {
 
   @Test
   void deleteOrderDeletesOrderAndPostsEvent() {
-    var now = Instant.now();
-    when(time.now()).thenReturn(now);
+    var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
+    var order = orders.create(now, OrderKind.PURCHASE, OrderState.NEW, 1, 1, "");
 
-    orders.create(now, OrderKind.PURCHASE, OrderState.NEW, 1, 1, "");
-    orderService.deleteOrder(64, 1);
+    orderService.deleteOrder(64, order.id());
 
     assertThatThrownBy(() -> orders.findById(1)).isInstanceOf(RowNotFoundException.class);
-    assertThat(events.listAll()).usingRecursiveFieldByFieldElementComparator()
-                                .contains(new OrderEvent.Deleted(now, 64, 1));
+    verify(eventService).onOrderDeleted(64, 1);
   }
 
   @Test
@@ -136,17 +154,14 @@ public class OrderServiceTest {
 
   @Test
   void cancelOrderEditsStateToCancelledAndPostsEvent() {
-    var now = Instant.now();
-    when(time.now()).thenReturn(now);
-
+    var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
     orders.create(now, OrderKind.PURCHASE, OrderState.NEW, 1, 1, "");
+
     orderService.cancel(6, 1);
 
-    assertThat(orders.findById(1))
-        .isEqualTo(new Order(1, now, OrderKind.PURCHASE, OrderState.CANCELLED, user, car, ""));
-    assertThat(events.listAll()).usingRecursiveFieldByFieldElementComparator()
-                                .contains(new OrderEvent.Modified(now, 6, 1, now, OrderKind.PURCHASE,
-                                                                  OrderState.CANCELLED, 1, 1, ""));
+    var expected = new Order(1, now, OrderKind.PURCHASE, OrderState.CANCELLED, users.findById(1), cars.findById(1), "");
+    assertThat(orders.findById(1)).isEqualTo(expected);
+    verify(eventService).onOrderEdited(6, expected);
   }
 
   @Test
@@ -163,17 +178,14 @@ public class OrderServiceTest {
 
   @Test
   void updateStateEditsOrderAndPostsEvent() {
-    var now = Instant.now();
-    when(time.now()).thenReturn(now);
+    var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
 
     orders.create(now, OrderKind.PURCHASE, OrderState.NEW, 1, 1, "");
     orderService.updateState(7, 1, OrderState.PERFORMING, "New comment");
 
-    assertThat(orders.findById(1))
-        .isEqualTo(new Order(1, now, OrderKind.PURCHASE, OrderState.PERFORMING, user, car, "New comment"));
-
-    assertThat(events.listAll()).usingRecursiveFieldByFieldElementComparator()
-                                .contains(new OrderEvent.Modified(now, 7, 1, now, OrderKind.PURCHASE,
-                                                                  OrderState.PERFORMING, 1, 1, "New comment"));
+    var expected = new Order(1, now, OrderKind.PURCHASE, OrderState.PERFORMING,
+                             users.findById(1), cars.findById(1), "New comment");
+    assertThat(orders.findById(1)).isEqualTo(expected);
+    verify(eventService).onOrderEdited(7, expected);
   }
 }

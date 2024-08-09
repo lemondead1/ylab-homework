@@ -28,7 +28,7 @@ public class UserService {
 
   public User signUserUp(String username, String phoneNumber, String email, String password) {
     var user = users.create(username, phoneNumber, email, password, UserRole.CLIENT);
-    events.onUserSignedUp(user.id(), username);
+    events.onUserSignedUp(user);
     return user;
   }
 
@@ -54,7 +54,7 @@ public class UserService {
     return users.findById(id);
   }
 
-  public List<User> searchUsers(String username, Collection<UserRole> roles, String phoneNumber, String email,
+  public List<User> lookupUsers(String username, Collection<UserRole> roles, String phoneNumber, String email,
                                 IntRange purchases, UserSorting sorting) {
     return users.lookup(username, EnumSet.copyOf(roles), phoneNumber, email, purchases, sorting);
   }
@@ -79,13 +79,7 @@ public class UserService {
       throw new IllegalArgumentException("Role anonymous is not allowed");
     }
     var oldUser = users.findById(id);
-    var newUser = users.edit(id)
-                       .username(username)
-                       .phoneNumber(phoneNumber)
-                       .email(email)
-                       .password(password)
-                       .role(role)
-                       .apply();
+    var newUser = users.edit(id, username, phoneNumber, email, password, role);
     events.onUserEdited(editorId, oldUser, newUser);
     return newUser;
   }

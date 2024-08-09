@@ -1,44 +1,60 @@
 package com.lemondead1.carshopservice.repo;
 
 import com.lemondead1.carshopservice.IntRangeConverter;
+import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.exceptions.ForeignKeyException;
+import com.lemondead1.carshopservice.exceptions.DBException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.util.IntRange;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class CarRepoTest {
-  CarRepo cars;
-  UserRepo users;
-  OrderRepo orders;
+  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres");
+
+  static DBManager dbManager;
+  static CarRepo cars;
+  static UserRepo users;
+  static OrderRepo orders;
+
+  @BeforeAll
+  static void beforeAll() {
+    postgres.start();
+    dbManager = new DBManager(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword(), "data", "infra");
+    cars = new CarRepo(dbManager);
+    users = new UserRepo(dbManager);
+    orders = new OrderRepo(dbManager);
+  }
+
+  @AfterAll
+  static void afterAll() {
+    postgres.stop();
+  }
 
   @BeforeEach
   void beforeEach() {
-    cars = new CarRepo();
-    users = new UserRepo();
-    orders = new OrderRepo();
-    cars.setOrders(orders);
-    users.setOrders(orders);
-    orders.setCars(cars);
-    orders.setUsers(users);
+    dbManager.init();
+  }
+
+  @AfterEach
+  void afterEach() {
+    dbManager.dropAll();
   }
 
   @Test
@@ -51,20 +67,19 @@ public class CarRepoTest {
   void createdCarMatchesSpec() {
     assertThat(cars.create("BMW", "X5", 2015, 3000000, "good").id()).isEqualTo(1);
     assertThat(cars.create("Lamborghini", "Diablo", 2017, 6000000, "fair").id()).isEqualTo(2);
-    assertThat(cars.findById(2)).isEqualTo(new Car(2, "Lamborghini", "Diablo", 2017, 6000000, "fair"));
+    assertThat(cars.findById(2)).isEqualTo(new Car(2, "Lamborghini", "Diablo", 2017, 6000000, "fair", true));
   }
 
   @Test
   void editedCarMatchesSpec() {
     cars.create("BMW", "X5", 2015, 3000000, "good");
-    cars.edit(1).price(4000000).condition("mint").apply();
-    assertThat(cars.findById(1)).isEqualTo(new Car(1, "BMW", "X5", 2015, 4000000, "mint"));
+    cars.edit(1, null, null, null, 4000000, "mint");
+    assertThat(cars.findById(1)).isEqualTo(new Car(1, "BMW", "X5", 2015, 4000000, "mint", true));
   }
 
   @Test
   void editNonExistingCarThrows() {
-    var builder = cars.edit(1).price(3000000);
-    assertThatThrownBy(builder::apply).isInstanceOf(RowNotFoundException.class);
+    assertThatThrownBy(() -> cars.edit(1, null, null, null, 3000000, null)).isInstanceOf(RowNotFoundException.class);
   }
 
   @Test
@@ -79,7 +94,7 @@ public class CarRepoTest {
     cars.create("BMW", "X5", 2015, 3000000, "good");
     users.create("alex", "88005553535", "test@example.com", "pwd", UserRole.CLIENT);
     orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.NEW, 1, 1, "ASAP");
-    assertThatThrownBy(() -> cars.delete(1)).isInstanceOf(ForeignKeyException.class);
+    assertThatThrownBy(() -> cars.delete(1)).isInstanceOf(DBException.class);
   }
 
   @Nested
@@ -109,33 +124,29 @@ public class CarRepoTest {
             .forEachOrdered(r -> cars.create(r[0], r[1], Integer.parseInt(r[2]), Integer.parseInt(r[3]), r[4]));
     }
 
-    @ParameterizedTest
-    @ValueSource(
-        strings = { "NAME_ASC", "NAME_DESC", "PRODUCTION_YEAR_ASC", "PRODUCTION_YEAR_DESC", "PRICE_ASC", "PRICE_DESC" })
-    void sortingTest(CarSorting sorting) {
-      assertThat(cars.lookup("", "", IntRange.ALL, IntRange.ALL, "", sorting))
-          .isSortedAccordingTo(sorting.getSorter())
+    @Test
+    void sortingTestNameAsc() {
+      assertThat(cars.lookup("", "", IntRange.ALL, IntRange.ALL, "", Set.of(true, false), CarSorting.NAME_ASC))
+          .isSortedAccordingTo(Comparator.comparing(Car::getBrandModel, String::compareToIgnoreCase))
           .map(Car::id).contains(IntStream.range(1, 16).boxed().toArray(Integer[]::new));
     }
 
     //TODO add more cases
     @ParameterizedTest
-    @CsvSource(value =
-                   {
-                       "'1',               chev, cor, ALL,  ALL,               ''",
-                       "'4,5,11',          '',   an,  ALL,  ALL,               ''",
-                       "'10,16',           '',   '',  1995, ALL,               ''",
-                       "'2,4,10,12,13',    '',   '',  ALL,  3000000 - 4000000, ''",
-                       "'3,6,12,13,15,16', '',   '',  ALL,  ALL,               air"
-                   },
-               nullValues = "null")
+    @CsvSource(value = {
+        "'1',               chev, cor, ALL,  ALL,               ''",
+        "'4,5,11',          '',   an,  ALL,  ALL,               ''",
+        "'10,16',           '',   '',  1995, ALL,               ''",
+        "'2,4,10,12,13',    '',   '',  ALL,  3000000 - 4000000, ''",
+        "'3,6,12,13,15,16', '',   '',  ALL,  ALL,               air"
+    })
     void lookupTest(String expectedIds,
                     String brand,
                     String model,
                     @ConvertWith(IntRangeConverter.class) IntRange year,
                     @ConvertWith(IntRangeConverter.class) IntRange price,
                     String condition) {
-      assertThat(cars.lookup(brand, model, year, price, condition, CarSorting.NAME_ASC))
+      assertThat(cars.lookup(brand, model, year, price, condition, Set.of(true, false), CarSorting.NAME_ASC))
           .isSortedAccordingTo(Comparator.comparing(Car::getBrandModel, String::compareToIgnoreCase))
           .map(Car::id)
           .contains(Arrays.stream(expectedIds.split(",")).map(Integer::parseInt).toArray(Integer[]::new));

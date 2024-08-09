@@ -59,7 +59,7 @@ public class OrderControllerTest {
   @Test
   void byIdSuccess() {
     var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
-    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", false);
     var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
 
     when(orders.findById(10)).thenReturn(dummyOrder);
@@ -80,7 +80,7 @@ public class OrderControllerTest {
 
   @Test
   void orderPurchaseCancelled() {
-    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", true);
 
     cli.out("Comments > ").in("")
        .out("Ordering " + mockCar.prettyFormat() + ".\n")
@@ -99,17 +99,20 @@ public class OrderControllerTest {
 
   @Test
   void orderPurchaseSuccess() {
-    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
+    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", true);
+    var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
+
 
     cli.out("Comments > ").in("ASAP")
-       .out("Ordering " + mockCar.prettyFormat() + ".\n")
+       .out("Ordering " + dummyCar.prettyFormat() + ".\n")
        .out("Confirm [y/N] > ").in("y");
 
     when(session.getCurrentUserId()).thenReturn(50);
-    when(cars.findById(3)).thenReturn(mockCar);
-    when(orders.purchase(50, 3, "ASAP")).thenReturn(mockCar);
+    when(cars.findById(3)).thenReturn(dummyCar);
+    when(orders.purchase(50, 3, "ASAP")).thenReturn(dummyOrder);
 
-    assertThat(order.purchase(session, cli, "3")).isEqualTo("Ordered " + mockCar.prettyFormat());
+    assertThat(order.purchase(session, cli, "3")).isEqualTo("Ordered " + dummyCar.prettyFormat());
 
     cli.assertMatchesHistory();
 
@@ -128,14 +131,16 @@ public class OrderControllerTest {
 
   @Test
   void orderServiceSuccess() {
-    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
+    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", false);
+    var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
 
     cli.out("Comments > ").in("ASAP");
 
     when(session.getCurrentUserId()).thenReturn(50);
-    when(orders.orderService(50, 3, "ASAP")).thenReturn(mockCar);
+    when(orders.orderService(50, 3, "ASAP")).thenReturn(dummyOrder);
 
-    assertThat(order.service(session, cli, "3")).isEqualTo("Scheduled service for " + mockCar.prettyFormat());
+    assertThat(order.service(session, cli, "3")).isEqualTo("Scheduled service for " + dummyCar.prettyFormat());
 
     cli.assertMatchesHistory();
 
@@ -154,7 +159,7 @@ public class OrderControllerTest {
   @Test
   void orderCancelThrowsWhenCancellingAnotherUserOrder() {
     var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
-    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", false);
     var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
 
 
@@ -168,7 +173,7 @@ public class OrderControllerTest {
   @Test
   void orderCancelSuccess() {
     var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
-    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", false);
     var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
 
     when(session.getCurrentUserRole()).thenReturn(UserRole.CLIENT);
@@ -183,7 +188,7 @@ public class OrderControllerTest {
   @Test
   void cancelOtherUsersOrderByManagerSuccess() {
     var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
-    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", false);
     var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
 
     when(session.getCurrentUserRole()).thenReturn(UserRole.MANAGER);
@@ -205,7 +210,7 @@ public class OrderControllerTest {
   @Test
   void orderUpdateStateThrowsOnNoStateChange() {
     var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
-    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", false);
     var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
 
     when(orders.findById(10)).thenReturn(dummyOrder);
@@ -216,7 +221,7 @@ public class OrderControllerTest {
   @Test
   void orderUpdateStateSuccess() {
     var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
-    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", false);
     var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
 
     when(orders.findById(10)).thenReturn(dummyOrder);
@@ -241,7 +246,7 @@ public class OrderControllerTest {
   @Test
   void orderCreateSuccess() {
     var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
-    var dummyCar = new Car(5, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyCar = new Car(5, "Brand", "Model", 2001, 1000000, "poor", false);
     var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
 
     cli.out("Kind > ").in("purchase")
@@ -270,7 +275,7 @@ public class OrderControllerTest {
   @Test
   void orderDeleteCancelled() {
     var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
-    var dummyCar = new Car(5, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyCar = new Car(5, "Brand", "Model", 2001, 1000000, "poor", false);
     var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
 
     cli.out("Deleting " + dummyOrder.prettyFormat() + "\n")
@@ -288,7 +293,7 @@ public class OrderControllerTest {
   @Test
   void orderDeleteSuccess() {
     var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
-    var dummyCar = new Car(5, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyCar = new Car(5, "Brand", "Model", 2001, 1000000, "poor", false);
     var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
 
     cli.out("Deleting " + dummyOrder.prettyFormat() + "\n")

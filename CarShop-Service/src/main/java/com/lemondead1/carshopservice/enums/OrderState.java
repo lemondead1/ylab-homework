@@ -24,4 +24,13 @@ public enum OrderState implements HasId {
     return id;
   }
 
+  public static OrderState parse(String id) {
+    return switch (id) {
+      case "new" -> NEW;
+      case "performing" -> PERFORMING;
+      case "done" -> DONE;
+      case "cancelled" -> CANCELLED;
+      default -> throw new IllegalArgumentException();
+    };
+  }
 }

@@ -1,63 +1,77 @@
 package com.lemondead1.carshopservice.service;
 
-import com.lemondead1.carshopservice.enums.EventSorting;
-import com.lemondead1.carshopservice.enums.EventType;
+import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.event.UserEvent;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.exceptions.WrongUsernamePasswordException;
 import com.lemondead1.carshopservice.repo.CarRepo;
 import com.lemondead1.carshopservice.repo.EventRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
 import com.lemondead1.carshopservice.repo.UserRepo;
-import com.lemondead1.carshopservice.util.DateRange;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.util.Set;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
 
+@ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
-  CarRepo cars;
-  UserRepo users;
-  OrderRepo orders;
-  EventRepo events;
+  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres");
+
+  static DBManager dbManager;
+  static CarRepo cars;
+  static UserRepo users;
+  static OrderRepo orders;
+  static EventRepo events;
+
+  @Mock
   EventService eventService;
-  UserService userService;
   SessionService session;
+  UserService userService;
+
+  @BeforeAll
+  static void beforeAll() {
+    postgres.start();
+    dbManager = new DBManager(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword(), "data", "infra");
+    cars = new CarRepo(dbManager);
+    users = new UserRepo(dbManager);
+    orders = new OrderRepo(dbManager);
+    events = new EventRepo(dbManager);
+  }
+
+  @AfterAll
+  static void afterAll() {
+    postgres.stop();
+  }
 
   @BeforeEach
   void beforeEach() {
-    cars = new CarRepo();
-    users = new UserRepo();
-    orders = new OrderRepo();
-    events = new EventRepo();
-    cars.setOrders(orders);
-    users.setOrders(orders);
-    orders.setCars(cars);
-    orders.setUsers(users);
-    events.setUsers(users);
-    eventService = new EventService(events, new TimeService());
+    dbManager.init();
     userService = new UserService(users, eventService);
     session = new SessionService(userService);
+  }
+
+  @AfterEach
+  void afterEach() {
+    dbManager.dropAll();
   }
 
   @Test
   void createUserSavesUserAndPostsEvent() {
     var user = userService.createUser(3, "username", "+73462684906", "test@example.com", "password", UserRole.CLIENT);
-    assertThat(users.findById(1)).isEqualTo(user);
-    assertThat(events.lookup(Set.of(EventType.USER_CREATED), DateRange.ALL, "", EventSorting.USERNAME_ASC))
-        .hasSize(1).map(e -> (UserEvent.Created) e).allMatch(e -> e.getUserId() == 3 && e.getCreatedUserId() == 1);
+    assertThat(users.findById(user.id())).isEqualTo(user);
+    verify(eventService).onUserCreated(3, user);
   }
 
   @Test
   void signUserUpCreatesUserAndPostsEvent() {
     var user = userService.signUserUp("username", "+73462684906", "test@example.com", "password");
-    assertThat(users.findById(1)).isEqualTo(user);
-    assertThat(events.lookup(Set.of(EventType.USER_SIGNED_UP), DateRange.ALL, "", EventSorting.USERNAME_ASC))
-        .hasSize(1).map(e -> (UserEvent.SignUp) e).allMatch(e -> e.getUserId() == 1);
+    assertThat(users.findById(user.id())).isEqualTo(user);
+    verify(eventService).onUserSignedUp(user);
   }
 
   @Test
@@ -83,11 +97,10 @@ public class UserServiceTest {
 
   @Test
   void editSavesNewUserAndPostsAnEvent() {
-    userService.createUser(3, "username", "+73462684906", "test@example.com", "password", UserRole.CLIENT);
-    var user = userService.editUser(5, 1, "newUsername", "+5334342", "test1@example.com", "password", UserRole.CLIENT);
-    assertThat(users.findById(1)).isEqualTo(user);
-    assertThat(events.lookup(Set.of(EventType.USER_MODIFIED), DateRange.ALL, "", EventSorting.USERNAME_ASC))
-        .hasSize(1).map(e -> (UserEvent.Edited) e).allMatch(e -> e.getUserId() == 5 && e.getChangedUserId() == 1);
+    var oldUser = userService.createUser(3, "steve", "+73462684906", "test@example.com", "password", UserRole.CLIENT);
+    var newUser = userService.editUser(5, oldUser.id(), "bob", "+5334342", "test@ya.com", "password", UserRole.CLIENT);
+    assertThat(users.findById(oldUser.id())).isEqualTo(newUser);
+    verify(eventService).onUserEdited(5, oldUser, newUser);
   }
 
   @Test
@@ -98,8 +111,9 @@ public class UserServiceTest {
   }
 
   @Test
-  void deleteUserDeletesUser() {
-    userService.signUserUp("username", "+73462684906", "test@example.com", "password");
+  void deleteUserDeletesUserAndPostsAnEvent() {
+    var user = userService.signUserUp("username", "+73462684906", "test@example.com", "password");
     userService.deleteUser(5, 1);
+    verify(eventService).onUserDeleted(5, user.id());
   }
 }

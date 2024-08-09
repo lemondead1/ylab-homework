@@ -56,12 +56,12 @@ public class UserController implements Controller {
 
   String search(SessionService session, ConsoleIO cli, String... path) {
     var username = cli.parseOptional("Username > ", StringParser.INSTANCE).orElse("");
-    var role = cli.parseOptional("Role > ", IdListParser.of(UserRole.class)).orElse(UserRole.ALL);
+    var role = cli.parseOptional("Role > ", IdListParser.of(UserRole.class)).orElse(UserRole.AUTHORIZED);
     var phoneNumber = cli.parseOptional("Phone number > ", StringParser.INSTANCE).orElse("");
     var email = cli.parseOptional("Email > ", StringParser.INSTANCE).orElse("");
     var purchases = cli.parseOptional("Purchases > ", IntRangeParser.INSTANCE).orElse(IntRange.ALL);
     var sort = cli.parseOptional("Sorting > ", IdParser.of(UserSorting.class)).orElse(UserSorting.USERNAME_ASC);
-    var list = users.searchUsers(username, role, phoneNumber, email, purchases, sort);
+    var list = users.lookupUsers(username, role, phoneNumber, email, purchases, sort);
     var table = new TableFormatter("ID", "Username", "Phone number", "Email", "Purchase count", "Role");
     for (var row : list) {
       table.addRow(row.id(), row.username(), row.phoneNumber(), row.email(), row.purchaseCount(),
