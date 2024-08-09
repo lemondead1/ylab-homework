@@ -32,26 +32,12 @@ public class UserService {
     return user;
   }
 
-  public UserRole getUserRole(int userId) {
-    return users.findById(userId).role();
-  }
-
-  public void login(String username, String password, SessionService session) {
-    User user;
-    try {
-      user = users.findByUsername(username);
-    } catch (RowNotFoundException e) {
-      throw new WrongUsernamePasswordException("Wrong username or password.");
-    }
-    if (!user.password().equals(password)) {
-      throw new WrongUsernamePasswordException("Wrong username or password.");
-    }
-    session.setCurrentUserId(user.id());
-    events.onUserLoggedIn(user.id());
-  }
-
   public User findById(int id) {
     return users.findById(id);
+  }
+
+  public User findByUsername(String username) {
+    return users.findByUsername(username);
   }
 
   public List<User> lookupUsers(String username, Collection<UserRole> roles, String phoneNumber, String email,

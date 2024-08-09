@@ -3,12 +3,12 @@ package com.lemondead1.carshopservice.controller;
 import com.lemondead1.carshopservice.cli.ConsoleIO;
 import com.lemondead1.carshopservice.cli.command.builders.TreeCommandBuilder;
 import com.lemondead1.carshopservice.cli.parsing.*;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.Availability;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.exceptions.WrongUsageException;
 import com.lemondead1.carshopservice.service.CarService;
-import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.util.IntRange;
 import com.lemondead1.carshopservice.util.TableFormatter;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +53,7 @@ public class CarController implements Controller {
            .pop();
   }
 
-  String byId(SessionService session, ConsoleIO cli, String... path) {
+  String byId(User currentUser, ConsoleIO cli, String... path) {
     if (path.length == 0) {
       throw new WrongUsageException();
     }
@@ -61,17 +61,17 @@ public class CarController implements Controller {
     return "Found " + car.prettyFormat();
   }
 
-  String createCar(SessionService session, ConsoleIO cli, String... path) {
+  String createCar(User currentUser, ConsoleIO cli, String... path) {
     var brand = cli.parse("Brand > ", StringParser.INSTANCE);
     var model = cli.parse("Model > ", StringParser.INSTANCE);
     var productionYear = cli.parse("Production year > ", IntParser.INSTANCE);
     var price = cli.parse("Price > ", IntParser.INSTANCE);
     var condition = cli.parse("Condition > ", StringParser.INSTANCE);
-    var car = cars.createCar(session.getCurrentUserId(), brand, model, productionYear, price, condition);
+    var car = cars.createCar(currentUser.id(), brand, model, productionYear, price, condition);
     return "Created " + car.prettyFormat();
   }
 
-  String listCars(SessionService session, ConsoleIO cli, String... path) {
+  String listCars(User currentUser, ConsoleIO cli, String... path) {
     var brand = cli.parseOptional("Brand > ", StringParser.INSTANCE).orElse("");
     var model = cli.parseOptional("Model > ", StringParser.INSTANCE).orElse("");
     var productionYear = cli.parseOptional("Prod. year > ", IntRangeParser.INSTANCE).orElse(IntRange.ALL);
@@ -81,16 +81,17 @@ public class CarController implements Controller {
                           .orElse(List.of(Availability.AVAILABLE));
     var sorting = cli.parseOptional("Sorting > ", IdParser.of(CarSorting.class)).orElse(CarSorting.NAME_ASC);
     var list = cars.lookupCars(brand, model, productionYear, price, condition, availability, sorting);
-    var table =
-        new TableFormatter("ID", "Brand", "Model", "Prod. year", "Price", "Condition", "Available for purchase");
+
+    var table = new TableFormatter("ID", "Brand", "Model", "Prod. year", "Price", "Condition", "Available for purchase");
     for (var car : list) {
       table.addRow(car.id(), car.brand(), car.model(), car.productionYear(), car.price(), car.condition(),
                    car.availableForPurchase() ? "Yes" : "No");
     }
+
     return table.format(true);
   }
 
-  String editCar(SessionService session, ConsoleIO cli, String... path) {
+  String editCar(User currentUser, ConsoleIO cli, String... path) {
     if (path.length == 0) {
       throw new WrongUsageException();
     }
@@ -98,15 +99,14 @@ public class CarController implements Controller {
     var car = cars.findById(id);
     var newBrand = cli.parseOptional("Brand (" + car.brand() + ") > ", StringParser.INSTANCE).orElse(null);
     var newModel = cli.parseOptional("Model (" + car.model() + ") > ", StringParser.INSTANCE).orElse(null);
-    var prodYear = cli.parseOptional("Production year (" + car.productionYear() + ") > ", IntParser.INSTANCE)
-                      .orElse(null);
+    var prodYear = cli.parseOptional("Production year (" + car.productionYear() + ") > ", IntParser.INSTANCE).orElse(null);
     var newPrice = cli.parseOptional("Price (" + car.price() + ") > ", IntParser.INSTANCE).orElse(null);
     var newCondition = cli.parseOptional("Condition (" + car.condition() + ") > ", StringParser.INSTANCE).orElse(null);
-    car = cars.editCar(session.getCurrentUserId(), id, newBrand, newModel, prodYear, newPrice, newCondition);
+    car = cars.editCar(currentUser.id(), id, newBrand, newModel, prodYear, newPrice, newCondition);
     return "Saved changes to " + car.prettyFormat();
   }
 
-  String deleteCar(SessionService session, ConsoleIO cli, String... path) {
+  String deleteCar(User currentUser, ConsoleIO cli, String... path) {
     if (path.length == 0) {
       throw new WrongUsageException();
     }
@@ -117,7 +117,7 @@ public class CarController implements Controller {
       return "Cancelled";
     }
     try {
-      cars.deleteCar(session.getCurrentUserId(), id, false);
+      cars.deleteCar(currentUser.id(), id, false);
       return "Done";
     } catch (CascadingException e) {
       cli.println(e.getMessage());
@@ -125,7 +125,7 @@ public class CarController implements Controller {
     if (!cli.parseOptional("Delete them [y/N] > ", BooleanParser.DEFAULT_TO_FALSE).orElse(false)) {
       return "Cancelled";
     }
-    cars.deleteCar(session.getCurrentUserId(), id, true);
+    cars.deleteCar(currentUser.id(), id, true);
     return "Done";
   }
 }

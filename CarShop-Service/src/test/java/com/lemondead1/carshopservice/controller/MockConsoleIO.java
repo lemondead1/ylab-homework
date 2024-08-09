@@ -30,9 +30,10 @@ public class MockConsoleIO extends ConsoleIO {
 
   public String readInteractive(String message) {
     if (currentInputIndex >= inputs.size()) {
-      throw new NoSuchElementException();
+      throw new NoSuchElementException(
+          "Attempted to read with message '" + message + "' but there was no element ot return.");
     }
-    actualHistory.add(new Item(message, false));
+    printf(message);
     actualHistory.add(new Item(inputs.get(currentInputIndex), true));
     return inputs.get(currentInputIndex++);
   }
@@ -49,7 +50,12 @@ public class MockConsoleIO extends ConsoleIO {
   }
 
   public MockConsoleIO out(String output) {
-    expectedHistory.add(new Item(output, false));
+    if (!expectedHistory.isEmpty() && !expectedHistory.get(expectedHistory.size() - 1).input) {
+      expectedHistory.set(expectedHistory.size() - 1,
+                          new Item(expectedHistory.get(expectedHistory.size() - 1).value + output, false));
+    } else {
+      expectedHistory.add(new Item(output, false));
+    }
     return this;
   }
 

@@ -24,7 +24,7 @@ public class CommandAcceptor {
       }
       var split = path.split(" +");
       try {
-        rootCommand.execute(session, cli, split);
+        rootCommand.execute(session.getCurrentUser(), cli, split);
       } catch (RuntimeException e) {
         e.printStackTrace();
       }

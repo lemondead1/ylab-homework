@@ -1,6 +1,8 @@
 package com.lemondead1.carshopservice.cli.command;
 
 import com.lemondead1.carshopservice.cli.ConsoleIO;
+import com.lemondead1.carshopservice.controller.MockConsoleIO;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.service.SessionService;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,11 +32,7 @@ public class CommandTreeTest {
   @Mock
   Command commandFour;
 
-  @Mock
-  SessionService session;
-
-  @Mock
-  ConsoleIO cli;
+  MockConsoleIO cli;
 
   CommandTree tree;
 
@@ -45,32 +43,40 @@ public class CommandTreeTest {
     when(commandThree.getName()).thenReturn("three");
     when(commandFour.getName()).thenReturn("four");
 
+    cli = new MockConsoleIO();
     tree = new CommandTree(List.of(commandOne, commandTwo, commandThree, commandFour),
                            "treeName",
                            "treeDescription",
-                           Set.of(UserRole.CLIENT));
+                           Set.of(UserRole.CLIENT, UserRole.ADMIN));
   }
 
   @Test
   void executeWithTwoTestExecutesCommandTwoWithTest() {
-    when(session.getCurrentUserRole()).thenReturn(UserRole.CLIENT);
-    tree.execute(session, cli, "two", "test");
-    verify(commandTwo).execute(session, cli, "test");
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+
+    tree.execute(dummyUser, cli, "two", "test");
+    verify(commandTwo).execute(dummyUser, cli, "test");
   }
 
   @Test
   void executeTwoWithInsufficientPermissionsPrintsAndReturns() {
-    when(session.getCurrentUserRole()).thenReturn(UserRole.ANONYMOUS);
-    tree.execute(session, cli, "two", "test");
-    verify(cli).println("Insufficient permissions.");
-    verify(commandTwo, never()).execute(session, cli, "test");
+    var dummyUser = new User(1, "anonymous", "12346789", "mail@example.com", "pass", UserRole.ANONYMOUS, 0);
+    cli.out("Insufficient permissions.\n");
+
+    tree.execute(dummyUser, cli, "two", "test");
+
+    verify(commandTwo, never()).execute(dummyUser, cli, "test");
+    cli.assertMatchesHistory();
   }
 
   @Test
   void executeWithFivePrintsCommandNotFound() {
-    when(session.getCurrentUserRole()).thenReturn(UserRole.CLIENT);
-    tree.execute(session, cli, "five", "test");
-    verify(cli).println("Command 'five' not found. Use 'help' to list available commands.");
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+    cli.out("Command 'five' not found. Use 'help' to list available commands.\n");
+
+    tree.execute(dummyUser, cli, "five", "test");
+
+    cli.assertMatchesHistory();
   }
 
   @Test
@@ -85,19 +91,18 @@ public class CommandTreeTest {
     when(commandThree.getAllowedRoles()).thenReturn(Set.of(UserRole.CLIENT));
     when(commandFour.getAllowedRoles()).thenReturn(Set.of(UserRole.CLIENT));
 
-    when(session.getCurrentUserRole()).thenReturn(UserRole.CLIENT);
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
 
-    tree.execute(session, cli);
+    cli.out("treeDescription\n")
+       .out("Subcommands:\n")
+       .out("  one: 1\n")
+       .out("  two: 2\n")
+       .out("  three: 3\n")
+       .out("  four: 4\n");
 
-    var captor = ArgumentCaptor.forClass(String.class);
-    verify(cli, times(6)).println(captor.capture());
+    tree.execute(dummyUser, cli);
 
-    assertThat(captor.getAllValues()).containsExactly("treeDescription",
-                                                      "Subcommands:",
-                                                      "  one: 1",
-                                                      "  two: 2",
-                                                      "  three: 3",
-                                                      "  four: 4");
+    cli.assertMatchesHistory();
   }
 
   @Test
@@ -111,17 +116,16 @@ public class CommandTreeTest {
     when(commandThree.getAllowedRoles()).thenReturn(Set.of(UserRole.ADMIN));
     when(commandFour.getAllowedRoles()).thenReturn(Set.of(UserRole.CLIENT));
 
-    when(session.getCurrentUserRole()).thenReturn(UserRole.CLIENT);
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
 
-    tree.execute(session, cli, "help");
+    cli.out("treeDescription\n")
+       .out("Subcommands:\n")
+       .out("  one: 1\n")
+       .out("  two: 2\n")
+       .out("  four: 4\n");
 
-    var captor = ArgumentCaptor.forClass(String.class);
-    verify(cli, times(5)).println(captor.capture());
+    tree.execute(dummyUser, cli, "help");
 
-    assertThat(captor.getAllValues()).containsExactly("treeDescription",
-                                                      "Subcommands:",
-                                                      "  one: 1",
-                                                      "  two: 2",
-                                                      "  four: 4");
+    cli.assertMatchesHistory();
   }
 }

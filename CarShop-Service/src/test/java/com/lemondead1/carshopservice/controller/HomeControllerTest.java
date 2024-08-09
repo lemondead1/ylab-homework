@@ -1,6 +1,7 @@
 package com.lemondead1.carshopservice.controller;
 
-import com.lemondead1.carshopservice.service.SessionService;
+import com.lemondead1.carshopservice.entity.User;
+import com.lemondead1.carshopservice.enums.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,9 +15,6 @@ public class HomeControllerTest {
   @Mock
   Runnable exitRunnable;
 
-  @Mock
-  SessionService session;
-
   MockConsoleIO cli;
 
   HomeController home;
@@ -29,7 +27,9 @@ public class HomeControllerTest {
 
   @Test
   void exitCallsExitRunnable() {
-    home.exit(session, cli);
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.ANONYMOUS, 0);
+
+    home.exit(dummyUser, cli);
 
     cli.assertMatchesHistory();
     verify(exitRunnable).run();

@@ -3,6 +3,7 @@ package com.lemondead1.carshopservice.controller;
 import com.lemondead1.carshopservice.cli.ConsoleIO;
 import com.lemondead1.carshopservice.cli.command.builders.TreeCommandBuilder;
 import com.lemondead1.carshopservice.cli.parsing.*;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;
@@ -10,7 +11,6 @@ import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.exceptions.WrongUsageException;
 import com.lemondead1.carshopservice.service.CarService;
 import com.lemondead1.carshopservice.service.OrderService;
-import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.service.UserService;
 import com.lemondead1.carshopservice.util.DateRange;
 import com.lemondead1.carshopservice.util.TableFormatter;
@@ -77,7 +77,7 @@ public class OrderController implements Controller {
 
   }
 
-  String byId(SessionService session, ConsoleIO cli, String... path) {
+  String byId(User currentUser, ConsoleIO cli, String... path) {
     if (path.length == 0) {
       throw new WrongUsageException();
     }
@@ -85,7 +85,7 @@ public class OrderController implements Controller {
     return "Found " + order.prettyFormat();
   }
 
-  String purchase(SessionService session, ConsoleIO cli, String... path) {
+  String purchase(User currentUser, ConsoleIO cli, String... path) {
     if (path.length == 0) {
       throw new WrongUsageException();
     }
@@ -96,33 +96,33 @@ public class OrderController implements Controller {
     if (!cli.parseOptional("Confirm [y/N] > ", BooleanParser.DEFAULT_TO_FALSE).orElse(false)) {
       return "Cancelled";
     }
-    orders.purchase(session.getCurrentUserId(), carId, comments);
+    orders.purchase(currentUser.id(), carId, comments);
     return "Ordered " + car.prettyFormat();
   }
 
-  String service(SessionService session, ConsoleIO cli, String... path) {
+  String service(User currentUser, ConsoleIO cli, String... path) {
     if (path.length == 0) {
       throw new WrongUsageException();
     }
     int carId = IntParser.INSTANCE.parse(path[0]);
     var comments = cli.parseOptional("Comments > ", StringParser.INSTANCE).orElse("");
-    var order = orders.orderService(session.getCurrentUserId(), carId, comments);
+    var order = orders.orderService(currentUser.id(), carId, comments);
     return "Scheduled service for " + order.car().prettyFormat();
   }
 
-  String cancel(SessionService session, ConsoleIO cli, String... path) {
+  String cancel(User currentUser, ConsoleIO cli, String... path) {
     if (path.length == 0) {
       throw new WrongUsageException();
     }
     var order = IntParser.INSTANCE.map(orders::findById).parse(path[0]);
-    if (session.getCurrentUserRole() == CLIENT && order.customer().id() != session.getCurrentUserId()) {
+    if (currentUser.role() == CLIENT && order.customer().id() != currentUser.id()) {
       throw new CommandException("Wrong order id.");
     }
-    orders.cancel(session.getCurrentUserId(), order.id());
+    orders.cancel(currentUser.id(), order.id());
     return "Cancelled " + order.prettyFormat();
   }
 
-  String updateState(SessionService session, ConsoleIO cli, String... path) {
+  String updateState(User currentUser, ConsoleIO cli, String... path) {
     if (path.length < 2) {
       throw new WrongUsageException();
     }
@@ -133,16 +133,16 @@ public class OrderController implements Controller {
       throw new CommandException("State has not been changed.");
     }
     var addedComments = cli.parseOptional("Append comment > ", StringParser.INSTANCE).map(c -> "\n" + c).orElse("");
-    orders.updateState(session.getCurrentUserId(), orderId, newState, addedComments);
+    orders.updateState(currentUser.id(), orderId, newState, addedComments);
     return "Done";
   }
 
-  String myOrders(SessionService session, ConsoleIO cli, String... path) {
+  String myOrders(User currentUser, ConsoleIO cli, String... path) {
     OrderSorting sorting = OrderSorting.LATEST_FIRST;
     if (path.length > 0) {
       sorting = IdParser.of(OrderSorting.class).parse(path[0]);
     }
-    var list = orders.findMyOrders(session.getCurrentUserId(), sorting);
+    var list = orders.findMyOrders(currentUser.id(), sorting);
     var table = new TableFormatter("Order ID", "Creation date", "Type", "Status",
                                    "Car ID", "Car brand", "Car model", "Comments");
     for (var row : list) {
@@ -152,7 +152,7 @@ public class OrderController implements Controller {
     return table.format(true);
   }
 
-  String deleteOrder(SessionService session, ConsoleIO cli, String... path) {
+  String deleteOrder(User currentUser, ConsoleIO cli, String... path) {
     if (path.length == 0) {
       throw new WrongUsageException();
     }
@@ -164,11 +164,11 @@ public class OrderController implements Controller {
       return "Cancelled";
     }
 
-    orders.deleteOrder(session.getCurrentUserId(), orderId);
+    orders.deleteOrder(currentUser.id(), orderId);
     return "Deleted";
   }
 
-  String search(SessionService session, ConsoleIO cli, String... path) {
+  String search(User currentUser, ConsoleIO cli, String... path) {
     var dates = cli.parseOptional("Date > ", DateRangeParser.INSTANCE).orElse(DateRange.ALL);
     var kind = cli.parseOptional("Kind > ", IdListParser.of(OrderKind.class)).orElse(OrderKind.ALL);
     var username = cli.parseOptional("Customer > ", StringParser.INSTANCE).orElse("");
@@ -188,7 +188,7 @@ public class OrderController implements Controller {
     return table.format(true);
   }
 
-  String create(SessionService session, ConsoleIO cli, String... path) {
+  String create(User currentUser, ConsoleIO cli, String... path) {
     if (path.length < 2) {
       throw new WrongUsageException();
     }
@@ -197,7 +197,7 @@ public class OrderController implements Controller {
     var kind = cli.parse("Kind > ", IdParser.of(OrderKind.class));
     var state = cli.parseOptional("State > ", IdParser.of(OrderState.class)).orElse(OrderState.NEW);
     var comment = cli.parseOptional("Comments > ", StringParser.INSTANCE).orElse("");
-    var order = orders.createOrder(session.getCurrentUserId(), customer.id(), car.id(), kind, state, comment);
+    var order = orders.createOrder(currentUser.id(), customer.id(), car.id(), kind, state, comment);
     return "Created " + order.prettyFormat() + ".";
   }
 }

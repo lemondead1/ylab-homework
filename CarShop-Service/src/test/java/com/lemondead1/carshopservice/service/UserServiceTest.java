@@ -3,7 +3,6 @@ package com.lemondead1.carshopservice.service;
 import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
-import com.lemondead1.carshopservice.exceptions.WrongUsernamePasswordException;
 import com.lemondead1.carshopservice.repo.CarRepo;
 import com.lemondead1.carshopservice.repo.EventRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
@@ -52,7 +51,7 @@ public class UserServiceTest {
   void beforeEach() {
     dbManager.init();
     userService = new UserService(users, eventService);
-    session = new SessionService(userService);
+    session = new SessionService(userService, eventService);
   }
 
   @AfterEach
@@ -72,27 +71,6 @@ public class UserServiceTest {
     var user = userService.signUserUp("username", "+73462684906", "test@example.com", "password");
     assertThat(users.findById(user.id())).isEqualTo(user);
     verify(eventService).onUserSignedUp(user);
-  }
-
-  @Test
-  void loginThrowsWrongUsernamePasswordOnWrongUsername() {
-    userService.signUserUp("username", "+73462684906", "test@example.com", "password");
-    assertThatThrownBy(() -> userService.login("doesnotexist", "password", session))
-        .isInstanceOf(WrongUsernamePasswordException.class);
-  }
-
-  @Test
-  void loginThrowsWrongUsernamePasswordOnWrongPassword() {
-    userService.signUserUp("username", "+73462684906", "test@example.com", "password");
-    assertThatThrownBy(() -> userService.login("username", "wrong", session))
-        .isInstanceOf(WrongUsernamePasswordException.class);
-  }
-
-  @Test
-  void loginSetsCurrentUserOnCorrectCredentials() {
-    userService.signUserUp("username", "+73462684906", "test@example.com", "password");
-    userService.login("username", "password", session);
-    assertThat(session.getCurrentUserId()).isEqualTo(1);
   }
 
   @Test

@@ -26,6 +26,9 @@ public class ControllerTest {
   UserService users;
 
   @Mock
+  SessionService session;
+
+  @Mock
   Runnable exitRunnable;
 
   MockConsoleIO cli;
@@ -42,7 +45,7 @@ public class ControllerTest {
     event = new EventController(events);
     car = new CarController(cars);
     home = new HomeController(exitRunnable);
-    login = new LoginController(users);
+    login = new LoginController(users, session);
     order = new OrderController(orders, cars, users);
     user = new UserController(users);
 

@@ -3,8 +3,8 @@ package com.lemondead1.carshopservice.cli.command;
 import com.lemondead1.carshopservice.cli.ConsoleIO;
 import com.lemondead1.carshopservice.cli.command.builders.CommandRootBuilder;
 import com.lemondead1.carshopservice.cli.command.builders.TreeSubcommandBuilder;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.service.SessionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,9 +35,6 @@ public class CommandBuildersTest {
   @Mock
   ConsoleIO cli;
 
-  @Mock
-  SessionService session;
-
   CommandTreeRoot root;
 
   @BeforeEach
@@ -63,32 +60,39 @@ public class CommandBuildersTest {
 
   @Test
   void rootExecutesEp1OnLogin() {
-    when(session.getCurrentUserRole()).thenReturn(UserRole.ANONYMOUS);
-    root.execute(session, cli, "login");
-    verify(ep1).execute(session, cli);
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.ANONYMOUS, 0);
+
+    root.execute(dummyUser, cli, "login");
+
+    verify(ep1).execute(dummyUser, cli);
     verifyNoInteractions(cli, ep2, ep3, ep4);
   }
 
   @Test
   void rootExecutesEp4OnUserDelete1() {
-    when(session.getCurrentUserRole()).thenReturn(UserRole.ADMIN);
-    root.execute(session, cli, "user", "delete", "1");
-    verify(ep4).execute(session, cli, "1");
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.ADMIN, 0);
+
+    root.execute(dummyUser, cli, "user", "delete", "1");
+
+    verify(ep4).execute(dummyUser, cli, "1");
     verifyNoInteractions(cli, ep1, ep2, ep3);
   }
 
   @Test
   void rootPrintsInsufficientPermissionsOnUserCreateWhenClient() {
-    when(session.getCurrentUserRole()).thenReturn(UserRole.CLIENT);
-    root.execute(session, cli, "user", "create");
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+
+    root.execute(dummyUser, cli, "user", "create");
+
     verify(cli).println("Insufficient permissions.");
     verifyNoInteractions(ep1, ep2, ep3, ep4);
   }
 
   @Test
   void rootPrintsDescriptionInOrderFilteringByRole() {
-    when(session.getCurrentUserRole()).thenReturn(UserRole.ADMIN);
-    root.execute(session, cli, "help");
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.ADMIN, 0);
+
+    root.execute(dummyUser, cli, "help");
 
     var capture = ArgumentCaptor.forClass(String.class);
     verify(cli, times(3)).println(capture.capture());

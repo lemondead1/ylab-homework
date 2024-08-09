@@ -4,6 +4,7 @@ import com.lemondead1.carshopservice.cli.ConsoleIO;
 import com.lemondead1.carshopservice.cli.command.builders.TreeCommandBuilder;
 import com.lemondead1.carshopservice.cli.parsing.StringParser;
 import com.lemondead1.carshopservice.cli.validation.PatternValidator;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.ValidationException;
 import com.lemondead1.carshopservice.service.SessionService;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LoginController implements Controller {
   private final UserService users;
+  private final SessionService session;
 
   @Override
   public void registerEndpoints(TreeCommandBuilder<?> builder) {
@@ -32,7 +34,7 @@ public class LoginController implements Controller {
            .pop();
   }
 
-  String signUp(SessionService session, ConsoleIO cli, String... params) {
+  String signUp(User currentUser, ConsoleIO cli, String... args) {
     String username = cli.parse("Username > ", StringParser.INSTANCE, PatternValidator.USERNAME, value -> {
       if (!users.checkUsernameFree(value)) {
         throw new ValidationException("Username '" + value + "' is already taken.");
@@ -45,15 +47,15 @@ public class LoginController implements Controller {
     return "Signed up successfully!";
   }
 
-  String login(SessionService session, ConsoleIO cli, String... params) {
+  String login(User currentUser, ConsoleIO cli, String... args) {
     String username = cli.parse("Username > ", StringParser.INSTANCE);
     String password = cli.parse("Password > ", StringParser.INSTANCE, true);
-    users.login(username, password, session);
+    session.login(username, password);
     return "Welcome, " + username + "!";
   }
 
-  String logout(SessionService session, ConsoleIO cli, String... params) {
-    session.setCurrentUserId(0);
+  String logout(User currentUser, ConsoleIO cli, String... args) {
+    session.logout();
     return "Logout";
   }
 }

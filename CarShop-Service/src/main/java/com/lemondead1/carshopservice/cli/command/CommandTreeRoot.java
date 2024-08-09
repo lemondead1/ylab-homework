@@ -1,6 +1,7 @@
 package com.lemondead1.carshopservice.cli.command;
 
 import com.lemondead1.carshopservice.cli.ConsoleIO;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.service.SessionService;
 
 import java.util.Arrays;
@@ -17,16 +18,16 @@ public class CommandTreeRoot {
     }
   }
 
-  private void printHelp(SessionService session, ConsoleIO cli) {
+  private void printHelp(User currentUser, ConsoleIO cli) {
     cli.println("Subcommands:");
     for (var subcommand : subcommands.values()) {
-      if (subcommand.getAllowedRoles().contains(session.getCurrentUserRole())) {
+      if (subcommand.getAllowedRoles().contains(currentUser.role())) {
         cli.println("  " + subcommand.getName() + ": " + subcommand.getDescription());
       }
     }
   }
 
-  public void execute(SessionService currentUser, ConsoleIO cli, String... path) {
+  public void execute(User currentUser, ConsoleIO cli, String... path) {
     if (path.length == 0) {
       printHelp(currentUser, cli);
       return;

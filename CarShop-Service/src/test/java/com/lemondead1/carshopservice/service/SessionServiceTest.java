@@ -1,7 +1,10 @@
 package com.lemondead1.carshopservice.service;
 
 
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
+import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
+import com.lemondead1.carshopservice.exceptions.WrongUsernamePasswordException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,30 +19,62 @@ public class SessionServiceTest {
   @Mock
   UserService users;
 
+  @Mock
+  EventService eventService;
+
   SessionService session;
 
   @BeforeEach
   void setup() {
-    session = new SessionService(users);
+    session = new SessionService(users, eventService);
   }
 
   @Test
-  void getCurrentUserRoleReturnsNonAnonymousWhenIdIsNot0() {
-    when(users.getUserRole(123)).thenReturn(UserRole.ADMIN);
+  void loginThrowsOnWrongUsername() {
+    when(users.findByUsername("wrongUsername")).thenThrow(new RowNotFoundException());
 
-    session.setCurrentUserId(123);
-
-    assertThat(session.getCurrentUserRole()).isEqualTo(UserRole.ADMIN);
-
-    verify(users).getUserRole(123);
+    assertThatThrownBy(() -> session.login("wrongUsername", "pass")).isInstanceOf(WrongUsernamePasswordException.class);
   }
 
   @Test
-  void getCurrentUserRoleReturnsAnonymousWhenIdIs0() {
-    session.setCurrentUserId(0);
+  void loginThrowsOnWrongPassword() {
+    var dummyUser = new User(1, "testUsername", "88005553535", "test@example.com", "pass", UserRole.CLIENT, 0);
+    when(users.findByUsername("testUsername")).thenReturn(dummyUser);
 
-    assertThat(session.getCurrentUserRole()).isEqualTo(UserRole.ANONYMOUS);
+    assertThatThrownBy(() -> session.login("testUsername", "wrong")).isInstanceOf(WrongUsernamePasswordException.class);
+  }
 
-    verifyNoInteractions(users);
+  @Test
+  void successfulLoginTest() {
+    var dummyUser = new User(1, "testUsername", "88005553535", "test@example.com", "pass", UserRole.CLIENT, 0);
+    when(users.findByUsername("testUsername")).thenReturn(dummyUser);
+    when(users.findById(1)).thenReturn(dummyUser);
+
+    session.login("testUsername", "pass");
+
+    assertThat(session.getCurrentUser()).isEqualTo(dummyUser);
+    verify(eventService).onUserLoggedIn(1);
+  }
+
+  @Test
+  void logoutTest() {
+    var dummyUser = new User(1, "testUsername", "88005553535", "test@example.com", "pass", UserRole.CLIENT, 0);
+    when(users.findByUsername("testUsername")).thenReturn(dummyUser);
+
+    session.login("testUsername", "pass");
+    session.logout();
+
+    assertThat(session.getCurrentUser()).matches(u -> u.id() == 0 && u.role() == UserRole.ANONYMOUS);
+  }
+
+  @Test
+  void deletedUserTest() {
+    var dummyUser = new User(1, "testUsername", "88005553535", "test@example.com", "pass", UserRole.CLIENT, 0);
+    when(users.findByUsername("testUsername")).thenReturn(dummyUser);
+    when(users.findById(1)).thenThrow(new RowNotFoundException());
+
+    session.login("testUsername", "pass");
+
+    assertThat(session.getCurrentUser()).matches(u -> u.id() == 0 && u.role() == UserRole.ANONYMOUS);
   }
 }

@@ -4,10 +4,10 @@ import com.lemondead1.carshopservice.cli.ConsoleIO;
 import com.lemondead1.carshopservice.cli.command.builders.TreeCommandBuilder;
 import com.lemondead1.carshopservice.cli.parsing.*;
 import com.lemondead1.carshopservice.cli.validation.PatternValidator;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.enums.UserSorting;
 import com.lemondead1.carshopservice.exceptions.WrongUsageException;
-import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.service.UserService;
 import com.lemondead1.carshopservice.util.IntRange;
 import com.lemondead1.carshopservice.util.TableFormatter;
@@ -46,7 +46,7 @@ public class UserController implements Controller {
            .pop();
   }
 
-  String byId(SessionService session, ConsoleIO cli, String... path) {
+  String byId(User currentUser, ConsoleIO cli, String... path) {
     if (path.length == 0) {
       throw new WrongUsageException();
     }
@@ -54,7 +54,7 @@ public class UserController implements Controller {
     return "Found " + user.prettyFormat();
   }
 
-  String search(SessionService session, ConsoleIO cli, String... path) {
+  String search(User currentUser, ConsoleIO cli, String... path) {
     var username = cli.parseOptional("Username > ", StringParser.INSTANCE).orElse("");
     var role = cli.parseOptional("Role > ", IdListParser.of(UserRole.class)).orElse(UserRole.AUTHORIZED);
     var phoneNumber = cli.parseOptional("Phone number > ", StringParser.INSTANCE).orElse("");
@@ -70,17 +70,17 @@ public class UserController implements Controller {
     return table.format(true);
   }
 
-  String create(SessionService session, ConsoleIO console, String... path) {
+  String create(User currentUser, ConsoleIO console, String... path) {
     var username = console.parse("Username > ", StringParser.INSTANCE, PatternValidator.USERNAME);
     var phoneNumber = console.parse("Phone number > ", StringParser.INSTANCE, PatternValidator.PHONE_NUMBER);
     var email = console.parse("Email > ", StringParser.INSTANCE, PatternValidator.EMAIL);
     var password = console.parse("Password > ", StringParser.INSTANCE, true, PatternValidator.PASSWORD);
     var role = console.parseOptional("Role > ", IdParser.of(CLIENT, MANAGER, ADMIN)).orElse(CLIENT);
-    var newUser = users.createUser(session.getCurrentUserId(), username, phoneNumber, email, password, role);
+    var newUser = users.createUser(currentUser.id(), username, phoneNumber, email, password, role);
     return "Created " + newUser.prettyFormat();
   }
 
-  String edit(SessionService session, ConsoleIO cli, String... path) {
+  String edit(User currentUser, ConsoleIO cli, String... path) {
     if (path.length == 0) {
       throw new WrongUsageException();
     }
@@ -94,7 +94,7 @@ public class UserController implements Controller {
     var password = cli.parseOptional("Password > ", StringParser.INSTANCE, true).orElse(null);
     var role = cli.parseOptional("Role (" + old.role().getPrettyName() + ") > ", IdParser.of(CLIENT, MANAGER, ADMIN))
                   .orElse(null);
-    var newUser = users.editUser(session.getCurrentUserId(), old.id(), username, phoneNumber, email, password, role);
+    var newUser = users.editUser(currentUser.id(), old.id(), username, phoneNumber, email, password, role);
     return "Saved " + newUser.prettyFormat();
   }
 }
