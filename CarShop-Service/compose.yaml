@@ -3,8 +3,8 @@ services:
     image: postgres
     container_name: postgres
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=car_shop_user
+      - POSTGRES_PASSWORD=some_password
       - POSTGRES_DB=car_shop
     restart: unless-stopped
     ports:
