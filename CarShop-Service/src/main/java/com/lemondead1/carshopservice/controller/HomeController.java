@@ -3,7 +3,6 @@ package com.lemondead1.carshopservice.controller;
 import com.lemondead1.carshopservice.cli.ConsoleIO;
 import com.lemondead1.carshopservice.cli.command.builders.TreeCommandBuilder;
 import com.lemondead1.carshopservice.entity.User;
-import com.lemondead1.carshopservice.service.SessionService;
 import lombok.RequiredArgsConstructor;
 
 import static com.lemondead1.carshopservice.enums.UserRole.*;

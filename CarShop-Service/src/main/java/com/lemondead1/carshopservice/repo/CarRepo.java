@@ -33,8 +33,7 @@ public class CarRepo {
    * @return car that was created
    */
   public Car create(String brand, String model, int productionYear, int price, String condition) {
-    var sql = """
-        insert into cars (brand, model, production_year, price, condition) values (?, ?, ?, ?, ?)""";
+    var sql = "insert into cars (brand, model, production_year, price, condition) values (?, ?, ?, ?, ?)";
 
     try (var conn = db.connect(); var stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
       stmt.setString(1, brand);

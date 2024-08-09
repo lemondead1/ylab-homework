@@ -49,12 +49,12 @@ public class CarRepoTest {
 
   @BeforeEach
   void beforeEach() {
-    dbManager.init();
+    dbManager.setupDatabase();
   }
 
   @AfterEach
   void afterEach() {
-    dbManager.dropAll();
+    dbManager.dropSchemas();
   }
 
   @Test

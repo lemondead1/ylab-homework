@@ -9,7 +9,6 @@ import com.lemondead1.carshopservice.enums.EventSorting;
 import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.service.EventService;
-import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.util.DateRange;
 import lombok.RequiredArgsConstructor;
 

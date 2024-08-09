@@ -5,7 +5,6 @@ import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.exceptions.WrongUsageException;
-import com.lemondead1.carshopservice.service.SessionService;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Collection;

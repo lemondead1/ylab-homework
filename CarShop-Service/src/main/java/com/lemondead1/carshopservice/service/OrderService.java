@@ -77,7 +77,7 @@ public class OrderService {
    * @param customerId customer id
    * @param carId      car id
    */
-  private void validateNoServiceOrdersExist(int customerId, int carId) {
+  private void checkNoServiceOrdersExist(int customerId, int carId) {
     if (orders.findCarOrders(carId)
               .stream()
               .filter(o -> o.customer().id() == customerId)
@@ -95,22 +95,11 @@ public class OrderService {
   public void deleteOrder(int deleterId, int orderId) {
     var old = orders.findById(orderId);
     if (old.type() == OrderKind.PURCHASE) {
-      validateNoServiceOrdersExist(old.customer().id(), old.car().id());
+      checkNoServiceOrdersExist(old.customer().id(), old.car().id());
     }
 
     orders.delete(orderId);
     events.onOrderDeleted(deleterId, orderId);
-  }
-
-  public Order cancel(int userId, int orderId) {
-    var order = orders.findById(orderId);
-    switch (order.state()) {
-      case CANCELLED -> throw new CommandException("This order has already been cancelled.");
-      case DONE -> throw new CommandException("You cannot cancel finished orders.");
-    }
-    var newRow = orders.edit(orderId, null, null, OrderState.CANCELLED, null, null, null);
-    events.onOrderEdited(userId, newRow);
-    return newRow;
   }
 
   /**
@@ -125,11 +114,22 @@ public class OrderService {
     var order = orders.findById(orderId);
 
     if (newState != OrderState.DONE && order.state() == OrderState.DONE && order.type() == OrderKind.PURCHASE) {
-      validateNoServiceOrdersExist(order.customer().id(), order.car().id());
+      checkNoServiceOrdersExist(order.customer().id(), order.car().id());
     }
 
     var newRow = orders.edit(orderId, null, null, newState, null, null, order.comments() + appendComment);
     events.onOrderEdited(userId, newRow);
+  }
+
+  public Order cancel(int userId, int orderId) {
+    var order = orders.findById(orderId);
+    switch (order.state()) {
+      case CANCELLED -> throw new CommandException("This order has already been cancelled.");
+      case DONE -> throw new CommandException("You cannot cancel finished orders.");
+    }
+    var newRow = orders.edit(orderId, null, null, OrderState.CANCELLED, null, null, null);
+    events.onOrderEdited(userId, newRow);
+    return newRow;
   }
 
   public List<Order> findMyOrders(int user, OrderSorting sorting) {

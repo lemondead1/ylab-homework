@@ -26,7 +26,7 @@ public class DBManager {
     this.liquibaseSchema = liquibaseSchema;
   }
 
-  public void init() {
+  public void setupDatabase() {
     try (var conn = DriverManager.getConnection(url, user, password)) {
       conn.prepareStatement("create schema if not exists " + schema).execute();
       conn.prepareStatement("create schema if not exists " + liquibaseSchema).execute();
@@ -41,7 +41,7 @@ public class DBManager {
     }
   }
 
-  public void dropAll() {
+  public void dropSchemas() {
     try (var conn = DriverManager.getConnection(url, user, password)) {
       conn.prepareStatement("drop schema " + schema + " cascade").execute();
       conn.prepareStatement("drop schema " + liquibaseSchema + " cascade").execute();

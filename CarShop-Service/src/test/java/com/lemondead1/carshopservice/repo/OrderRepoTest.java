@@ -41,14 +41,14 @@ public class OrderRepoTest {
 
   @BeforeEach
   void beforeEach() {
-    dbManager.init();
+    dbManager.setupDatabase();
     users.create("test_user_1", "88005553535", "test@example.com", "pass", UserRole.CLIENT);
     cars.create("Tesla", "Model 3", 2020, 4000000, "good");
   }
 
   @AfterEach
   void afterEach() {
-    dbManager.dropAll();
+    dbManager.dropSchemas();
   }
 
   @Test

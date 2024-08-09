@@ -68,7 +68,7 @@ public class OrderServiceTest {
 
   @BeforeEach
   void beforeEach() {
-    dbManager.init();
+    dbManager.setupDatabase();
 
     orderService = new OrderService(orders, eventService, time);
 
@@ -79,7 +79,7 @@ public class OrderServiceTest {
 
   @AfterEach
   void afterEach() {
-    dbManager.dropAll();
+    dbManager.dropSchemas();
   }
 
   @Test

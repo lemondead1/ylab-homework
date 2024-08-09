@@ -54,13 +54,13 @@ public class CarServiceTest {
 
   @BeforeEach
   void beforeEach() {
-    dbManager.init();
+    dbManager.setupDatabase();
     carService = new CarService(cars, orders, eventService);
   }
 
   @AfterEach
   void afterEach() {
-    dbManager.dropAll();
+    dbManager.dropSchemas();
   }
 
   @Test

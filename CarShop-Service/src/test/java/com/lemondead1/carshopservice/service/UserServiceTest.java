@@ -49,14 +49,14 @@ public class UserServiceTest {
 
   @BeforeEach
   void beforeEach() {
-    dbManager.init();
+    dbManager.setupDatabase();
     userService = new UserService(users, eventService);
     session = new SessionService(userService, eventService);
   }
 
   @AfterEach
   void afterEach() {
-    dbManager.dropAll();
+    dbManager.dropSchemas();
   }
 
   @Test
