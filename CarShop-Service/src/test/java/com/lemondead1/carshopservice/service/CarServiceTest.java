@@ -88,7 +88,7 @@ public class CarServiceTest {
   void deleteCarDeletesCarAndPostsEvent() {
     carService.createCar(6, "Chevrolet", "Corvette", 1999, 10000000, "used");
 
-    carService.deleteCar(10, 1, false);
+    carService.deleteCar(10, 1);
 
     assertThatThrownBy(() -> cars.findById(1)).isInstanceOf(RowNotFoundException.class);
     verify(eventService).onCarDeleted(10, 1);
@@ -100,16 +100,16 @@ public class CarServiceTest {
     carService.createCar(53, "Chevrolet", "Camaro", 1999, 10000000, "used");
     orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.NEW, 1, 1, "");
 
-    assertThatThrownBy(() -> carService.deleteCar(6, 1, false)).isInstanceOf(CascadingException.class);
+    assertThatThrownBy(() -> carService.deleteCar(6, 1)).isInstanceOf(CascadingException.class);
   }
 
   @Test
-  void deleteCarDeletesCarAndOrdersWhenCascadeIsTrue() {
+  void deleteCarCascadingDeletesCar() {
     users.create("alex", "8800555", "test@example.com", "password", UserRole.CLIENT);
     carService.createCar(53, "Chevrolet", "Camaro", 1999, 10000000, "used");
     orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.NEW, 1, 1, "");
 
-    carService.deleteCar(6, 1, true);
+    carService.deleteCarCascading(6, 1);
 
     assertThatThrownBy(() -> cars.findById(1)).isInstanceOf(RowNotFoundException.class);
     assertThatThrownBy(() -> orders.findById(1)).isInstanceOf(RowNotFoundException.class);

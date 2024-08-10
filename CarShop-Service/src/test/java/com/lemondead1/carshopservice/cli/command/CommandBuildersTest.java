@@ -1,6 +1,6 @@
 package com.lemondead1.carshopservice.cli.command;
 
-import com.lemondead1.carshopservice.cli.ConsoleIO;
+import com.lemondead1.carshopservice.cli.CLI;
 import com.lemondead1.carshopservice.cli.command.builders.CommandRootBuilder;
 import com.lemondead1.carshopservice.cli.command.builders.TreeSubcommandBuilder;
 import com.lemondead1.carshopservice.entity.User;
@@ -33,7 +33,7 @@ public class CommandBuildersTest {
   Endpoint ep4; // user delete <id>
 
   @Mock
-  ConsoleIO cli;
+  CLI cli;
 
   CommandTreeRoot root;
 

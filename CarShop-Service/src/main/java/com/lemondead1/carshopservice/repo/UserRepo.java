@@ -59,7 +59,7 @@ public class UserRepo {
                          role=coalesce(?::user_role, role)
         where id=?
         returning id, username, phone_number, email, password, role,
-        (select count(*) from orders where client_id=id and kind='purchase' and state='done') as purchase_count""";
+        (select count(*) from orders where client_id=users.id and kind='purchase' and state='done') as purchase_count""";
 
     try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
       stmt.setString(1, username);
@@ -76,7 +76,7 @@ public class UserRepo {
         throw new RowNotFoundException("User #" + id + " does not exist.");
       }
 
-      return readUser(results);
+      return readUser(results, 1);
     } catch (SQLException e) {
       throw new DBException("Failed to update user", e);
     }
@@ -97,7 +97,7 @@ public class UserRepo {
         throw new RowNotFoundException("User #" + id + " does not exist.");
       }
 
-      return readUser(results);
+      return readUser(results, 1);
     } catch (SQLException e) {
       throw new DBException("Failed to delete user", e);
     }
@@ -121,7 +121,7 @@ public class UserRepo {
   public User findByUsername(String username) {
     var sql = """
         select id, username, phone_number, email, password, role,
-        (select count(*) from orders where client_id=id and kind='purchase' and state='done') as purchase_count
+        (select count(*) from orders where client_id=users.id and kind='purchase' and state='done') as purchase_count
         from users
         where username=?""";
 
@@ -135,7 +135,7 @@ public class UserRepo {
         throw new RowNotFoundException("User with username '" + username + "' does not exist.");
       }
 
-      return readUser(results);
+      return readUser(results, 1);
     } catch (SQLException e) {
       throw new DBException(e);
     }
@@ -144,7 +144,7 @@ public class UserRepo {
   public User findById(int id) {
     var sql = """
         select id, username, phone_number, email, password, role,
-        (select count(*) from orders where client_id=id and kind='purchase' and state='done') as purchase_count
+        (select count(*) from orders where client_id=users.id and kind='purchase' and state='done') as purchase_count
         from users
         where id=?""";
 
@@ -158,7 +158,20 @@ public class UserRepo {
         throw new RowNotFoundException("User #" + id + " does not exist.");
       }
 
-      return readUser(results);
+      return readUser(results, 1);
+    } catch (SQLException e) {
+      throw new DBException(e);
+    }
+  }
+
+  public int totalCount() {
+    var sql = "select count(*) from users";
+
+    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
+      stmt.execute();
+      var results = stmt.getResultSet();
+      results.next();
+      return results.getInt(1);
     } catch (SQLException e) {
       throw new DBException(e);
     }
@@ -174,7 +187,7 @@ public class UserRepo {
                                        select id, username, phone_number, email, password, role, purchase_count
                                        from (
                                          select id, username, phone_number, email, password, role,
-                                                (select count(*) from orders where client_id=id and kind='purchase' and state='done') as purchase_count
+                                                (select count(*) from orders where client_id=users.id and kind='purchase' and state='done') as purchase_count
                                          from users
                                        )
                                        where
@@ -209,7 +222,7 @@ public class UserRepo {
       List<User> list = new ArrayList<>();
 
       while (results.next()) {
-        list.add(readUser(results));
+        list.add(readUser(results, 1));
       }
 
       return list;
@@ -218,15 +231,14 @@ public class UserRepo {
     }
   }
 
-  private User readUser(ResultSet results) throws SQLException {
-    var id = results.getInt(1);
-    var username = results.getString(2);
-    var phoneNumber = results.getString(3);
-    var email = results.getString(4);
-    var password = results.getString(5);
-    var role = UserRole.parse(results.getString(6));
-    var purchaseCount = results.getInt(7);
+  static User readUser(ResultSet results, int startIndex) throws SQLException {
+    var id = results.getInt(startIndex);
+    var username = results.getString(startIndex + 1);
+    var phoneNumber = results.getString(startIndex + 2);
+    var email = results.getString(startIndex + 3);
+    var password = results.getString(startIndex + 4);
+    var role = UserRole.parse(results.getString(startIndex + 5));
+    var purchaseCount = results.getInt(startIndex + 6);
     return new User(id, username, phoneNumber, email, password, role, purchaseCount);
   }
-
 }

@@ -52,17 +52,12 @@ public class OrderRepoTest {
   }
 
   @Test
-  void firstCreatedOrderHasIdEqualToOne() {
-    assertThat(orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.NEW, 1, 1, "").id()).isEqualTo(1);
-  }
-
-  @Test
   void createdOrderMatchesSpec() {
     Instant now = Instant.now().truncatedTo(ChronoUnit.MICROS); //Postgres does not support finer units
-    var created = orders.create(now, OrderKind.PURCHASE, OrderState.NEW, 1, 1, "");
+    var created = orders.create(now, OrderKind.PURCHASE, OrderState.NEW, 24, 61, "");
     assertThat(created)
-        .isEqualTo(orders.findById(1))
-        .isEqualTo(new Order(1, now, OrderKind.PURCHASE, OrderState.NEW, users.findById(1), cars.findById(1), ""));
+        .isEqualTo(orders.findById(created.id()))
+        .isEqualTo(new Order(created.id(), now, OrderKind.PURCHASE, OrderState.NEW, users.findById(24), cars.findById(61), ""));
   }
 
   @Test
@@ -70,7 +65,7 @@ public class OrderRepoTest {
     Instant now = Instant.now().truncatedTo(ChronoUnit.MICROS);
     orders.create(now, OrderKind.PURCHASE, OrderState.NEW, 1, 1, "");
 
-    assertThat(orders.findCustomerOrders(1, OrderSorting.LATEST_FIRST))
+    assertThat(orders.findClientOrders(1, OrderSorting.LATEST_FIRST))
         .singleElement()
         .isEqualTo(new Order(1, now, OrderKind.PURCHASE, OrderState.NEW, users.findById(1), cars.findById(1), ""));
   }
@@ -80,7 +75,7 @@ public class OrderRepoTest {
     Instant now = Instant.now().truncatedTo(ChronoUnit.MICROS);
     orders.create(now, OrderKind.PURCHASE, OrderState.NEW, 1, 1, "");
 
-    assertThat(orders.findCustomerOrders(1, OrderSorting.LATEST_FIRST))
+    assertThat(orders.findClientOrders(1, OrderSorting.LATEST_FIRST))
         .singleElement()
         .isEqualTo(new Order(1, now, OrderKind.PURCHASE, OrderState.NEW, users.findById(1), cars.findById(1), ""));
   }
@@ -110,7 +105,7 @@ public class OrderRepoTest {
     assertThat(deleted).isEqualTo(new Order(1, now, OrderKind.PURCHASE, OrderState.NEW,
                                             users.findById(1), cars.findById(1), ""));
     assertThat(orders.findCarOrders(1)).isEmpty();
-    assertThat(orders.findCustomerOrders(1, OrderSorting.LATEST_FIRST)).isEmpty();
+    assertThat(orders.findClientOrders(1, OrderSorting.LATEST_FIRST)).isEmpty();
   }
 
   @Test

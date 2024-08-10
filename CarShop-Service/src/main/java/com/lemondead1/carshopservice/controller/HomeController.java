@@ -1,6 +1,6 @@
 package com.lemondead1.carshopservice.controller;
 
-import com.lemondead1.carshopservice.cli.ConsoleIO;
+import com.lemondead1.carshopservice.cli.CLI;
 import com.lemondead1.carshopservice.cli.command.builders.TreeCommandBuilder;
 import com.lemondead1.carshopservice.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ public class HomeController implements Controller {
            .pop();
   }
 
-  String exit(User currentUser, ConsoleIO cli, String... params) {
+  String exit(User currentUser, CLI cli, String... params) {
     exit.run();
     return "Goodbye!";
   }

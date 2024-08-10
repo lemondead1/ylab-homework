@@ -31,7 +31,7 @@ public class ControllerTest {
   @Mock
   Runnable exitRunnable;
 
-  MockConsoleIO cli;
+  MockCLI cli;
 
   LoginController login;
   EventController event;
@@ -49,7 +49,7 @@ public class ControllerTest {
     order = new OrderController(orders, cars, users);
     user = new UserController(users);
 
-    cli = new MockConsoleIO();
+    cli = new MockCLI();
   }
 
   @Test

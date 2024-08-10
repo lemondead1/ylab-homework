@@ -1,6 +1,6 @@
 package com.lemondead1.carshopservice.controller;
 
-import com.lemondead1.carshopservice.cli.ConsoleIO;
+import com.lemondead1.carshopservice.cli.CLI;
 import com.lemondead1.carshopservice.cli.command.builders.TreeCommandBuilder;
 import com.lemondead1.carshopservice.cli.parsing.StringParser;
 import com.lemondead1.carshopservice.cli.validation.PatternValidator;
@@ -34,7 +34,7 @@ public class LoginController implements Controller {
            .pop();
   }
 
-  String signUp(User currentUser, ConsoleIO cli, String... args) {
+  String signUp(User currentUser, CLI cli, String... args) {
     String username = cli.parse("Username > ", StringParser.INSTANCE, PatternValidator.USERNAME, value -> {
       if (!users.checkUsernameFree(value)) {
         throw new ValidationException("Username '" + value + "' is already taken.");
@@ -47,14 +47,14 @@ public class LoginController implements Controller {
     return "Signed up successfully!";
   }
 
-  String login(User currentUser, ConsoleIO cli, String... args) {
+  String login(User currentUser, CLI cli, String... args) {
     String username = cli.parse("Username > ", StringParser.INSTANCE);
     String password = cli.parse("Password > ", StringParser.INSTANCE, true);
     session.login(username, password);
     return "Welcome, " + username + "!";
   }
 
-  String logout(User currentUser, ConsoleIO cli, String... args) {
+  String logout(User currentUser, CLI cli, String... args) {
     session.logout();
     return "Logout";
   }

@@ -1,6 +1,6 @@
 package com.lemondead1.carshopservice.cli.command;
 
-import com.lemondead1.carshopservice.cli.ConsoleIO;
+import com.lemondead1.carshopservice.cli.CLI;
 import com.lemondead1.carshopservice.entity.User;
 
 import java.util.Arrays;
@@ -17,7 +17,7 @@ public class CommandTreeRoot {
     }
   }
 
-  private void printHelp(User currentUser, ConsoleIO cli) {
+  private void printHelp(User currentUser, CLI cli) {
     cli.println("Subcommands:");
     for (var subcommand : subcommands.values()) {
       if (subcommand.getAllowedRoles().contains(currentUser.role())) {
@@ -26,7 +26,7 @@ public class CommandTreeRoot {
     }
   }
 
-  public void execute(User currentUser, ConsoleIO cli, String... path) {
+  public void execute(User currentUser, CLI cli, String... path) {
     if (path.length == 0) {
       printHelp(currentUser, cli);
       return;

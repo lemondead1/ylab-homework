@@ -13,6 +13,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -22,16 +24,16 @@ public class EventRepo {
   private final DBManager db;
 
   public Event create(Instant timestamp, int userId, EventType type, String json) {
-    var sql = "insert into events e (timestamp, user_id, type, data) values (?, ?, ?::event_type, ?)";
+    var sql = "insert into events (timestamp, user_id, type, data) values (?, ?, ?::event_type, ?::jsonb)";
 
     try (var conn = db.connect(); var stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-      stmt.setObject(1, timestamp);
+      stmt.setObject(1, timestamp.atOffset(ZoneOffset.UTC));
       stmt.setInt(2, userId);
       stmt.setString(3, type.getId());
       stmt.setString(4, json);
       stmt.execute();
 
-      var results = stmt.getResultSet();
+      var results = stmt.getGeneratedKeys();
       results.next();
 
       var id = results.getInt(1);
@@ -83,7 +85,7 @@ public class EventRepo {
 
   private Event readEvent(ResultSet results) throws SQLException {
     var id = results.getInt(1);
-    var timestamp = results.getObject(2, Instant.class);
+    var timestamp = results.getObject(2, OffsetDateTime.class).toInstant();
     var userId = results.getInt(3);
     var type = EventType.parse(results.getString(4));
     var data = results.getString(5);

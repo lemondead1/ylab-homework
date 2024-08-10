@@ -70,7 +70,7 @@ public class OrderServiceTest {
   void beforeEach() {
     dbManager.setupDatabase();
 
-    orderService = new OrderService(orders, eventService, time);
+    orderService = new OrderService(orders, cars, eventService, time);
 
     car = cars.create("Chevrolet", "Camaro", 2000, 8000000, "like new");
     user = users.create("Username", "+74326735354", "test@example.com", "pwd", UserRole.CLIENT);

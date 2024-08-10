@@ -8,7 +8,6 @@ import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.exceptions.WrongUsageException;
 import com.lemondead1.carshopservice.service.CarService;
-import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.service.UserService;
 import com.lemondead1.carshopservice.util.IntRange;
 import com.lemondead1.carshopservice.util.TableFormatter;
@@ -32,7 +31,7 @@ public class CarControllerTest {
   @Mock
   UserService users;
 
-  MockConsoleIO cli;
+  MockCLI cli;
 
   CarController car;
 
@@ -40,7 +39,7 @@ public class CarControllerTest {
   void setup() {
     car = new CarController(cars);
 
-    cli = new MockConsoleIO();
+    cli = new MockCLI();
   }
 
   @Test
@@ -59,7 +58,7 @@ public class CarControllerTest {
 
     when(cars.findById(3)).thenReturn(dummyCar);
 
-    assertThat(car.byId(dummyUser, cli, "3")).isEqualTo("Found " + dummyCar.prettyFormat());
+    assertThat(car.byId(dummyUser, cli, "3")).isEqualTo("Found " + dummyCar.prettyFormat() + ".");
 
     cli.assertMatchesHistory();
     verify(cars).findById(3);
@@ -80,7 +79,7 @@ public class CarControllerTest {
     var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.ADMIN, 0);
     var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", true);
 
-    cli.out("Deleting \"Brand\" \"Model\" of 2001 p/y priced 1000000 in \"poor\" condition with id 3")
+    cli.out("Deleting \"Brand\" \"Model\" of 2001 p/y priced 1000000 in \"poor\" condition with id 3.\n")
        .out("Confirm [y/N] > ").in("not");
 
     when(cars.findById(3)).thenReturn(mockCar);
@@ -95,18 +94,18 @@ public class CarControllerTest {
     var dummyUser = new User(5, "username", "12346789", "mail@example.com", "pass", UserRole.ADMIN, 0);
     var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", true);
 
-    cli.out("Deleting \"Brand\" \"Model\" of 2001 p/y priced 1000000 in \"poor\" condition with id 3")
+    cli.out("Deleting \"Brand\" \"Model\" of 2001 p/y priced 1000000 in \"poor\" condition with id 3.\n")
        .out("Confirm [y/N] > ").in("yes")
        .out("Cascading\n")
        .out("Delete them [y/N] > ").in("not");
 
     when(cars.findById(3)).thenReturn(dummyCar);
-    doThrow(new CascadingException("Cascading")).when(cars).deleteCar(5, 3, false);
+    doThrow(new CascadingException("Cascading")).when(cars).deleteCar(5, 3);
 
     assertThat(car.deleteCar(dummyUser, cli, "3")).isEqualTo("Cancelled");
 
     cli.assertMatchesHistory();
-    verify(cars, times(0)).deleteCar(5, 3, true);
+    verify(cars, times(0)).deleteCarCascading(5, 3);
   }
 
   @Test
@@ -114,16 +113,16 @@ public class CarControllerTest {
     var dummyUser = new User(5, "username", "12346789", "mail@example.com", "pass", UserRole.ADMIN, 0);
     var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", true);
 
-    cli.out("Deleting \"Brand\" \"Model\" of 2001 p/y priced 1000000 in \"poor\" condition with id 3")
+    cli.out("Deleting \"Brand\" \"Model\" of 2001 p/y priced 1000000 in \"poor\" condition with id 3.\n")
        .out("Confirm [y/N] > ").in("yes");
 
     when(cars.findById(3)).thenReturn(mockCar);
-    doNothing().when(cars).deleteCar(5, 3, false);
+    doNothing().when(cars).deleteCar(5, 3);
 
-    assertThat(car.deleteCar(dummyUser, cli, "3")).isEqualTo("Done");
+    assertThat(car.deleteCar(dummyUser, cli, "3")).isEqualTo("Deleted");
 
     cli.assertMatchesHistory();
-    verify(cars).deleteCar(5, 3, false);
+    verify(cars).deleteCar(5, 3);
   }
 
   @Test
@@ -131,20 +130,20 @@ public class CarControllerTest {
     var dummyUser = new User(5, "username", "12346789", "mail@example.com", "pass", UserRole.ADMIN, 0);
     var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", false);
 
-    cli.out("Deleting \"Brand\" \"Model\" of 2001 p/y priced 1000000 in \"poor\" condition with id 3")
+    cli.out("Deleting \"Brand\" \"Model\" of 2001 p/y priced 1000000 in \"poor\" condition with id 3.\n")
        .out("Confirm [y/N] > ").in("yes")
        .out("Cascading\n")
        .out("Delete them [y/N] > ").in("yes");
 
     when(cars.findById(3)).thenReturn(mockCar);
-    doThrow(new CascadingException("Cascading")).when(cars).deleteCar(5, 3, false);
-    doNothing().when(cars).deleteCar(5, 3, true);
+    doThrow(new CascadingException("Cascading")).when(cars).deleteCar(5, 3);
+    doNothing().when(cars).deleteCarCascading(5, 3);
 
-    assertThat(car.deleteCar(dummyUser, cli, "3")).isEqualTo("Done");
+    assertThat(car.deleteCar(dummyUser, cli, "3")).isEqualTo("Deleted");
 
     cli.assertMatchesHistory();
-    verify(cars).deleteCar(5, 3, false);
-    verify(cars).deleteCar(5, 3, true);
+    verify(cars).deleteCar(5, 3);
+    verify(cars).deleteCarCascading(5, 3);
   }
 
   @Test
@@ -172,7 +171,7 @@ public class CarControllerTest {
     when(cars.findById(3)).thenReturn(oldCar);
     when(cars.editCar(5, 3, null, null, 2001, 2000000, "ok")).thenReturn(newCar);
 
-    assertThat(car.editCar(dummyUser, cli, "3")).isEqualTo("Saved changes to " + newCar.prettyFormat());
+    assertThat(car.editCar(dummyUser, cli, "3")).isEqualTo("Saved changes to " + newCar.prettyFormat() + ".");
 
     cli.assertMatchesHistory();
     verify(cars).findById(3);
@@ -193,7 +192,7 @@ public class CarControllerTest {
 
     when(cars.createCar(6, "Brand", "Model", 2001, 1000000, "poor")).thenReturn(mockCar);
 
-    assertThat(car.createCar(dummyUser, cli)).isEqualTo("Created " + mockCar.prettyFormat());
+    assertThat(car.createCar(dummyUser, cli)).isEqualTo("Created " + mockCar.prettyFormat() + ".");
 
     cli.assertMatchesHistory();
     verify(cars).createCar(6, "Brand", "Model", 2001, 1000000, "poor");

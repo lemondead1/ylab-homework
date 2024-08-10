@@ -1,14 +1,11 @@
 package com.lemondead1.carshopservice.cli.command;
 
-import com.lemondead1.carshopservice.cli.ConsoleIO;
-import com.lemondead1.carshopservice.controller.MockConsoleIO;
+import com.lemondead1.carshopservice.controller.MockCLI;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.service.SessionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -32,7 +29,7 @@ public class CommandTreeTest {
   @Mock
   Command commandFour;
 
-  MockConsoleIO cli;
+  MockCLI cli;
 
   CommandTree tree;
 
@@ -43,7 +40,7 @@ public class CommandTreeTest {
     when(commandThree.getName()).thenReturn("three");
     when(commandFour.getName()).thenReturn("four");
 
-    cli = new MockConsoleIO();
+    cli = new MockCLI();
     tree = new CommandTree(List.of(commandOne, commandTwo, commandThree, commandFour),
                            "treeName",
                            "treeDescription",

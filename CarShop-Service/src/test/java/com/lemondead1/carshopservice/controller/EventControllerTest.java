@@ -26,7 +26,7 @@ public class EventControllerTest {
   @Mock
   EventService events;
 
-  MockConsoleIO cli;
+  MockCLI cli;
 
   EventController event;
 
@@ -34,7 +34,7 @@ public class EventControllerTest {
   void setup() {
     event = new EventController(events);
 
-    cli = new MockConsoleIO();
+    cli = new MockCLI();
   }
 
   @Test

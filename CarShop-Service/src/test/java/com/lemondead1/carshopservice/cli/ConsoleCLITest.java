@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ConsoleIOTest {
+public class ConsoleCLITest {
   private static final Object o1 = new Object();
   private static final Object o2 = new Object();
 
@@ -31,7 +31,7 @@ public class ConsoleIOTest {
   Validator<Object> validator;
 
   @InjectMocks
-  ConsoleIO cli;
+  CLI cli;
 
   @Test
   void printlnCallsPrintln() {

@@ -12,7 +12,7 @@ import java.util.function.BooleanSupplier;
 @RequiredArgsConstructor
 public class CommandAcceptor {
   private final BooleanSupplier doContinue;
-  private final ConsoleIO cli;
+  private final CLI cli;
   private final SessionService session;
   private final CommandTreeRoot rootCommand;
 

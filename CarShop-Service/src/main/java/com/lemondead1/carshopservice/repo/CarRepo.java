@@ -2,6 +2,7 @@ package com.lemondead1.carshopservice.repo;
 
 import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.entity.Car;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.DBException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
@@ -16,6 +17,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @RequiredArgsConstructor
@@ -97,7 +99,7 @@ public class CarRepo {
         throw new RowNotFoundException("Car #" + carId + " not found.");
       }
 
-      return readCar(results);
+      return readCar(results, 1);
     } catch (SQLException e) {
       throw new DBException("Failed to update a car", e);
     }
@@ -125,7 +127,7 @@ public class CarRepo {
         throw new RowNotFoundException("Car #" + carId + " not found.");
       }
 
-      return readCar(results);
+      return readCar(results, 1);
     } catch (SQLException e) {
       throw new DBException("Failed to update a car", e);
     }
@@ -147,9 +149,33 @@ public class CarRepo {
         throw new RowNotFoundException("Car #" + carId + " not found.");
       }
 
-      return readCar(results);
+      return readCar(results, 1);
     } catch (SQLException e) {
       throw new DBException("Failed to find a car.", e);
+    }
+  }
+
+  public Optional<User> findCarOwner(int carId) {
+    var sql = """
+        select u.id, username, phone_number, email, password, role,
+        (select count(*) from orders where client_id=id and kind='purchase' and state='done') as purchase_count
+        from users u
+        join orders o on o.client_id=u.id
+        where o.car_id=? and o.state='done' and o.kind='purchase'""";
+
+    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
+      stmt.setInt(1, carId);
+      stmt.execute();
+
+      var results = stmt.getResultSet();
+
+      if (!results.next()) {
+        return Optional.empty();
+      }
+
+      return Optional.of(UserRepo.readUser(results, 1));
+    } catch (SQLException e) {
+      throw new DBException(e);
     }
   }
 
@@ -199,7 +225,7 @@ public class CarRepo {
       var results = stmt.getResultSet();
 
       while (results.next()) {
-        list.add(readCar(results));
+        list.add(readCar(results, 1));
       }
 
       return list;
@@ -208,14 +234,14 @@ public class CarRepo {
     }
   }
 
-  private Car readCar(ResultSet results) throws SQLException {
-    var id = results.getInt(1);
-    var brand = results.getString(2);
-    var model = results.getString(3);
-    var productionYear = results.getInt(4);
-    var price = results.getInt(5);
-    var condition = results.getString(6);
-    var availableForPurchase = results.getBoolean(7);
+  static Car readCar(ResultSet results, int startIndex) throws SQLException {
+    var id = results.getInt(startIndex);
+    var brand = results.getString(startIndex + 1);
+    var model = results.getString(startIndex + 2);
+    var productionYear = results.getInt(startIndex + 3);
+    var price = results.getInt(startIndex + 4);
+    var condition = results.getString(startIndex + 5);
+    var availableForPurchase = results.getBoolean(startIndex + 6);
     return new Car(id, brand, model, productionYear, price, condition, availableForPurchase);
   }
 }

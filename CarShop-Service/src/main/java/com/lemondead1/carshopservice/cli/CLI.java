@@ -4,33 +4,27 @@ import com.lemondead1.carshopservice.cli.parsing.Parser;
 import com.lemondead1.carshopservice.cli.validation.Validator;
 import com.lemondead1.carshopservice.exceptions.ParsingException;
 import com.lemondead1.carshopservice.exceptions.ValidationException;
-import lombok.RequiredArgsConstructor;
 
-import java.io.Console;
 import java.util.Optional;
 
-/**
- * Console decorator with support for parsing
- */
-@RequiredArgsConstructor
-public class ConsoleIO {
-  private final Console io;
+public abstract class CLI {
+  public static CLI getBestAvailable() {
+    if (System.console() == null) {
+      return new PlainCLI();
+    } else {
+      return new ConsoleCLI(System.console());
+    }
+  }
 
   public final void println(String line) {
     printf(line + "\n");
   }
 
-  public void printf(String pattern, Object... args) {
-    io.printf(pattern, args);
-  }
+  public abstract void printf(String pattern, Object... args);
 
-  public String readInteractive(String message) {
-    return io.readLine(message);
-  }
+  public abstract String readInteractive(String message);
 
-  public String readPassword(String message) {
-    return new String(io.readPassword(message));
-  }
+  public abstract String readPassword(String message);
 
   @SafeVarargs
   public final <T> T parse(String message, Parser<T> parser, boolean hideInput, Validator<T>... validators) {

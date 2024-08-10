@@ -1,7 +1,8 @@
 package com.lemondead1.carshopservice;
 
+import com.lemondead1.carshopservice.cli.CLI;
 import com.lemondead1.carshopservice.cli.CommandAcceptor;
-import com.lemondead1.carshopservice.cli.ConsoleIO;
+import com.lemondead1.carshopservice.cli.ConsoleCLI;
 import com.lemondead1.carshopservice.cli.command.builders.CommandRootBuilder;
 import com.lemondead1.carshopservice.controller.*;
 import com.lemondead1.carshopservice.database.DBManager;
@@ -34,12 +35,12 @@ public class CarShopServiceApplication {
 
     var timeService = new TimeService();
     var eventService = new EventService(eventRepo, timeService);
-    var userService = new UserService(userRepo, eventService);
-    var orderService = new OrderService(orderRepo, eventService, timeService);
+    var userService = new UserService(userRepo, orderRepo, eventService);
+    var orderService = new OrderService(orderRepo, carRepo, eventService, timeService);
     var carService = new CarService(carRepo, orderRepo, eventService);
     var sessionService = new SessionService(userService, eventService);
 
-    var cli = new ConsoleIO(System.console());
+    var cli = CLI.getBestAvailable();
     var commandBuilder = new CommandRootBuilder();
     new LoginController(userService, sessionService).registerEndpoints(commandBuilder);
     new HomeController(() -> exited = true).registerEndpoints(commandBuilder);

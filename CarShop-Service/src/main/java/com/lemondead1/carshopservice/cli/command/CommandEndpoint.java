@@ -1,6 +1,6 @@
 package com.lemondead1.carshopservice.cli.command;
 
-import com.lemondead1.carshopservice.cli.ConsoleIO;
+import com.lemondead1.carshopservice.cli.CLI;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.CommandException;
@@ -36,7 +36,7 @@ public class CommandEndpoint implements Command {
   }
 
   @Override
-  public void execute(User currentUser, ConsoleIO cli, String... path) {
+  public void execute(User currentUser, CLI cli, String... path) {
     if (!getAllowedRoles().contains(currentUser.role())) {
       cli.println("Insufficient permissions.");
       return;

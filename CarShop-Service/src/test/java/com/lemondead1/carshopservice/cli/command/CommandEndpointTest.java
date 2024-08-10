@@ -1,6 +1,6 @@
 package com.lemondead1.carshopservice.cli.command;
 
-import com.lemondead1.carshopservice.controller.MockConsoleIO;
+import com.lemondead1.carshopservice.controller.MockCLI;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.CommandException;
@@ -20,12 +20,12 @@ public class CommandEndpointTest {
   @Mock
   Endpoint endpoint;
 
-  MockConsoleIO cli;
+  MockCLI cli;
   CommandEndpoint command;
 
   @BeforeEach
   void setup() {
-    cli = new MockConsoleIO();
+    cli = new MockCLI();
     command = new CommandEndpoint("testCommand", "testDescription", Set.of(UserRole.CLIENT), endpoint);
   }
 

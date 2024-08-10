@@ -43,8 +43,7 @@ public class DBManager {
 
   public void dropSchemas() {
     try (var conn = DriverManager.getConnection(url, user, password)) {
-      conn.prepareStatement("drop schema " + schema + " cascade").execute();
-      conn.prepareStatement("drop schema " + liquibaseSchema + " cascade").execute();
+      conn.prepareStatement("drop schema if exists " + schema + ", " + liquibaseSchema + " cascade").execute();
     } catch (SQLException e) {
       throw new DBException("Failed to drop all", e);
     }

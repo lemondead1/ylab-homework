@@ -11,6 +11,7 @@ import com.lemondead1.carshopservice.util.IntRange;
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class CarService {
@@ -24,35 +25,41 @@ public class CarService {
     this.events = events;
   }
 
-  public Car createCar(int user, String brand, String model, int productionYear, int price, String condition) {
+  public Car createCar(int userId, String brand, String model, int productionYear, int price, String condition) {
     Car newCar = cars.create(brand, model, productionYear, price, condition);
-    events.onCarCreated(user, newCar);
+    events.onCarCreated(userId, newCar);
     return newCar;
   }
 
-  public Car editCar(int user, int carId, @Nullable String brand, @Nullable String model,
-                     @Nullable Integer productionYear, @Nullable Integer price, @Nullable String condition) {
+  public Car editCar(int userId, int carId,
+                     @Nullable String brand,
+                     @Nullable String model,
+                     @Nullable Integer productionYear,
+                     @Nullable Integer price,
+                     @Nullable String condition) {
     var newCar = cars.edit(carId, brand, model, productionYear, price, condition);
-    events.onCarEdited(user, newCar);
+    events.onCarEdited(userId, newCar);
     return newCar;
   }
 
-  public void deleteCar(int user, int carId, boolean cascade) {
+  public void deleteCar(int userId, int carId) {
     if (orders.existCarOrders(carId)) {
-      if (cascade) {
-        for (var order : orders.findCarOrders(carId)) {
-          orders.delete(order.id());
-        }
-      } else {
-        throw new CascadingException(orders.findCarOrders(carId).size() + " order(s) reference this car.");
-      }
+      throw new CascadingException(orders.findCarOrders(carId).size() + " order(s) reference this car.");
     }
+
     cars.delete(carId);
-    events.onCarDeleted(user, carId);
+    events.onCarDeleted(userId, carId);
   }
 
-  public Car findById(int id) {
-    return cars.findById(id);
+  public void deleteCarCascading(int userId, int carId) {
+    orders.deleteCarOrders(carId);
+
+    cars.delete(carId);
+    events.onCarDeleted(userId, carId);
+  }
+
+  public Car findById(int carId) {
+    return cars.findById(carId);
   }
 
   public List<Car> lookupCars(String brand,
@@ -62,14 +69,7 @@ public class CarService {
                               String condition,
                               Collection<Availability> availability,
                               CarSorting sorting) {
-    return cars.lookup(brand,
-                       model,
-                       productionYear,
-                       price,
-                       condition,
-                       availability.stream()
-                                   .map(a -> a == Availability.AVAILABLE)
-                                   .collect(Collectors.toSet()),
-                       sorting);
+    var boolSet = availability.stream().map(a -> a == Availability.AVAILABLE).collect(Collectors.toSet());
+    return cars.lookup(brand, model, productionYear, price, condition, boolSet, sorting);
   }
 }

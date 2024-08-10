@@ -18,7 +18,7 @@ public class UserControllerTest {
   @Mock
   UserService users;
 
-  MockConsoleIO cli;
+  MockCLI cli;
 
   UserController user;
 
@@ -26,7 +26,7 @@ public class UserControllerTest {
   void setup() {
     user = new UserController(users);
 
-    cli = new MockConsoleIO();
+    cli = new MockCLI();
   }
 
   @Test
@@ -93,7 +93,7 @@ public class UserControllerTest {
     when(users.editUser(54, 23, "newUsername", null, "test@example.com", "newPassword", UserRole.ADMIN))
         .thenReturn(newUser);
 
-    assertThat(user.edit(dummyAdmin, cli, "23")).isEqualTo("Saved " + newUser.prettyFormat());
+    assertThat(user.edit(dummyAdmin, cli, "23")).isEqualTo("Saved changes to " + newUser.prettyFormat() + ".");
 
     cli.assertMatchesHistory();
 

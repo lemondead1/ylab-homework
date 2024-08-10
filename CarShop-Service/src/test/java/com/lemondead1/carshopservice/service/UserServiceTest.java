@@ -50,7 +50,7 @@ public class UserServiceTest {
   @BeforeEach
   void beforeEach() {
     dbManager.setupDatabase();
-    userService = new UserService(users, eventService);
+    userService = new UserService(users, orders, eventService);
     session = new SessionService(userService, eventService);
   }
 

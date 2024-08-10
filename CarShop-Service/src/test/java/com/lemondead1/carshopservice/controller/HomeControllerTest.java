@@ -15,14 +15,14 @@ public class HomeControllerTest {
   @Mock
   Runnable exitRunnable;
 
-  MockConsoleIO cli;
+  MockCLI cli;
 
   HomeController home;
 
   @BeforeEach
   void setup() {
     home = new HomeController(exitRunnable);
-    cli = new MockConsoleIO();
+    cli = new MockCLI();
   }
 
   @Test

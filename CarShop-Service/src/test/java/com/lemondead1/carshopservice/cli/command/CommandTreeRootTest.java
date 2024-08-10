@@ -1,9 +1,8 @@
 package com.lemondead1.carshopservice.cli.command;
 
-import com.lemondead1.carshopservice.cli.ConsoleIO;
+import com.lemondead1.carshopservice.cli.CLI;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.service.SessionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +31,7 @@ public class CommandTreeRootTest {
   Command commandFour;
 
   @Mock
-  ConsoleIO cli;
+  CLI cli;
 
   CommandTreeRoot root;
 

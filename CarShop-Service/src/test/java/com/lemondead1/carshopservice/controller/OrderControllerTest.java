@@ -34,7 +34,7 @@ public class OrderControllerTest {
   @Mock
   UserService users;
 
-  MockConsoleIO cli;
+  MockCLI cli;
 
   OrderController order;
 
@@ -42,7 +42,7 @@ public class OrderControllerTest {
   void setup() {
     order = new OrderController(orders, cars, users);
 
-    cli = new MockConsoleIO();
+    cli = new MockCLI();
   }
 
   @Test

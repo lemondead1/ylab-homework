@@ -79,7 +79,7 @@ public class EventService {
                        .append("created_at", order.createdAt())
                        .append("order_type", order.type())
                        .append("state", order.state())
-                       .append("customer_id", order.customer().id())
+                       .append("client_id", order.client().id())
                        .append("car_id", order.car().id())
                        .append("comments", order.comments()).build();
     events.create(now, userId, EventType.ORDER_CREATED, json);
@@ -95,7 +95,7 @@ public class EventService {
                        .append("new_created_at", newOrder.createdAt())
                        .append("new_order_type", newOrder.type())
                        .append("new_state", newOrder.state())
-                       .append("new_customer_id", newOrder.customer().id())
+                       .append("new_client_id", newOrder.client().id())
                        .append("new_car_id", newOrder.car().id())
                        .append("new_comments", newOrder.comments()).build();
     events.create(now, userId, EventType.ORDER_MODIFIED, json);
@@ -153,7 +153,7 @@ public class EventService {
                        .append("timestamp", now)
                        .append("type", EventType.USER_CREATED)
                        .append("user_id", userId)
-                       .append("edited_user_id", user.id())
+                       .append("created_user_id", user.id())
                        .append("username", user.username())
                        .append("phone_number", user.phoneNumber())
                        .append("email", user.email())

@@ -1,6 +1,6 @@
 package com.lemondead1.carshopservice.cli.command;
 
-import com.lemondead1.carshopservice.cli.ConsoleIO;
+import com.lemondead1.carshopservice.cli.CLI;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 
@@ -39,7 +39,7 @@ public class CommandTree implements Command {
     return allowedRoles;
   }
 
-  private void printHelp(User currentUser, ConsoleIO cli) {
+  private void printHelp(User currentUser, CLI cli) {
     cli.println(description);
     cli.println("Subcommands:");
     for (var subcommand : subcommands.values()) {
@@ -50,7 +50,7 @@ public class CommandTree implements Command {
   }
 
   @Override
-  public void execute(User currentUser, ConsoleIO cli, String... path) {
+  public void execute(User currentUser, CLI cli, String... path) {
     if (!getAllowedRoles().contains(currentUser.role())) {
       cli.println("Insufficient permissions.");
       return;

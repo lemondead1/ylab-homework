@@ -1,6 +1,6 @@
 package com.lemondead1.carshopservice.cli.command;
 
-import com.lemondead1.carshopservice.cli.ConsoleIO;
+import com.lemondead1.carshopservice.cli.CLI;
 import com.lemondead1.carshopservice.entity.User;
 
 import javax.annotation.Nullable;
@@ -10,5 +10,5 @@ import javax.annotation.Nullable;
  */
 public interface Endpoint {
   @Nullable
-  String execute(User currentUser, ConsoleIO cli, String... args);
+  String execute(User currentUser, CLI cli, String... args);
 }

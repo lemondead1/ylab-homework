@@ -21,7 +21,7 @@ public class LoginControllerTest {
   @Mock
   UserService users;
 
-  MockConsoleIO cli;
+  MockCLI cli;
 
   LoginController login;
 
@@ -29,7 +29,7 @@ public class LoginControllerTest {
   void setup() {
     login = new LoginController(users, session);
 
-    cli = new MockConsoleIO();
+    cli = new MockCLI();
   }
 
   @Test

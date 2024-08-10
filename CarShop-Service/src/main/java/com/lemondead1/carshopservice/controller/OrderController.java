@@ -1,6 +1,6 @@
 package com.lemondead1.carshopservice.controller;
 
-import com.lemondead1.carshopservice.cli.ConsoleIO;
+import com.lemondead1.carshopservice.cli.CLI;
 import com.lemondead1.carshopservice.cli.command.builders.TreeCommandBuilder;
 import com.lemondead1.carshopservice.cli.parsing.*;
 import com.lemondead1.carshopservice.entity.User;
@@ -64,7 +64,7 @@ public class OrderController implements Controller {
            .pop()
 
            .accept("create", this::create)
-           .describe("Use 'order create <customer id> <car id>' to create order.")
+           .describe("Use 'order create <client id> <car id>' to create order.")
            .allow(MANAGER, ADMIN)
            .pop()
 
@@ -77,7 +77,7 @@ public class OrderController implements Controller {
 
   }
 
-  String byId(User currentUser, ConsoleIO cli, String... path) {
+  String byId(User currentUser, CLI cli, String... path) {
     if (path.length == 0) {
       throw new WrongUsageException();
     }
@@ -85,7 +85,7 @@ public class OrderController implements Controller {
     return "Found " + order.prettyFormat();
   }
 
-  String purchase(User currentUser, ConsoleIO cli, String... path) {
+  String purchase(User currentUser, CLI cli, String... path) {
     if (path.length == 0) {
       throw new WrongUsageException();
     }
@@ -100,7 +100,7 @@ public class OrderController implements Controller {
     return "Ordered " + car.prettyFormat();
   }
 
-  String service(User currentUser, ConsoleIO cli, String... path) {
+  String service(User currentUser, CLI cli, String... path) {
     if (path.length == 0) {
       throw new WrongUsageException();
     }
@@ -110,19 +110,19 @@ public class OrderController implements Controller {
     return "Scheduled service for " + order.car().prettyFormat();
   }
 
-  String cancel(User currentUser, ConsoleIO cli, String... path) {
+  String cancel(User currentUser, CLI cli, String... path) {
     if (path.length == 0) {
       throw new WrongUsageException();
     }
     var order = IntParser.INSTANCE.map(orders::findById).parse(path[0]);
-    if (currentUser.role() == CLIENT && order.customer().id() != currentUser.id()) {
+    if (currentUser.role() == CLIENT && order.client().id() != currentUser.id()) {
       throw new CommandException("Wrong order id.");
     }
     orders.cancel(currentUser.id(), order.id());
     return "Cancelled " + order.prettyFormat();
   }
 
-  String updateState(User currentUser, ConsoleIO cli, String... path) {
+  String updateState(User currentUser, CLI cli, String... path) {
     if (path.length < 2) {
       throw new WrongUsageException();
     }
@@ -137,12 +137,12 @@ public class OrderController implements Controller {
     return "Done";
   }
 
-  String myOrders(User currentUser, ConsoleIO cli, String... path) {
+  String myOrders(User currentUser, CLI cli, String... path) {
     OrderSorting sorting = OrderSorting.LATEST_FIRST;
     if (path.length > 0) {
       sorting = IdParser.of(OrderSorting.class).parse(path[0]);
     }
-    var list = orders.findMyOrders(currentUser.id(), sorting);
+    var list = orders.findClientOrders(currentUser.id(), sorting);
     var table = new TableFormatter("Order ID", "Creation date", "Type", "Status",
                                    "Car ID", "Car brand", "Car model", "Comments");
     for (var row : list) {
@@ -152,7 +152,7 @@ public class OrderController implements Controller {
     return table.format(true);
   }
 
-  String deleteOrder(User currentUser, ConsoleIO cli, String... path) {
+  String deleteOrder(User currentUser, CLI cli, String... path) {
     if (path.length == 0) {
       throw new WrongUsageException();
     }
@@ -168,7 +168,7 @@ public class OrderController implements Controller {
     return "Deleted";
   }
 
-  String search(User currentUser, ConsoleIO cli, String... path) {
+  String search(User currentUser, CLI cli, String... path) {
     var dates = cli.parseOptional("Date > ", DateRangeParser.INSTANCE).orElse(DateRange.ALL);
     var kind = cli.parseOptional("Kind > ", IdListParser.of(OrderKind.class)).orElse(OrderKind.ALL);
     var username = cli.parseOptional("Customer > ", StringParser.INSTANCE).orElse("");
@@ -182,13 +182,13 @@ public class OrderController implements Controller {
                                    "Comments");
     for (var row : list) {
       table.addRow(row.id(), row.createdAt(), row.type().getPrettyName(), row.state().getPrettyName(),
-                   row.customer().id(), row.customer().username(), row.car().id(), row.car().brand(), row.car().model(),
+                   row.client().id(), row.client().username(), row.car().id(), row.car().brand(), row.car().model(),
                    row.comments());
     }
     return table.format(true);
   }
 
-  String create(User currentUser, ConsoleIO cli, String... path) {
+  String create(User currentUser, CLI cli, String... path) {
     if (path.length < 2) {
       throw new WrongUsageException();
     }
