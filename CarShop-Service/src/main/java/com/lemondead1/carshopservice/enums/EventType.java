@@ -1,14 +1,14 @@
 package com.lemondead1.carshopservice.enums;
 
 import com.lemondead1.carshopservice.cli.parsing.HasId;
+import com.lemondead1.carshopservice.util.EnumUtil;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
+@Getter
 @RequiredArgsConstructor
 public enum EventType implements HasId {
   CAR_CREATED("car_created"),
@@ -23,16 +23,11 @@ public enum EventType implements HasId {
   USER_LOGGED_IN("user_logged_in"),
   USER_SIGNED_UP("user_signed_up");
 
-  private static final Map<String, EventType> idToEnum =
-      Arrays.stream(values()).collect(Collectors.toMap(EventType::getId, Function.identity()));
   public static final List<EventType> ALL = List.of(values());
 
-  private final String id;
+  private static final Map<String, EventType> idToEnum = EnumUtil.createIdMap(EventType.class);
 
-  @Override
-  public String getId() {
-    return id;
-  }
+  private final String id;
 
   public static EventType parse(String id) {
     var value = idToEnum.get(id);

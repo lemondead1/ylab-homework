@@ -1,8 +1,10 @@
 package com.lemondead1.carshopservice.enums;
 
 import com.lemondead1.carshopservice.cli.parsing.HasId;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+@Getter
 @RequiredArgsConstructor
 public enum CarSorting implements HasId {
   NAME_ASC("name"),
@@ -13,9 +15,4 @@ public enum CarSorting implements HasId {
   PRICE_DESC("expensive_first");
 
   private final String id;
-
-  @Override
-  public String getId() {
-    return id;
-  }
 }

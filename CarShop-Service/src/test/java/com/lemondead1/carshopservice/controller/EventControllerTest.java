@@ -5,7 +5,7 @@ import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.EventSorting;
 import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.service.*;
+import com.lemondead1.carshopservice.service.EventService;
 import com.lemondead1.carshopservice.util.DateRange;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

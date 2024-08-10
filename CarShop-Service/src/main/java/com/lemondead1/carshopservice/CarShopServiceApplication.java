@@ -2,7 +2,6 @@ package com.lemondead1.carshopservice;
 
 import com.lemondead1.carshopservice.cli.CLI;
 import com.lemondead1.carshopservice.cli.CommandAcceptor;
-import com.lemondead1.carshopservice.cli.ConsoleCLI;
 import com.lemondead1.carshopservice.cli.command.builders.CommandRootBuilder;
 import com.lemondead1.carshopservice.controller.*;
 import com.lemondead1.carshopservice.database.DBManager;

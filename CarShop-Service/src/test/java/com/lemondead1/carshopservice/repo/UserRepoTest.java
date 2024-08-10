@@ -1,9 +1,9 @@
 package com.lemondead1.carshopservice.repo;
 
 import com.lemondead1.carshopservice.HasIdEnumConverter;
+import com.lemondead1.carshopservice.HasIdEnumSetConverter;
 import com.lemondead1.carshopservice.IntRangeConverter;
 import com.lemondead1.carshopservice.IntegerArrayConverter;
-import com.lemondead1.carshopservice.HasIdEnumSetConverter;
 import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.OrderKind;
@@ -13,7 +13,10 @@ import com.lemondead1.carshopservice.enums.UserSorting;
 import com.lemondead1.carshopservice.exceptions.DBException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.util.IntRange;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -23,7 +26,8 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.Set;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class UserRepoTest {
   static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres").withReuse(true);

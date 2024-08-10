@@ -2,7 +2,6 @@ package com.lemondead1.carshopservice.cli.parsing;
 
 import com.lemondead1.carshopservice.exceptions.ParsingException;
 import com.lemondead1.carshopservice.util.DateRange;
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
 import java.time.Instant;

@@ -7,23 +7,18 @@ import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.repo.CarRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
 import com.lemondead1.carshopservice.util.IntRange;
+import lombok.RequiredArgsConstructor;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 public class CarService {
   private final CarRepo cars;
   private final OrderRepo orders;
   private final EventService events;
-
-  public CarService(CarRepo cars, OrderRepo orders, EventService events) {
-    this.cars = cars;
-    this.orders = orders;
-    this.events = events;
-  }
 
   public Car createCar(int userId, String brand, String model, int productionYear, int price, String condition) {
     Car newCar = cars.create(brand, model, productionYear, price, condition);

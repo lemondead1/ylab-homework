@@ -164,19 +164,6 @@ public class UserRepo {
     }
   }
 
-  public int totalCount() {
-    var sql = "select count(*) from users";
-
-    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
-      stmt.execute();
-      var results = stmt.getResultSet();
-      results.next();
-      return results.getInt(1);
-    } catch (SQLException e) {
-      throw new DBException(e);
-    }
-  }
-
   public List<User> lookup(String username,
                            Set<UserRole> roles,
                            String phoneNumber,

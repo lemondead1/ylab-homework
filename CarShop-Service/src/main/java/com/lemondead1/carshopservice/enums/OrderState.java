@@ -1,12 +1,15 @@
 package com.lemondead1.carshopservice.enums;
 
 import com.lemondead1.carshopservice.cli.parsing.HasId;
+import com.lemondead1.carshopservice.util.EnumUtil;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+@Getter
 @RequiredArgsConstructor
 public enum OrderState implements HasId {
   NEW("new", "New"),
@@ -17,22 +20,16 @@ public enum OrderState implements HasId {
   public static final List<OrderState> ALL = List.of(values());
   public static final Set<OrderState> ALL_SET = Set.of(values());
 
+  private static final Map<String, OrderState> idToEnum = EnumUtil.createIdMap(OrderState.class);
+
   private final String id;
-  @Getter
   private final String prettyName;
 
-  @Override
-  public String getId() {
-    return id;
-  }
-
   public static OrderState parse(String id) {
-    return switch (id) {
-      case "new" -> NEW;
-      case "performing" -> PERFORMING;
-      case "done" -> DONE;
-      case "cancelled" -> CANCELLED;
-      default -> throw new IllegalArgumentException();
-    };
+    var found = idToEnum.get(id);
+    if (found == null) {
+      throw new IllegalArgumentException();
+    }
+    return found;
   }
 }
