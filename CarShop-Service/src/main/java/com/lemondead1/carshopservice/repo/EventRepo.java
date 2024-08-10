@@ -6,7 +6,7 @@ import com.lemondead1.carshopservice.enums.EventSorting;
 import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.exceptions.DBException;
 import com.lemondead1.carshopservice.util.DateRange;
-import com.lemondead1.carshopservice.util.SqlUtil;
+import com.lemondead1.carshopservice.util.Util;
 import lombok.RequiredArgsConstructor;
 
 import java.sql.ResultSet;
@@ -45,26 +45,19 @@ public class EventRepo {
   }
 
   public List<Event> lookup(Set<EventType> types, DateRange dates, String username, EventSorting sorting) {
-    var template = """
-        select id, timestamp, user_id, type, data from events e
-        left join users u where u.id = e.user_id where
-        timestamp between ? and ? and
-        uppercase(u.username) like '%' || uppercase(?) || '%' and
-        type in (%s)
-        sorted by %s""";
-
-    var sql = String.format(template, SqlUtil.serializeSet(types), switch (sorting) {
-      case TIMESTAMP_DESC -> "timestamp desc";
-      case TIMESTAMP_ASC -> "timestamp asc";
-      case USERNAME_ASC -> "username asc";
-      case USERNAME_DESC -> "username desc";
-      case TYPE_ASC -> "type asc";
-      case TYPE_DESC -> "type desc";
-    });
+    var sql = Util.format("""
+                              select e.id, timestamp, user_id, type, data from events e
+                              left join users u on u.id = e.user_id where
+                              timestamp between ? and ? and
+                              upper(coalesce(u.username, 'removed')) like '%' || upper(?) || '%' and
+                              type in ({})
+                              order by {}""",
+                          Util.serializeSet(types),
+                          getOrderingString(sorting));
 
     try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
-      stmt.setObject(1, dates.min());
-      stmt.setObject(2, dates.max());
+      stmt.setObject(1, dates.min().atOffset(ZoneOffset.UTC));
+      stmt.setObject(2, dates.max().atOffset(ZoneOffset.UTC));
       stmt.setString(3, username);
 
       stmt.execute();
@@ -81,6 +74,17 @@ public class EventRepo {
     } catch (SQLException e) {
       throw new DBException("Failed to lookup events.", e);
     }
+  }
+
+  private String getOrderingString(EventSorting sorting) {
+    return switch (sorting) {
+      case TIMESTAMP_DESC -> "timestamp desc";
+      case TIMESTAMP_ASC -> "timestamp asc";
+      case USERNAME_ASC -> "username asc";
+      case USERNAME_DESC -> "username desc";
+      case TYPE_ASC -> "type asc";
+      case TYPE_DESC -> "type desc";
+    };
   }
 
   private Event readEvent(ResultSet results) throws SQLException {

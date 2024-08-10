@@ -8,8 +8,7 @@ import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.exceptions.DBException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.util.DateRange;
-import com.lemondead1.carshopservice.util.SqlUtil;
-import com.lemondead1.carshopservice.util.StringUtil;
+import com.lemondead1.carshopservice.util.Util;
 import lombok.RequiredArgsConstructor;
 
 import javax.annotation.Nullable;
@@ -235,15 +234,6 @@ public class OrderRepo {
     }
   }
 
-  private String getOrdering(OrderSorting sorting) {
-    return switch (sorting) {
-      case CREATED_AT_DESC -> "o.created_at desc";
-      case CREATED_AT_ASC -> "o.created_at asc";
-      case CAR_NAME_DESC -> "c.brand || ' ' || c.model desc";
-      case CAR_NAME_ASC -> "c.brand || ' ' || c.model asc";
-    };
-  }
-
   /**
    * Fetches orders done by that client.
    * Does not check whether the client exists and in that case returns an empty list.
@@ -252,21 +242,21 @@ public class OrderRepo {
    * @return List of orders done by that client
    */
   public List<Order> findClientOrders(int clientId, OrderSorting sorting) {
-    var sql = StringUtil.format("""
-                                    select
-                                    o.id, o.created_at, o.kind, o.state, o.comment,
-                                    
-                                    u.id, u.username, u.phone_number, u.email, u.password, u.role,
-                                    (select count(*) from orders where client_id=u.id and kind='purchase' and state='done') as purchase_count,
-                                    
-                                    c.id, c.brand, c.model, c.production_year, c.price, c.condition,
-                                    c.id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase
-                                    
-                                    from orders o
-                                    join users u on o.client_id=u.id
-                                    join cars c on o.car_id=c.id
-                                    where o.client_id=?
-                                    order by {}""", getOrdering(sorting));
+    var sql = Util.format("""
+                              select
+                              o.id, o.created_at, o.kind, o.state, o.comment,
+                              
+                              u.id, u.username, u.phone_number, u.email, u.password, u.role,
+                              (select count(*) from orders where client_id=u.id and kind='purchase' and state='done') as purchase_count,
+                              
+                              c.id, c.brand, c.model, c.production_year, c.price, c.condition,
+                              c.id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase
+                              
+                              from orders o
+                              join users u on o.client_id=u.id
+                              join cars c on o.car_id=c.id
+                              where o.client_id=?
+                              order by {}""", getOrderingString(sorting));
 
     try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
       stmt.setInt(1, clientId);
@@ -365,28 +355,28 @@ public class OrderRepo {
                             Set<OrderKind> kinds,
                             Set<OrderState> states,
                             OrderSorting sorting) {
-    var sql = StringUtil.format("""
-                                    select o.id, o.created_at, o.kind, o.state, o.comment,
-                                    
-                                    u.id, u.username, u.phone_number, u.email, u.password, u.role,
-                                    (select count(*) from orders where client_id=u.id and kind='purchase' and state='done') as purchase_count,
-                                    
-                                    c.id, c.brand, c.model, c.production_year, c.price, c.condition,
-                                    c.id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase
-                                    
-                                    from orders o
-                                    join users u on o.client_id=u.id
-                                    join cars c on o.car_id=c.id
-                                    where o.created_at between ? and ? and
-                                    upper(u.username) like '%' || upper(?) || '%' and
-                                    upper(c.brand) like '%' || upper(?) || '%' and
-                                    upper(c.model) like '%' || upper(?) || '%' and
-                                    o.state in ({}) and
-                                    o.kind in ({})
-                                    order by {}""",
-                                SqlUtil.serializeSet(states),
-                                SqlUtil.serializeSet(kinds),
-                                getOrdering(sorting));
+    var sql = Util.format("""
+                              select o.id, o.created_at, o.kind, o.state, o.comment,
+                              
+                              u.id, u.username, u.phone_number, u.email, u.password, u.role,
+                              (select count(*) from orders where client_id=u.id and kind='purchase' and state='done') as purchase_count,
+                              
+                              c.id, c.brand, c.model, c.production_year, c.price, c.condition,
+                              c.id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase
+                              
+                              from orders o
+                              join users u on o.client_id=u.id
+                              join cars c on o.car_id=c.id
+                              where o.created_at between ? and ? and
+                              upper(u.username) like '%' || upper(?) || '%' and
+                              upper(c.brand) like '%' || upper(?) || '%' and
+                              upper(c.model) like '%' || upper(?) || '%' and
+                              o.state in ({}) and
+                              o.kind in ({})
+                              order by {}""",
+                          Util.serializeSet(states),
+                          Util.serializeSet(kinds),
+                          getOrderingString(sorting));
 
     try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
       stmt.setObject(1, dates.min().atOffset(ZoneOffset.UTC));
@@ -408,6 +398,15 @@ public class OrderRepo {
     } catch (SQLException e) {
       throw new DBException(e);
     }
+  }
+
+  private String getOrderingString(OrderSorting sorting) {
+    return switch (sorting) {
+      case CREATED_AT_DESC -> "o.created_at desc";
+      case CREATED_AT_ASC -> "o.created_at asc";
+      case CAR_NAME_DESC -> "c.brand || ' ' || c.model desc";
+      case CAR_NAME_ASC -> "c.brand || ' ' || c.model asc";
+    };
   }
 
   static Order readOrder(ResultSet results) throws SQLException {

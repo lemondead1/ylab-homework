@@ -3,7 +3,6 @@ package com.lemondead1.carshopservice.controller;
 import com.lemondead1.carshopservice.cli.CLI;
 import com.lemondead1.carshopservice.cli.command.builders.TreeCommandBuilder;
 import com.lemondead1.carshopservice.cli.parsing.*;
-import com.lemondead1.carshopservice.cli.validation.PatternValidator;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.enums.UserSorting;
@@ -12,6 +11,7 @@ import com.lemondead1.carshopservice.exceptions.WrongUsageException;
 import com.lemondead1.carshopservice.service.UserService;
 import com.lemondead1.carshopservice.util.IntRange;
 import com.lemondead1.carshopservice.util.TableFormatter;
+import com.lemondead1.carshopservice.util.Util;
 import lombok.RequiredArgsConstructor;
 
 import static com.lemondead1.carshopservice.enums.UserRole.*;
@@ -77,10 +77,10 @@ public class UserController implements Controller {
   }
 
   String create(User currentUser, CLI console, String... args) {
-    var username = console.parse("Username > ", StringParser.INSTANCE, PatternValidator.USERNAME);
-    var phoneNumber = console.parse("Phone number > ", StringParser.INSTANCE, PatternValidator.PHONE_NUMBER);
-    var email = console.parse("Email > ", StringParser.INSTANCE, PatternValidator.EMAIL);
-    var password = console.parse("Password > ", StringParser.INSTANCE, true, PatternValidator.PASSWORD);
+    var username = console.parse("Username > ", StringParser.INSTANCE, Util.USERNAME);
+    var phoneNumber = console.parse("Phone number > ", StringParser.INSTANCE, Util.PHONE_NUMBER);
+    var email = console.parse("Email > ", StringParser.INSTANCE, Util.EMAIL);
+    var password = console.parse("Password > ", StringParser.INSTANCE, true, Util.PASSWORD);
     var role = console.parseOptional("Role > ", IdParser.of(CLIENT, MANAGER, ADMIN)).orElse(CLIENT);
     var newUser = users.createUser(currentUser.id(), username, phoneNumber, email, password, role);
     return "Created " + newUser.prettyFormat();
@@ -93,8 +93,8 @@ public class UserController implements Controller {
     var userToEdit = IntParser.INSTANCE.map(users::findById).parse(args[0]);
 
     var username = cli.parseOptional("Username (" + userToEdit.username() + ") > ", StringParser.INSTANCE).orElse(null);
-    var phoneNumber = cli.parseOptional("Phone number (" + userToEdit.phoneNumber() + ") > ", StringParser.INSTANCE, PatternValidator.PHONE_NUMBER).orElse(null);
-    var email = cli.parseOptional("Email (" + userToEdit.email() + ") > ", StringParser.INSTANCE, PatternValidator.EMAIL).orElse(null);
+    var phoneNumber = cli.parseOptional("Phone number (" + userToEdit.phoneNumber() + ") > ", StringParser.INSTANCE, Util.PHONE_NUMBER).orElse(null);
+    var email = cli.parseOptional("Email (" + userToEdit.email() + ") > ", StringParser.INSTANCE, Util.EMAIL).orElse(null);
     var password = cli.parseOptional("Password > ", StringParser.INSTANCE, true).orElse(null);
     var role = cli.parseOptional("Role (" + userToEdit.role().getPrettyName() + ") > ", IdParser.of(CLIENT, MANAGER, ADMIN)).orElse(null);
 

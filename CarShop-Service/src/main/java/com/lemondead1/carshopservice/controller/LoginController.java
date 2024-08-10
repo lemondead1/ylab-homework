@@ -3,12 +3,12 @@ package com.lemondead1.carshopservice.controller;
 import com.lemondead1.carshopservice.cli.CLI;
 import com.lemondead1.carshopservice.cli.command.builders.TreeCommandBuilder;
 import com.lemondead1.carshopservice.cli.parsing.StringParser;
-import com.lemondead1.carshopservice.cli.validation.PatternValidator;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.ValidationException;
 import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.service.UserService;
+import com.lemondead1.carshopservice.util.Util;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -35,14 +35,14 @@ public class LoginController implements Controller {
   }
 
   String signUp(User currentUser, CLI cli, String... args) {
-    String username = cli.parse("Username > ", StringParser.INSTANCE, PatternValidator.USERNAME, value -> {
+    String username = cli.parse("Username > ", StringParser.INSTANCE, Util.USERNAME, value -> {
       if (!users.checkUsernameFree(value)) {
         throw new ValidationException("Username '" + value + "' is already taken.");
       }
     });
-    String phoneNumber = cli.parse("Phone number > ", StringParser.INSTANCE, PatternValidator.PHONE_NUMBER);
-    String email = cli.parse("Email > ", StringParser.INSTANCE, PatternValidator.EMAIL);
-    String password = cli.parse("Password > ", StringParser.INSTANCE, true, PatternValidator.PASSWORD);
+    String phoneNumber = cli.parse("Phone number > ", StringParser.INSTANCE, Util.PHONE_NUMBER);
+    String email = cli.parse("Email > ", StringParser.INSTANCE, Util.EMAIL);
+    String password = cli.parse("Password > ", StringParser.INSTANCE, true, Util.PASSWORD);
     users.signUserUp(username, phoneNumber, email, password);
     return "Signed up successfully!";
   }

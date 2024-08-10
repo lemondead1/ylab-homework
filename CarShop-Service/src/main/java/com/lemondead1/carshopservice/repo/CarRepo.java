@@ -7,8 +7,7 @@ import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.DBException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.util.IntRange;
-import com.lemondead1.carshopservice.util.SqlUtil;
-import com.lemondead1.carshopservice.util.StringUtil;
+import com.lemondead1.carshopservice.util.Util;
 import lombok.RequiredArgsConstructor;
 
 import javax.annotation.Nullable;
@@ -186,29 +185,22 @@ public class CarRepo {
                           String condition,
                           Set<Boolean> availabilityForPurchase,
                           CarSorting sorting) {
-    var sql = StringUtil.format("""
-                                    select id, brand, model, production_year, price, condition, available_for_purchase
-                                    from (
-                                      select id, brand, model, production_year, price, condition,
-                                             id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase
-                                      from cars
-                                    )
-                                    where upper(brand) like '%' || upper(?) || '%' and
-                                          upper(model) like '%' || upper(?) || '%' and
-                                          production_year between ? and ? and
-                                          price between ? and ? and
-                                          upper(condition) like '%' || upper(?) || '%' and
-                                          available_for_purchase in ({})
-                                          order by {}""",
-                                SqlUtil.serializeBooleans(availabilityForPurchase),
-                                switch (sorting) {
-                                  case NAME_ASC -> "brand || ' ' || model asc";
-                                  case NAME_DESC -> "brand || ' ' || model desc";
-                                  case PRODUCTION_YEAR_ASC -> "production_year asc";
-                                  case PRODUCTION_YEAR_DESC -> "production_year desc";
-                                  case PRICE_ASC -> "price asc";
-                                  case PRICE_DESC -> "price desc";
-                                });
+    var sql = Util.format("""
+                              select id, brand, model, production_year, price, condition, available_for_purchase
+                              from (
+                                select id, brand, model, production_year, price, condition,
+                                       id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase
+                                from cars
+                              )
+                              where upper(brand) like '%' || upper(?) || '%' and
+                                    upper(model) like '%' || upper(?) || '%' and
+                                    production_year between ? and ? and
+                                    price between ? and ? and
+                                    upper(condition) like '%' || upper(?) || '%' and
+                                    available_for_purchase in ({})
+                                    order by {}""",
+                          Util.serializeBooleans(availabilityForPurchase),
+                          getOrderingString(sorting));
 
     try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
       stmt.setString(1, brand);
@@ -232,6 +224,17 @@ public class CarRepo {
     } catch (SQLException e) {
       throw new DBException("Failed to lookup database.", e);
     }
+  }
+
+  private String getOrderingString(CarSorting sorting) {
+    return switch (sorting) {
+      case NAME_ASC -> "brand || ' ' || model asc";
+      case NAME_DESC -> "brand || ' ' || model desc";
+      case PRODUCTION_YEAR_ASC -> "production_year asc";
+      case PRODUCTION_YEAR_DESC -> "production_year desc";
+      case PRICE_ASC -> "price asc";
+      case PRICE_DESC -> "price desc";
+    };
   }
 
   static Car readCar(ResultSet results, int startIndex) throws SQLException {

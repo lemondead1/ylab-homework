@@ -7,8 +7,7 @@ import com.lemondead1.carshopservice.enums.UserSorting;
 import com.lemondead1.carshopservice.exceptions.DBException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.util.IntRange;
-import com.lemondead1.carshopservice.util.SqlUtil;
-import com.lemondead1.carshopservice.util.StringUtil;
+import com.lemondead1.carshopservice.util.Util;
 import lombok.RequiredArgsConstructor;
 
 import javax.annotation.Nullable;
@@ -83,9 +82,7 @@ public class UserRepo {
   }
 
   public User delete(int id) {
-    var sql = """
-        delete from users where id=?
-        returning id, username, phone_number, email, password, role, 0""";
+    var sql = "delete from users where id=? returning id, username, phone_number, email, password, role, 0";
 
     try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
       stmt.setInt(1, id);
@@ -170,31 +167,22 @@ public class UserRepo {
                            String email,
                            IntRange purchaseCount,
                            UserSorting sorting) {
-    String sql = StringUtil.format("""
-                                       select id, username, phone_number, email, password, role, purchase_count
-                                       from (
-                                         select id, username, phone_number, email, password, role,
-                                                (select count(*) from orders where client_id=users.id and kind='purchase' and state='done') as purchase_count
-                                         from users
-                                       )
-                                       where
-                                       upper(username) like '%' || upper(?) || '%' and
-                                       upper(phone_number) like '%' || upper(?) || '%' and
-                                       upper(email) like '%' || upper(?) || '%' and
-                                       purchase_count between ? and ? and
-                                       role in ({})
-                                       order by {}""",
-                                   SqlUtil.serializeSet(roles),
-                                   switch (sorting) {
-                                     case USERNAME_DESC -> "username desc";
-                                     case USERNAME_ASC -> "username asc";
-                                     case EMAIL_DESC -> "email desc";
-                                     case EMAIL_ASC -> "email asc";
-                                     case ROLE_DESC -> "role desc";
-                                     case ROLE_ASC -> "role asc";
-                                     case PURCHASES_DESC -> "purchase_count desc";
-                                     case PURCHASES_ASC -> "purchase_count asc";
-                                   });
+    String sql = Util.format("""
+                                 select id, username, phone_number, email, password, role, purchase_count
+                                 from (
+                                   select id, username, phone_number, email, password, role,
+                                          (select count(*) from orders where client_id=users.id and kind='purchase' and state='done') as purchase_count
+                                   from users
+                                 )
+                                 where
+                                 upper(username) like '%' || upper(?) || '%' and
+                                 upper(phone_number) like '%' || upper(?) || '%' and
+                                 upper(email) like '%' || upper(?) || '%' and
+                                 purchase_count between ? and ? and
+                                 role in ({})
+                                 order by {}""",
+                             Util.serializeSet(roles),
+                             getOrderingString(sorting));
 
     try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
       stmt.setString(1, username);
@@ -216,6 +204,19 @@ public class UserRepo {
     } catch (SQLException e) {
       throw new DBException("Failed to lookup users", e);
     }
+  }
+
+  private String getOrderingString(UserSorting sorting) {
+    return switch (sorting) {
+      case USERNAME_DESC -> "username desc";
+      case USERNAME_ASC -> "username asc";
+      case EMAIL_DESC -> "email desc";
+      case EMAIL_ASC -> "email asc";
+      case ROLE_DESC -> "role desc";
+      case ROLE_ASC -> "role asc";
+      case PURCHASES_DESC -> "purchase_count desc";
+      case PURCHASES_ASC -> "purchase_count asc";
+    };
   }
 
   static User readUser(ResultSet results, int startIndex) throws SQLException {

@@ -1,12 +1,13 @@
 package com.lemondead1.carshopservice.enums;
 
 import com.lemondead1.carshopservice.cli.parsing.HasId;
-import com.lemondead1.carshopservice.util.EnumUtil;
+import com.lemondead1.carshopservice.util.Util;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Getter
 @RequiredArgsConstructor
@@ -24,8 +25,9 @@ public enum EventType implements HasId {
   USER_SIGNED_UP("user_signed_up");
 
   public static final List<EventType> ALL = List.of(values());
+  public static final Set<EventType> ALL_SET = Set.of(values());
 
-  private static final Map<String, EventType> idToEnum = EnumUtil.createIdMap(EventType.class);
+  private static final Map<String, EventType> idToEnum = Util.createIdToValueMap(values());
 
   private final String id;
 

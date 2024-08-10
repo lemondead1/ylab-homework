@@ -40,4 +40,5 @@ jar {
 
 test {
     useJUnitPlatform()
+    environment("TESTCONTAINERS_REUSE_ENABLE", "true")
 }

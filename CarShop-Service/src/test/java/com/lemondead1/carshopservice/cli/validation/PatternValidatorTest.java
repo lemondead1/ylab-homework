@@ -1,6 +1,7 @@
 package com.lemondead1.carshopservice.cli.validation;
 
 import com.lemondead1.carshopservice.exceptions.ValidationException;
+import com.lemondead1.carshopservice.util.Util;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -13,7 +14,7 @@ public class PatternValidatorTest {
       "hello-543J._"
   })
   void usernamePatternDoesNotThrow(String testString) {
-    PatternValidator.USERNAME.validate(testString);
+    Util.USERNAME.validate(testString);
   }
 
   @ParameterizedTest
@@ -22,7 +23,7 @@ public class PatternValidatorTest {
       "supercalifragilisticexpiolidocious"
   })
   void usernamePatternThrows(String testString) {
-    assertThatThrownBy(() -> PatternValidator.USERNAME.validate(testString)).isInstanceOf(ValidationException.class);
+    assertThatThrownBy(() -> Util.USERNAME.validate(testString)).isInstanceOf(ValidationException.class);
   }
 
   @ParameterizedTest
@@ -31,7 +32,7 @@ public class PatternValidatorTest {
       "12345678 password"
   })
   void passwordPatternDoesNotThrow(String testString) {
-    PatternValidator.PASSWORD.validate(testString);
+    Util.PASSWORD.validate(testString);
   }
 
   @ParameterizedTest
@@ -40,7 +41,7 @@ public class PatternValidatorTest {
       "short"
   })
   void passwordPatternThrows(String testString) {
-    assertThatThrownBy(() -> PatternValidator.PASSWORD.validate(testString)).isInstanceOf(ValidationException.class);
+    assertThatThrownBy(() -> Util.PASSWORD.validate(testString)).isInstanceOf(ValidationException.class);
   }
 
   @ParameterizedTest
@@ -49,7 +50,7 @@ public class PatternValidatorTest {
       "817352543554"
   })
   void phonePatternDoesNotThrow(String testString) {
-    PatternValidator.PHONE_NUMBER.validate(testString);
+    Util.PHONE_NUMBER.validate(testString);
   }
 
   @ParameterizedTest
@@ -59,7 +60,7 @@ public class PatternValidatorTest {
       "sometext"
   })
   void phonePatternThrows(String testString) {
-    assertThatThrownBy(() -> PatternValidator.PHONE_NUMBER.validate(testString));
+    assertThatThrownBy(() -> Util.PHONE_NUMBER.validate(testString));
   }
 
   @ParameterizedTest
@@ -69,7 +70,7 @@ public class PatternValidatorTest {
       "ivan.ivanov@ya.ru"
   })
   void emailPatternDoesNotThrow(String testString) {
-    PatternValidator.EMAIL.validate(testString);
+    Util.EMAIL.validate(testString);
   }
 
   @ParameterizedTest
@@ -78,6 +79,6 @@ public class PatternValidatorTest {
       "ip.address.email.is.spam.anyway@53.12.167.32"
   })
   void emailPatternThrows(String testString) {
-    assertThatThrownBy(() -> PatternValidator.EMAIL.validate(testString));
+    assertThatThrownBy(() -> Util.EMAIL.validate(testString));
   }
 }

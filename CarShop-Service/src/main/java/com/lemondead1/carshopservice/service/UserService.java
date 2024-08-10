@@ -34,8 +34,8 @@ public class UserService {
     return user;
   }
 
-  public User findById(int id) {
-    return users.findById(id);
+  public User findById(int userId) {
+    return users.findById(userId);
   }
 
   public User findByUsername(String username) {

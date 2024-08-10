@@ -1,7 +1,7 @@
 package com.lemondead1.carshopservice.enums;
 
 import com.lemondead1.carshopservice.cli.parsing.HasId;
-import com.lemondead1.carshopservice.util.EnumUtil;
+import com.lemondead1.carshopservice.util.Util;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -18,7 +18,7 @@ public enum OrderKind implements HasId {
   public static final List<OrderKind> ALL = List.of(values());
   public static final Set<OrderKind> ALL_SET = Set.of(values());
 
-  private static final Map<String, OrderKind> idToEnum = EnumUtil.createIdMap(OrderKind.class);
+  private static final Map<String, OrderKind> idToEnum = Util.createIdToValueMap(values());
 
   private final String id;
   private final String prettyName;

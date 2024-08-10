@@ -3,6 +3,7 @@ package com.lemondead1.carshopservice.service;
 import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
+import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
 import com.lemondead1.carshopservice.repo.CarRepo;
 import com.lemondead1.carshopservice.repo.EventRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
@@ -63,10 +64,29 @@ public class UserServiceTest {
   }
 
   @Test
+  void createUserThrowsOnDuplicateUsername() {
+    assertThatThrownBy(() -> userService.createUser(1, "admin", "123456789", "test@x.com", "password", UserRole.CLIENT))
+        .isInstanceOf(UserAlreadyExistsException.class);
+  }
+
+  @Test
+  void createUserThrowsOnAnonymousRole() {
+    assertThatThrownBy(() -> userService.createUser(1, "newname", "123456789", "test@x.com",
+                                                    "password", UserRole.ANONYMOUS))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
   void signUserUpCreatesUserAndPostsEvent() {
     var user = userService.signUserUp("joebiden", "+73462684906", "test@example.com", "password");
     assertThat(users.findById(user.id())).isEqualTo(user);
     verify(eventService).onUserSignedUp(user);
+  }
+
+  @Test
+  void signUserUpThrowsOnDuplicateUsername() {
+    assertThatThrownBy(() -> userService.signUserUp("admin", "123456789", "test@x.com", "password"))
+        .isInstanceOf(UserAlreadyExistsException.class);
   }
 
   @Test
@@ -82,6 +102,12 @@ public class UserServiceTest {
     assertThatThrownBy(() -> userService.editUser(5, 500, "newUsername", "+5334342",
                                                   "test1@example.com", "password", UserRole.CLIENT))
         .isInstanceOf(RowNotFoundException.class);
+  }
+
+  @Test
+  void editThrowsOnAnonymousRole() {
+    assertThatThrownBy(() -> userService.editUser(1, 1, null, null, null, null, UserRole.ANONYMOUS))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test

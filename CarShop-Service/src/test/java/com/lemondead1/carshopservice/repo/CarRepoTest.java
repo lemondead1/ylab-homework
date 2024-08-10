@@ -6,9 +6,6 @@ import com.lemondead1.carshopservice.IntegerArrayConverter;
 import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.enums.CarSorting;
-import com.lemondead1.carshopservice.enums.OrderKind;
-import com.lemondead1.carshopservice.enums.OrderState;
-import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.DBException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.util.IntRange;
@@ -21,7 +18,6 @@ import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-import java.time.Instant;
 import java.util.Comparator;
 import java.util.Set;
 
@@ -33,8 +29,6 @@ public class CarRepoTest {
 
   static DBManager dbManager;
   static CarRepo cars;
-  static UserRepo users;
-  static OrderRepo orders;
 
   @BeforeAll
   static void beforeAll() {
@@ -42,8 +36,6 @@ public class CarRepoTest {
     dbManager = new DBManager(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword(), "data", "infra");
     dbManager.setupDatabase();
     cars = new CarRepo(dbManager);
-    users = new UserRepo(dbManager);
-    orders = new OrderRepo(dbManager);
   }
 
   @AfterAll
@@ -99,9 +91,6 @@ public class CarRepoTest {
 
   @Test
   void deletingCarWithExistingOrdersThrows() {
-    cars.create("BMW", "X5", 2015, 3000000, "good");
-    users.create("alex", "88005553535", "test@example.com", "pwd", UserRole.CLIENT);
-    orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.NEW, 1, 1, "ASAP");
     assertThatThrownBy(() -> cars.delete(1)).isInstanceOf(DBException.class);
   }
 

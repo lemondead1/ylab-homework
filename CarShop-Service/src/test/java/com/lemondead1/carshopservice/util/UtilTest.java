@@ -4,13 +4,13 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class StringUtilTest {
+public class UtilTest {
   @Test
   void testFormat() {
     var template = "Lorem Ipsum is {} dummy text of the printing and {} industry.";
     var expected = "Lorem Ipsum is simply dummy text of the printing and {} industry.";
 
-    assertThat(StringUtil.format(template, "simply", "{}")).isEqualTo(expected);
+    assertThat(Util.format(template, "simply", "{}")).isEqualTo(expected);
 
   }
 }

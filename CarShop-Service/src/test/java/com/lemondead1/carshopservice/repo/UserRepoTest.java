@@ -6,8 +6,6 @@ import com.lemondead1.carshopservice.IntRangeConverter;
 import com.lemondead1.carshopservice.IntegerArrayConverter;
 import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.entity.User;
-import com.lemondead1.carshopservice.enums.OrderKind;
-import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.enums.UserSorting;
 import com.lemondead1.carshopservice.exceptions.DBException;
@@ -22,7 +20,6 @@ import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-import java.time.Instant;
 import java.util.Comparator;
 import java.util.Set;
 
@@ -33,18 +30,14 @@ public class UserRepoTest {
   static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres").withReuse(true);
 
   static DBManager dbManager;
-  static CarRepo cars;
   static UserRepo users;
-  static OrderRepo orders;
 
   @BeforeAll
   static void beforeAll() {
     postgres.start();
     dbManager = new DBManager(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword(), "data", "infra");
     dbManager.setupDatabase();
-    cars = new CarRepo(dbManager);
     users = new UserRepo(dbManager);
-    orders = new OrderRepo(dbManager);
   }
 
   @AfterAll
@@ -145,10 +138,7 @@ public class UserRepoTest {
 
   @Test
   void deletingUserWithExistingOrdersThrows() {
-    var car = cars.create("BMW", "X5", 2015, 3000000, "good");
-    var user = users.create("leonardo", "88005553535", "test@example.com", "pwd", UserRole.CLIENT);
-    orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.NEW, user.id(), car.id(), "ASAP");
-    assertThatThrownBy(() -> users.delete(user.id())).isInstanceOf(DBException.class);
+    assertThatThrownBy(() -> users.delete(1)).isInstanceOf(DBException.class);
   }
 
   @Nested

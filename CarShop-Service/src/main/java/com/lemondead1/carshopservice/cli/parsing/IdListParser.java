@@ -1,8 +1,11 @@
 package com.lemondead1.carshopservice.cli.parsing;
 
 import com.lemondead1.carshopservice.exceptions.ParsingException;
+import com.lemondead1.carshopservice.util.Util;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class IdListParser<T extends HasId> implements Parser<List<T>> {
@@ -12,15 +15,13 @@ public class IdListParser<T extends HasId> implements Parser<List<T>> {
 
   @SafeVarargs
   public static <E extends HasId> IdListParser<E> of(E... allowedValues) {
-    return new IdListParser<>(Arrays.asList(allowedValues));
+    return new IdListParser<>(allowedValues);
   }
 
-  private final Map<String, T> map = new LinkedHashMap<>();
+  private final Map<String, T> map;
 
-  private IdListParser(Collection<T> allowedValues) {
-    for (var constant : allowedValues) {
-      map.put(constant.getId(), constant);
-    }
+  private IdListParser(T[] allowedValues) {
+    map = Util.createIdToValueMap(allowedValues);
   }
 
   @Override
