@@ -42,7 +42,7 @@ public class ControllerTest {
     event = new EventController(events);
     car = new CarController(cars);
     home = new HomeController(exitRunnable);
-    login = new LoginController(users, session);
+    login = new LoginController(session);
     order = new OrderController(orders, cars, users);
     user = new UserController(users);
 

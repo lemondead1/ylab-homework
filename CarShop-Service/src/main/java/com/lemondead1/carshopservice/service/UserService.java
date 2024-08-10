@@ -21,19 +21,6 @@ public class UserService {
   private final OrderRepo orders;
   private final EventService events;
 
-  public boolean checkUsernameFree(String username) {
-    return !users.existsUsername(username);
-  }
-
-  public User signUserUp(String username, String phoneNumber, String email, String password) {
-    if (users.existsUsername(username)) {
-      throw new UserAlreadyExistsException("Username '" + username + "' is already taken.");
-    }
-    var user = users.create(username, phoneNumber, email, password, UserRole.CLIENT);
-    events.onUserSignedUp(user);
-    return user;
-  }
-
   public User findById(int userId) {
     return users.findById(userId);
   }

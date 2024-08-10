@@ -1,30 +1,51 @@
 package com.lemondead1.carshopservice.service;
 
 
-import com.lemondead1.carshopservice.entity.User;
+import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
+import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
 import com.lemondead1.carshopservice.exceptions.WrongUsernamePasswordException;
+import com.lemondead1.carshopservice.repo.OrderRepo;
+import com.lemondead1.carshopservice.repo.UserRepo;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class SessionServiceTest {
-  @Mock
-  UserService users;
+  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres").withReuse(true);
+
+  static DBManager dbManager;
+  static UserRepo users;
+  static OrderRepo orders;
 
   @Mock
   EventService eventService;
 
   SessionService session;
+
+  @BeforeAll
+  static void beforeAll() {
+    postgres.start();
+    dbManager = new DBManager(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword(), "data", "infra");
+    dbManager.setupDatabase();
+    users = new UserRepo(dbManager);
+    orders = new OrderRepo(dbManager);
+  }
+
+  @AfterAll
+  static void afterAll() {
+    dbManager.dropSchemas();
+  }
 
   @BeforeEach
   void setup() {
@@ -33,37 +54,25 @@ public class SessionServiceTest {
 
   @Test
   void loginThrowsOnWrongUsername() {
-    when(users.findByUsername("wrongUsername")).thenThrow(new RowNotFoundException());
-
     assertThatThrownBy(() -> session.login("wrongUsername", "pass")).isInstanceOf(WrongUsernamePasswordException.class);
   }
 
   @Test
   void loginThrowsOnWrongPassword() {
-    var dummyUser = new User(1, "testUsername", "88005553535", "test@example.com", "pass", UserRole.CLIENT, 0);
-    when(users.findByUsername("testUsername")).thenReturn(dummyUser);
-
-    assertThatThrownBy(() -> session.login("testUsername", "wrong")).isInstanceOf(WrongUsernamePasswordException.class);
+    assertThatThrownBy(() -> session.login("admin", "wrongPass")).isInstanceOf(WrongUsernamePasswordException.class);
   }
 
   @Test
   void successfulLoginTest() {
-    var dummyUser = new User(1, "testUsername", "88005553535", "test@example.com", "pass", UserRole.CLIENT, 0);
-    when(users.findByUsername("testUsername")).thenReturn(dummyUser);
-    when(users.findById(1)).thenReturn(dummyUser);
+    session.login("admin", "password");
 
-    session.login("testUsername", "pass");
-
-    assertThat(session.getCurrentUser()).isEqualTo(dummyUser);
+    assertThat(session.getCurrentUser()).isEqualTo(users.findById(1));
     verify(eventService).onUserLoggedIn(1);
   }
 
   @Test
   void logoutTest() {
-    var dummyUser = new User(1, "testUsername", "88005553535", "test@example.com", "pass", UserRole.CLIENT, 0);
-    when(users.findByUsername("testUsername")).thenReturn(dummyUser);
-
-    session.login("testUsername", "pass");
+    session.login("admin", "password");
     session.logout();
 
     assertThat(session.getCurrentUser()).matches(u -> u.id() == 0 && u.role() == UserRole.ANONYMOUS);
@@ -71,12 +80,23 @@ public class SessionServiceTest {
 
   @Test
   void deletedUserTest() {
-    var dummyUser = new User(1, "testUsername", "88005553535", "test@example.com", "pass", UserRole.CLIENT, 0);
-    when(users.findByUsername("testUsername")).thenReturn(dummyUser);
-    when(users.findById(1)).thenThrow(new RowNotFoundException());
+    session.login("spaylorcw", "hJ5=XuO!VO$|xP");
 
-    session.login("testUsername", "pass");
+    users.delete(27);
 
     assertThat(session.getCurrentUser()).matches(u -> u.id() == 0 && u.role() == UserRole.ANONYMOUS);
+  }
+
+  @Test
+  void signUserUpCreatesUserAndPostsEvent() {
+    var user = session.signUserUp("joebiden", "+73462684906", "test@example.com", "password");
+    assertThat(users.findById(user.id())).isEqualTo(user);
+    verify(eventService).onUserSignedUp(user);
+  }
+
+  @Test
+  void signUserUpThrowsOnDuplicateUsername() {
+    assertThatThrownBy(() -> session.signUserUp("admin", "123456789", "test@x.com", "password"))
+        .isInstanceOf(UserAlreadyExistsException.class);
   }
 }

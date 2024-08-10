@@ -3,7 +3,6 @@ package com.lemondead1.carshopservice.controller;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.service.SessionService;
-import com.lemondead1.carshopservice.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,16 +18,13 @@ public class LoginControllerTest {
   @Mock
   SessionService session;
 
-  @Mock
-  UserService users;
-
   MockCLI cli;
 
   LoginController login;
 
   @BeforeEach
   void setup() {
-    login = new LoginController(users, session);
+    login = new LoginController(session);
 
     cli = new MockCLI();
   }
@@ -62,11 +58,11 @@ public class LoginControllerTest {
        .out("Email > ").in("test@example.com")
        .out("Password > ").in("password");
 
-    when(users.checkUsernameFree("username")).thenReturn(true);
+    when(session.checkUsernameFree("username")).thenReturn(true);
 
     assertThat(login.signUp(dummyUser, cli)).isEqualTo("Signed up successfully!");
 
-    verify(users).signUserUp("username", "88005553535", "test@example.com", "password");
+    verify(session).signUserUp("username", "88005553535", "test@example.com", "password");
     cli.assertMatchesHistory();
   }
 
@@ -80,12 +76,12 @@ public class LoginControllerTest {
        .out("Email > ").in("test@example.com")
        .out("Password > ").in("password");
 
-    when(users.checkUsernameFree("username")).thenReturn(false);
-    when(users.checkUsernameFree("newusername")).thenReturn(true);
+    when(session.checkUsernameFree("username")).thenReturn(false);
+    when(session.checkUsernameFree("newusername")).thenReturn(true);
 
     assertThat(login.signUp(dummyUser, cli)).isEqualTo("Signed up successfully!");
 
     cli.assertMatchesHistory();
-    verify(users).signUserUp("newusername", "88005553535", "test@example.com", "password");
+    verify(session).signUserUp("newusername", "88005553535", "test@example.com", "password");
   }
 }
