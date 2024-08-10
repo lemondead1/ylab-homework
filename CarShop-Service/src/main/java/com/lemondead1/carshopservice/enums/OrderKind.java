@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.Set;
 
 @RequiredArgsConstructor
 public enum OrderKind implements HasId {
@@ -12,6 +13,7 @@ public enum OrderKind implements HasId {
   SERVICE("service", "Service");
 
   public static final List<OrderKind> ALL = List.of(values());
+  public static final Set<OrderKind> ALL_SET = Set.of(values());
 
   private final String id;
   @Getter

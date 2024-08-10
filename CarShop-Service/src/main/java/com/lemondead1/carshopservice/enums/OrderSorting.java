@@ -9,8 +9,8 @@ import java.util.Comparator;
 
 @RequiredArgsConstructor
 public enum OrderSorting implements HasId {
-  LATEST_FIRST("latest_first", Comparator.comparing(Order::createdAt).reversed()),
-  OLDEST_FIRST("oldest_first", Comparator.comparing(Order::createdAt)),
+  CREATED_AT_DESC("latest_first", Comparator.comparing(Order::createdAt).reversed()),
+  CREATED_AT_ASC("oldest_first", Comparator.comparing(Order::createdAt)),
   CAR_NAME_DESC("car_name_reversed",
                 Comparator.comparing((Order o) -> o.car().getBrandModel(), String::compareToIgnoreCase).reversed()),
   CAR_NAME_ASC("car_name", Comparator.comparing((Order o) -> o.car().getBrandModel(), String::compareToIgnoreCase));

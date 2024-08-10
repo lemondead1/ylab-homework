@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderServiceTest {
-  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres");
+  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres").withReuse(true);
 
   static DBManager dbManager;
   static CarRepo cars;
@@ -47,14 +47,11 @@ public class OrderServiceTest {
 
   OrderService orderService;
 
-  Car car;
-  User user;
-  User user2;
-
   @BeforeAll
   static void beforeAll() {
     postgres.start();
     dbManager = new DBManager(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword(), "data", "infra");
+    dbManager.setupDatabase();
     cars = new CarRepo(dbManager);
     users = new UserRepo(dbManager);
     orders = new OrderRepo(dbManager);
@@ -63,23 +60,12 @@ public class OrderServiceTest {
 
   @AfterAll
   static void afterAll() {
-    postgres.stop();
+    dbManager.dropSchemas();
   }
 
   @BeforeEach
   void beforeEach() {
-    dbManager.setupDatabase();
-
     orderService = new OrderService(orders, cars, eventService, time);
-
-    car = cars.create("Chevrolet", "Camaro", 2000, 8000000, "like new");
-    user = users.create("Username", "+74326735354", "test@example.com", "pwd", UserRole.CLIENT);
-    user2 = users.create("Username2", "+74326735354", "test@example.com", "pwd", UserRole.CLIENT);
-  }
-
-  @AfterEach
-  void afterEach() {
-    dbManager.dropSchemas();
   }
 
   @Test
@@ -87,32 +73,26 @@ public class OrderServiceTest {
     var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
     when(time.now()).thenReturn(now);
 
-    var order = orderService.purchase(user.id(), car.id(), "None");
-    assertThat(orders.findById(order.id())).isEqualTo(order);
-    verify(eventService).onOrderCreated(user.id(), order);
+    var created = orderService.purchase(53, 97, "None");
+
+    assertThat(created).isEqualTo(orders.findById(created.id()));
+    verify(eventService).onOrderCreated(53, created);
   }
 
   @Test
   void createPurchaseOrderThrowsCarReservedExceptionWhenThereIsActiveOrder() {
-    var now = Instant.now();
-    when(time.now()).thenReturn(now);
-
-    orderService.purchase(1, 1, "None");
-    assertThatThrownBy(() -> orderService.purchase(2, 1, "None")).isInstanceOf(CarReservedException.class);
+    assertThatThrownBy(() -> orderService.purchase(71, 4, "None")).isInstanceOf(CarReservedException.class);
   }
 
   @Test
   void createServiceOrderCreatesSavesAnOrderAndSubmitsEvent() {
-    var now = Instant.now();
+    var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
     when(time.now()).thenReturn(now);
 
-    orders.create(now, OrderKind.PURCHASE, OrderState.DONE, 1, 1, "");
+    var created = orderService.orderService(11, 7, "None");
 
-    var order = orderService.orderService(1, 1, "None");
-
-    assertThat(order).isEqualTo(orders.findById(2));
-
-    verify(eventService).onOrderCreated(1, order);
+    assertThat(created).isEqualTo(orders.findById(created.id()));
+    verify(eventService).onOrderCreated(11, created);
   }
 
   @Test
@@ -122,18 +102,15 @@ public class OrderServiceTest {
 
   @Test
   void deleteOrderDeletesOrderAndPostsEvent() {
-    var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
-    var order = orders.create(now, OrderKind.PURCHASE, OrderState.NEW, 1, 1, "");
+    orderService.deleteOrder(1, 232);
 
-    orderService.deleteOrder(64, order.id());
-
-    assertThatThrownBy(() -> orders.findById(1)).isInstanceOf(RowNotFoundException.class);
-    verify(eventService).onOrderDeleted(64, 1);
+    assertThatThrownBy(() -> orders.findById(232)).isInstanceOf(RowNotFoundException.class);
+    verify(eventService).onOrderDeleted(1, 232);
   }
 
   @Test
   void deleteOrderThrowsOnOwnershipConstraintViolation() {
-    var now = Instant.now();
+    var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
 
     orders.create(now, OrderKind.PURCHASE, OrderState.DONE, 1, 1, "");
     orders.create(now, OrderKind.SERVICE, OrderState.NEW, 1, 1, "");
@@ -143,7 +120,7 @@ public class OrderServiceTest {
 
   @Test
   void updateOrderStateThrowsOnOwnershipConstraintViolation() {
-    var now = Instant.now();
+    var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
 
     orders.create(now, OrderKind.PURCHASE, OrderState.DONE, 1, 1, "");
     orders.create(now, OrderKind.SERVICE, OrderState.NEW, 1, 1, "");
@@ -154,14 +131,11 @@ public class OrderServiceTest {
 
   @Test
   void cancelOrderEditsStateToCancelledAndPostsEvent() {
-    var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
-    orders.create(now, OrderKind.PURCHASE, OrderState.NEW, 1, 1, "");
+    orderService.cancel(6, 218);
 
-    orderService.cancel(6, 1);
-
-    var expected = new Order(1, now, OrderKind.PURCHASE, OrderState.CANCELLED, users.findById(1), cars.findById(1), "");
-    assertThat(orders.findById(1)).isEqualTo(expected);
-    verify(eventService).onOrderEdited(6, expected);
+    var found = orders.findById(218);
+    assertThat(found).matches(o -> o.state() == OrderState.CANCELLED);
+    verify(eventService).onOrderEdited(6, found);
   }
 
   @Test
@@ -181,11 +155,11 @@ public class OrderServiceTest {
     var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
 
     orders.create(now, OrderKind.PURCHASE, OrderState.NEW, 1, 1, "");
-    orderService.updateState(7, 1, OrderState.PERFORMING, "New comment");
+    orderService.updateState(1, 153, OrderState.PERFORMING, "New comment");
 
-    var expected = new Order(1, now, OrderKind.PURCHASE, OrderState.PERFORMING,
-                             users.findById(1), cars.findById(1), "New comment");
-    assertThat(orders.findById(1)).isEqualTo(expected);
-    verify(eventService).onOrderEdited(7, expected);
+    var found = orders.findById(153);
+    assertThat(found)
+        .matches(o -> o.state() == OrderState.PERFORMING && "fuCupMgTVufDxoGErKGONew comment".equals(o.comments()));
+    verify(eventService).onOrderEdited(1, found);
   }
 }

@@ -31,7 +31,7 @@ public class ConsoleCLITest {
   Validator<Object> validator;
 
   @InjectMocks
-  CLI cli;
+  ConsoleCLI cli;
 
   @Test
   void printlnCallsPrintln() {

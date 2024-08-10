@@ -13,7 +13,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.function.Supplier;
 
-@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
+@RequiredArgsConstructor
 public class DateRangeParser implements Parser<DateRange> {
   public static final DateRangeParser INSTANCE = new DateRangeParser(ZoneId::systemDefault);
 

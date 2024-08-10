@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.Set;
 
 @RequiredArgsConstructor
 public enum OrderState implements HasId {
@@ -14,6 +15,7 @@ public enum OrderState implements HasId {
   CANCELLED("cancelled", "Cancelled");
 
   public static final List<OrderState> ALL = List.of(values());
+  public static final Set<OrderState> ALL_SET = Set.of(values());
 
   private final String id;
   @Getter

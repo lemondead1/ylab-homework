@@ -138,7 +138,7 @@ public class OrderController implements Controller {
   }
 
   String myOrders(User currentUser, CLI cli, String... path) {
-    OrderSorting sorting = OrderSorting.LATEST_FIRST;
+    OrderSorting sorting = OrderSorting.CREATED_AT_DESC;
     if (path.length > 0) {
       sorting = IdParser.of(OrderSorting.class).parse(path[0]);
     }
@@ -175,7 +175,7 @@ public class OrderController implements Controller {
     var carBrand = cli.parseOptional("Car brand > ", StringParser.INSTANCE).orElse("");
     var carModel = cli.parseOptional("Car model > ", StringParser.INSTANCE).orElse("");
     var state = cli.parseOptional("State > ", IdListParser.of(OrderState.class)).orElse(OrderState.ALL);
-    var sorting = cli.parseOptional("Sorting > ", IdParser.of(OrderSorting.class)).orElse(OrderSorting.LATEST_FIRST);
+    var sorting = cli.parseOptional("Sorting > ", IdParser.of(OrderSorting.class)).orElse(OrderSorting.CREATED_AT_DESC);
     var list = orders.lookupOrders(dates, username, carBrand, carModel, kind, state, sorting);
     var table = new TableFormatter("Order ID", "Creation date", "Type", "Status",
                                    "Customer ID", "Customer name", "Car ID", "Car brand", "Car model",

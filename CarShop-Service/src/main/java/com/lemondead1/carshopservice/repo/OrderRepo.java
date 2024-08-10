@@ -237,8 +237,8 @@ public class OrderRepo {
 
   private String getOrdering(OrderSorting sorting) {
     return switch (sorting) {
-      case LATEST_FIRST -> "o.created_at desc";
-      case OLDEST_FIRST -> "o.created_at asc";
+      case CREATED_AT_DESC -> "o.created_at desc";
+      case CREATED_AT_ASC -> "o.created_at asc";
       case CAR_NAME_DESC -> "c.brand || ' ' || c.model desc";
       case CAR_NAME_ASC -> "c.brand || ' ' || c.model asc";
     };

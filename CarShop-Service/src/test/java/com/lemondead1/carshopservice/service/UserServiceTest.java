@@ -19,7 +19,7 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
-  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres");
+  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres").withReuse(true);
 
   static DBManager dbManager;
   static CarRepo cars;
@@ -29,13 +29,13 @@ public class UserServiceTest {
 
   @Mock
   EventService eventService;
-  SessionService session;
   UserService userService;
 
   @BeforeAll
   static void beforeAll() {
     postgres.start();
     dbManager = new DBManager(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword(), "data", "infra");
+    dbManager.setupDatabase();
     cars = new CarRepo(dbManager);
     users = new UserRepo(dbManager);
     orders = new OrderRepo(dbManager);
@@ -44,31 +44,24 @@ public class UserServiceTest {
 
   @AfterAll
   static void afterAll() {
-    postgres.stop();
+    dbManager.dropSchemas();
   }
 
   @BeforeEach
   void beforeEach() {
-    dbManager.setupDatabase();
     userService = new UserService(users, orders, eventService);
-    session = new SessionService(userService, eventService);
-  }
-
-  @AfterEach
-  void afterEach() {
-    dbManager.dropSchemas();
   }
 
   @Test
   void createUserSavesUserAndPostsEvent() {
-    var user = userService.createUser(3, "username", "+73462684906", "test@example.com", "password", UserRole.CLIENT);
+    var user = userService.createUser(3, "obemna", "+73462684906", "test@example.com", "password", UserRole.CLIENT);
     assertThat(users.findById(user.id())).isEqualTo(user);
     verify(eventService).onUserCreated(3, user);
   }
 
   @Test
   void signUserUpCreatesUserAndPostsEvent() {
-    var user = userService.signUserUp("username", "+73462684906", "test@example.com", "password");
+    var user = userService.signUserUp("joebiden", "+73462684906", "test@example.com", "password");
     assertThat(users.findById(user.id())).isEqualTo(user);
     verify(eventService).onUserSignedUp(user);
   }
@@ -83,15 +76,15 @@ public class UserServiceTest {
 
   @Test
   void editThrowsOnNonExistentUser() {
-    assertThatThrownBy(() -> userService.editUser(5, 1, "newUsername", "+5334342",
+    assertThatThrownBy(() -> userService.editUser(5, 500, "newUsername", "+5334342",
                                                   "test1@example.com", "password", UserRole.CLIENT))
         .isInstanceOf(RowNotFoundException.class);
   }
 
   @Test
   void deleteUserDeletesUserAndPostsAnEvent() {
-    var user = userService.signUserUp("username", "+73462684906", "test@example.com", "password");
-    userService.deleteUser(5, 1);
-    verify(eventService).onUserDeleted(5, user.id());
+    userService.deleteUser(1, 78);
+    assertThatThrownBy(() -> users.findById(78));
+    verify(eventService).onUserDeleted(1, 78);
   }
 }
