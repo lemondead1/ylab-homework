@@ -287,12 +287,41 @@ public class OrderRepo {
     }
   }
 
-  public void deleteCarOrders(int carId) {
-    var sql = "delete from orders where car_id=?";
+  public List<Order> deleteCarOrders(int carId) {
+    var sql = """
+        with o as (
+          delete from orders
+          where car_id=?
+          returning id, created_at, kind, state, client_id, car_id, comment
+        ),
+        all_o as (
+          select * from orders where id not in (select id from o)
+        )
+        select o.id, o.created_at, o.kind, o.state, o.comment,
+        
+        u.id, u.username, u.phone_number, u.email, u.password, u.role,
+        (select count(*) from all_o where client_id=u.id and kind='purchase' and state='done') as purchase_count,
+        
+        c.id, c.brand, c.model, c.production_year, c.price, c.condition,
+        c.id not in (select car_id from all_o where state!='cancelled' and kind='purchase') as available_for_purchase
+        
+        from o
+        join users u on o.client_id=u.id
+        join cars c on o.car_id=c.id""";
 
     try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
       stmt.setInt(1, carId);
       stmt.execute();
+
+      var results = stmt.getResultSet();
+
+      List<Order> list = new ArrayList<>();
+
+      while (results.next()) {
+        list.add(readOrder(results));
+      }
+
+      return list;
     } catch (SQLException e) {
       throw new DBException(e);
     }

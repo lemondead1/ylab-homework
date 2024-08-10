@@ -47,7 +47,9 @@ public class CarService {
   }
 
   public void deleteCarCascading(int userId, int carId) {
-    orders.deleteCarOrders(carId);
+    for (var order : orders.deleteCarOrders(carId)) {
+      events.onOrderDeleted(userId, order.id());
+    }
 
     cars.delete(carId);
     events.onCarDeleted(userId, carId);

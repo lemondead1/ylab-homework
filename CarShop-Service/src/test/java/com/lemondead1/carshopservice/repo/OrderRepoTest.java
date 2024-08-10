@@ -12,10 +12,7 @@ import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.exceptions.DBException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.util.DateRange;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -59,6 +56,7 @@ public class OrderRepoTest {
       "11,  2014-05-27T00:16:58Z, service,  done,       3,  2, zdgCoETFHuopYGAhVpwU",
       "101, 2014-07-25T08:18:25Z, service,  performing, 3,  2, rrMKbrhgfLqLatUxYGch"
   })
+  @DisplayName("findById returns the correct car.")
   void findByIdReturnsCorrectOrder(int id,
                                    Instant createdAt,
                                    @ConvertWith(HasIdEnumConverter.class) OrderKind kind,
@@ -75,6 +73,7 @@ public class OrderRepoTest {
       "purchase, done, 69, 81, BHPJowLzvtnBzTrURVYP",
       "service, new, 3, 6, BHPJowLzvtnBzTrURVYP",
   })
+  @DisplayName("create adds an order matching arguments.")
   void createdOrderMatchesSpec(@ConvertWith(HasIdEnumConverter.class) OrderKind kind,
                                @ConvertWith(HasIdEnumConverter.class) OrderState state,
                                int clientId,
@@ -93,6 +92,7 @@ public class OrderRepoTest {
       "'36, 189, 201, 203', 14",
       "'119', 50"
   })
+  @DisplayName("findCarOrders returns orders that reference the given car.")
   void findCarOrdersTest(@ConvertWith(IntegerArrayConverter.class) Integer[] expectedIds, int carId) {
     assertThat(orders.findCarOrders(carId))
         .allMatch(o -> orders.findById(o.id()).equals(o))
@@ -104,6 +104,7 @@ public class OrderRepoTest {
       "'41, 52, 104, 134, 215, 233, 238, 248, 250, 251, 265, 277, 281, 290', 15",
       "'119', 7"
   })
+  @DisplayName("findUserOrders returns orders that reference the given user.")
   void findUserOrdersContainsOrder(@ConvertWith(IntegerArrayConverter.class) Integer[] expectedIds, int clientId) {
     assertThat(orders.findClientOrders(clientId, OrderSorting.CREATED_AT_DESC))
         .allMatch(o -> orders.findById(o.id()).equals(o))
@@ -111,6 +112,7 @@ public class OrderRepoTest {
   }
 
   @Test
+  @DisplayName("edit changes the order's fields according to non-null arguments.")
   void editedOrderMatchesSpec() {
     Instant now = Instant.now().truncatedTo(ChronoUnit.MICROS);
     var created = orders.create(now, OrderKind.PURCHASE, OrderState.NEW, 88, 99, "");
@@ -120,12 +122,14 @@ public class OrderRepoTest {
   }
 
   @Test
+  @DisplayName("edit throws RowNotFoundException when a car with the given id does not exist.")
   void editNonExistingOrderThrows() {
     assertThatThrownBy(() -> orders.edit(1000, null, null, OrderState.PERFORMING, null, null, null))
         .isInstanceOf(RowNotFoundException.class);
   }
 
   @Test
+  @DisplayName("delete deletes.")
   void deleteTest() {
     Instant now = Instant.now().truncatedTo(ChronoUnit.MICROS);
     var created = orders.create(now, OrderKind.PURCHASE, OrderState.NEW, 101, 98, "");
@@ -140,12 +144,14 @@ public class OrderRepoTest {
   }
 
   @Test
+  @DisplayName("create throws when there is no car with the given id.")
   void creatingOrderWithMissingCarThrows() {
     assertThatThrownBy(() -> orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.NEW, 1, 13461, ""))
         .isInstanceOf(DBException.class);
   }
 
   @Test
+  @DisplayName("create throws when there is no user with the given id.")
   void creatingOrderWithMissingUserThrows() {
     assertThatThrownBy(() -> orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.NEW, 3224, 1, ""))
         .isInstanceOf(DBException.class);
@@ -168,6 +174,7 @@ public class OrderRepoTest {
         "'75, 79, 82, 83',                         3.7.2014 - 10.7.2014, '', '',   '',   purchase, ALL",
         "'75, 76, 77, 81, 83',                     3.7.2014 - 10.7.2014, '', '',   '',   ALL,      performing",
     })
+    @DisplayName("lookup returns rows matching arguments.")
     void filterTest(@ConvertWith(IntegerArrayConverter.class) Integer[] expectedIds,
                     @ConvertWith(DateRangeConverter.class) DateRange dateRange,
                     String customerName,
@@ -181,31 +188,26 @@ public class OrderRepoTest {
 
     @Test
     void sortingTestDateDesc() {
-      assertThat(
-          orders.lookup(DateRange.ALL, "", "", "", OrderKind.ALL_SET, OrderState.ALL_SET, OrderSorting.CREATED_AT_DESC))
+      assertThat(orders.lookup(DateRange.ALL, "", "", "", OrderKind.ALL_SET, OrderState.ALL_SET, OrderSorting.CREATED_AT_DESC))
           .isSortedAccordingTo(Comparator.comparing(Order::createdAt).reversed()).hasSize(290);
     }
 
     @Test
     void sortingTestDateAsc() {
-      assertThat(
-          orders.lookup(DateRange.ALL, "", "", "", OrderKind.ALL_SET, OrderState.ALL_SET, OrderSorting.CREATED_AT_ASC))
+      assertThat(orders.lookup(DateRange.ALL, "", "", "", OrderKind.ALL_SET, OrderState.ALL_SET, OrderSorting.CREATED_AT_ASC))
           .isSortedAccordingTo(Comparator.comparing(Order::createdAt)).hasSize(290);
     }
 
     @Test
     void sortingTestCarNameDesc() {
-      assertThat(
-          orders.lookup(DateRange.ALL, "", "", "", OrderKind.ALL_SET, OrderState.ALL_SET, OrderSorting.CAR_NAME_DESC))
-          .isSortedAccordingTo(
-              Comparator.comparing((Order o) -> o.car().getBrandModel(), String::compareToIgnoreCase).reversed())
+      assertThat(orders.lookup(DateRange.ALL, "", "", "", OrderKind.ALL_SET, OrderState.ALL_SET, OrderSorting.CAR_NAME_DESC))
+          .isSortedAccordingTo(Comparator.comparing((Order o) -> o.car().getBrandModel(), String::compareToIgnoreCase).reversed())
           .hasSize(290);
     }
 
     @Test
     void sortingTestCarNameAsc() {
-      assertThat(
-          orders.lookup(DateRange.ALL, "", "", "", OrderKind.ALL_SET, OrderState.ALL_SET, OrderSorting.CAR_NAME_ASC))
+      assertThat(orders.lookup(DateRange.ALL, "", "", "", OrderKind.ALL_SET, OrderState.ALL_SET, OrderSorting.CAR_NAME_ASC))
           .isSortedAccordingTo(Comparator.comparing(o -> o.car().getBrandModel(), String::compareToIgnoreCase))
           .hasSize(290);
     }

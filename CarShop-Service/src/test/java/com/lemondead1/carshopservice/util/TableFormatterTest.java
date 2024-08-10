@@ -1,5 +1,6 @@
 package com.lemondead1.carshopservice.util;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,6 +17,7 @@ public class TableFormatterTest {
       multiline |         |               |                   \s""";
 
   @Test
+  @DisplayName("format(false) returns the correct table.")
   void testTableFormatter() {
     var table = new TableFormatter("column_1", "column_2", "longer_column_1", "even_longer_column_2");
     table.addRow("abcdefghij", "something", 3, "one-line\ntwo-line\nthree-line");
@@ -24,6 +26,7 @@ public class TableFormatterTest {
   }
 
   @Test
+  @DisplayName("format(true) returns a table with a row count line.")
   void testTableFormatterWithRowCount() {
     var table = new TableFormatter("column_1", "column_2", "longer_column_1", "even_longer_column_2");
     table.addRow("abcdefghij", "something", 3, "one-line\ntwo-line\nthree-line");
@@ -32,6 +35,7 @@ public class TableFormatterTest {
   }
 
   @Test
+  @DisplayName("addRow throws when row length does not match header length.")
   void addRowThrowsOnWrongRowLength() {
     var table = new TableFormatter("column_1", "column_2", "longer_column_1", "even_longer_column_2");
     assertThatThrownBy(() -> table.addRow(1, 2, 3)).isInstanceOf(IllegalArgumentException.class);

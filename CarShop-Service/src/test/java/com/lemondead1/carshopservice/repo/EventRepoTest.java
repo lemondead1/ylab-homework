@@ -9,10 +9,7 @@ import com.lemondead1.carshopservice.enums.EventSorting;
 import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.util.DateRange;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -47,6 +44,7 @@ public class EventRepoTest {
   }
 
   @Test
+  @DisplayName("create creates an event.")
   void createEventTest() {
     var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
     var json = "{\"something\": \"doesnt_matter\", \"something_else\": \"value\"}";
@@ -69,6 +67,7 @@ public class EventRepoTest {
         "'225, 227, 238, 241, 261, 262, 263', user_edited, 3.7.2014 - 10.7.2014, ''",
         "'240, 255',                          ALL,         3.7.2014 - 10.7.2014, admin",
     })
+    @DisplayName("lookup returns entries matching arguments.")
     void filterTest(@ConvertWith(IntegerArrayConverter.class) Integer[] expectedIds,
                     @ConvertWith(HasIdEnumSetConverter.class) Set<EventType> types,
                     @ConvertWith(DateRangeConverter.class) DateRange dates,

@@ -29,7 +29,6 @@ public class EventServiceTest {
   @InjectMocks
   EventService service;
 
-  //TODO add json checks
   @Test
   void carCreatedTest() {
     var now = Instant.now();

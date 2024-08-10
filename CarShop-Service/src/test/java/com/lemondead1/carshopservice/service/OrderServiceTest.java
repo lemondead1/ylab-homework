@@ -11,10 +11,7 @@ import com.lemondead1.carshopservice.repo.CarRepo;
 import com.lemondead1.carshopservice.repo.EventRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
 import com.lemondead1.carshopservice.repo.UserRepo;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -68,6 +65,7 @@ public class OrderServiceTest {
   }
 
   @Test
+  @DisplayName("purchase creates a purchase order in the repo and submits an event.")
   void createPurchaseOrderCreatesOrderAndSubmitsEvent() {
     var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
     when(time.now()).thenReturn(now);
@@ -79,11 +77,13 @@ public class OrderServiceTest {
   }
 
   @Test
+  @DisplayName("purchase throws CarReservedException when the car is not available for purchase.")
   void createPurchaseOrderThrowsCarReservedExceptionWhenThereIsActiveOrder() {
     assertThatThrownBy(() -> orderService.purchase(71, 4, "None")).isInstanceOf(CarReservedException.class);
   }
 
   @Test
+  @DisplayName("orderService creates a service order in the repo and submits an event.")
   void createServiceOrderCreatesSavesAnOrderAndSubmitsEvent() {
     var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
     when(time.now()).thenReturn(now);
@@ -95,11 +95,13 @@ public class OrderServiceTest {
   }
 
   @Test
+  @DisplayName("orderService throws CarReservedException when the car does not belong to the user.")
   void createServiceOrderThrowsCarReservedExceptionWhenNoPurchaseWasPerformed() {
     assertThatThrownBy(() -> orderService.orderService(1, 1, "None")).isInstanceOf(CarReservedException.class);
   }
 
   @Test
+  @DisplayName("deleteOrder deletes order from the repo and submits an event.")
   void deleteOrderDeletesOrderAndPostsEvent() {
     orderService.deleteOrder(1, 232);
 
@@ -108,6 +110,7 @@ public class OrderServiceTest {
   }
 
   @Test
+  @DisplayName("deleteOrder throws CascadingException when the purchase order is in 'done' state and there exist service orders for the same car and user.")
   void deleteOrderThrowsOnOwnershipConstraintViolation() {
     var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
 
@@ -118,6 +121,7 @@ public class OrderServiceTest {
   }
 
   @Test
+  @DisplayName("updateState throws CascadingException when the purchase order is in 'done' state and there exist service orders for the same car and user.")
   void updateOrderStateThrowsOnOwnershipConstraintViolation() {
     var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
 
@@ -129,6 +133,7 @@ public class OrderServiceTest {
   }
 
   @Test
+  @DisplayName("cancel edits the order state to 'cancelled' and submits an event.")
   void cancelOrderEditsStateToCancelledAndPostsEvent() {
     orderService.cancel(6, 218);
 
@@ -138,18 +143,21 @@ public class OrderServiceTest {
   }
 
   @Test
+  @DisplayName("cancel throws when the order is in 'done' state.")
   void cancelOrderThrowsWhenDone() {
     orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.DONE, 1, 1, "");
     assertThatThrownBy(() -> orderService.cancel(6, 1)).isInstanceOf(CommandException.class);
   }
 
   @Test
+  @DisplayName("cancel throws when order is in 'cancelled' state.")
   void cancelOrderThrowsWhenCancelled() {
     orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.CANCELLED, 1, 1, "");
     assertThatThrownBy(() -> orderService.cancel(6, 1)).isInstanceOf(CommandException.class);
   }
 
   @Test
+  @DisplayName("updateState edits the order in the repo and submits an event.")
   void updateStateEditsOrderAndPostsEvent() {
     var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
 

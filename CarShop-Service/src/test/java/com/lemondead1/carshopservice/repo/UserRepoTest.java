@@ -11,10 +11,7 @@ import com.lemondead1.carshopservice.enums.UserSorting;
 import com.lemondead1.carshopservice.exceptions.DBException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.util.IntRange;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -52,6 +49,7 @@ public class UserRepoTest {
       "3,  eledstonefz, 67510438945, uFnB7iSehx@example.com, uM2+FrMY=9h@=o6, client,  3",
       "16, sbaythorpg7, 26692163281, jkwziZqaRD@example.com, xT6|D1(3+~IrC1r, client,  0"
   })
+  @DisplayName("findById returns the correct user.")
   void findByIdReturnsCorrectUser(int id,
                                   String username,
                                   String phoneNumber,
@@ -63,6 +61,7 @@ public class UserRepoTest {
   }
 
   @Test
+  @DisplayName("create creates a user matching arguments.")
   void createdUserMatchesSpec() {
     var created = users.create("duewngdaw", "88005553535", "test@x.com", "password", UserRole.ADMIN);
     assertThat(created)
@@ -71,6 +70,7 @@ public class UserRepoTest {
   }
 
   @Test
+  @DisplayName("create throws when there already exists a user with the given username.")
   void creatingUsersWithTheSameUsernameThrows() {
     users.create("uewtwgfd", "88005553535", "test@example.com", "password", UserRole.CLIENT);
     assertThatThrownBy(() -> users.create("uewtwgfd", "88005553535", "test@example.com", "password", UserRole.CLIENT))
@@ -78,6 +78,7 @@ public class UserRepoTest {
   }
 
   @Test
+  @DisplayName("edit changes user according to the non-null arguments.")
   void editedUserMatchesSpec() {
     var created = users.create("qweq", "88005553535", "test@example.com", "password", UserRole.CLIENT);
     var edited = users.edit(created.id(), null, "8912536173", null, "newPassword", UserRole.ADMIN);
@@ -87,12 +88,14 @@ public class UserRepoTest {
   }
 
   @Test
+  @DisplayName("edit throws when a user with the requested id does not exist.")
   void editNotExistingUserThrows() {
     assertThatThrownBy(() -> users.edit(4636, "username", null, null, "password", UserRole.ADMIN))
         .isInstanceOf(RowNotFoundException.class);
   }
 
   @Test
+  @DisplayName("edit throws when there already exists a user with the requested username.")
   void usernameConflictOnEditThrows() {
     users.create("connor", "88005553535", "test@example.com", "password", UserRole.CLIENT);
     var second = users.create("steve", "88005553535", "test@example.com", "password", UserRole.ADMIN);
@@ -100,43 +103,36 @@ public class UserRepoTest {
   }
 
   @Test
+  @DisplayName("delete deletes the user.")
   void deleteReturnsOldUser() {
     var created = users.create("blaze", "88005553535", "test@example.com", "password", UserRole.CLIENT);
     assertThat(users.delete(created.id())).isEqualTo(created);
+    assertThatThrownBy(() -> users.findById(created.id())).isInstanceOf(RowNotFoundException.class);
+    assertThatThrownBy(() -> users.findByUsername("user")).isInstanceOf(RowNotFoundException.class);
   }
 
   @Test
+  @DisplayName("delete throws RowNotFoundException when a user with the given id does not exist.")
   void deleteThrowsOnAbsentId() {
     assertThatThrownBy(() -> users.delete(6534)).isInstanceOf(RowNotFoundException.class);
   }
 
   @Test
-  void findByIdThrowsAfterDelete() {
-    var created = users.create("fermat", "88005553535", "test@example.com", "password", UserRole.CLIENT);
-    users.delete(created.id());
-    assertThatThrownBy(() -> users.findById(created.id())).isInstanceOf(RowNotFoundException.class);
-  }
-
-  @Test
-  void findByUsernameThrowsAfterDelete() {
-    var created = users.create("michelangelo", "88005553535", "test@example.com", "password", UserRole.CLIENT);
-    users.delete(created.id());
-    assertThatThrownBy(() -> users.findByUsername("user")).isInstanceOf(RowNotFoundException.class);
-  }
-
-  @Test
+  @DisplayName("findByUsername returns the correct user.")
   void findByUsernameReturnsUser() {
     var created = users.create("donatello", "88005553535", "test@example.com", "password", UserRole.CLIENT);
     assertThat(users.findByUsername("donatello")).isEqualTo(created);
   }
 
   @Test
+  @DisplayName("findById returns the correct user.")
   void findByIdReturnsUser() {
     var created = users.create("rafael", "88005553535", "test@example.com", "password", UserRole.CLIENT);
     assertThat(users.findById(created.id())).isEqualTo(created);
   }
 
   @Test
+  @DisplayName("delete throws when there exist orders referencing the given user.")
   void deletingUserWithExistingOrdersThrows() {
     assertThatThrownBy(() -> users.delete(1)).isInstanceOf(DBException.class);
   }
@@ -158,6 +154,7 @@ public class UserRepoTest {
         "'20, 129',                                       '',  'client, manager, admin', '', ab, ALL",
         "'2, 3, 10, 11, 15',                              '',  'client, manager, admin', '', '', 2-3",
     })
+    @DisplayName("lookup filters rows according to arguments.")
     void filterTest(@ConvertWith(IntegerArrayConverter.class) Integer[] expected,
                     String username,
                     @ConvertWith(HasIdEnumSetConverter.class) Set<UserRole> roles,

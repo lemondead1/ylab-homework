@@ -8,10 +8,7 @@ import com.lemondead1.carshopservice.repo.CarRepo;
 import com.lemondead1.carshopservice.repo.EventRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
 import com.lemondead1.carshopservice.repo.UserRepo;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -19,6 +16,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -57,6 +55,7 @@ public class CarServiceTest {
   }
 
   @Test
+  @DisplayName("createCar creates a car in the repo and submits an event.")
   void createCarCreatesCarAndPostsEvent() {
     var createdCar = carService.createCar(4, "Tesla", "Model 3", 2020, 5000000, "mint");
 
@@ -68,6 +67,7 @@ public class CarServiceTest {
   }
 
   @Test
+  @DisplayName("editCar edits the car in the repo and submits an event.")
   void editCarEditsCarAndPostsEvent() {
     var editedCar = carService.editCar(5, 35, null, null, 2021, 454636, "good");
 
@@ -79,6 +79,7 @@ public class CarServiceTest {
   }
 
   @Test
+  @DisplayName("deleteCar deletes the car from the repo and submits an event.")
   void deleteCarDeletesCarAndPostsEvent() {
     carService.deleteCar(10, 99);
     assertThatThrownBy(() -> cars.findById(99)).isInstanceOf(RowNotFoundException.class);
@@ -86,16 +87,23 @@ public class CarServiceTest {
   }
 
   @Test
-  void deleteCarThrowsCascadingExceptionWhenAnOrderExistsAndCascadeIsFalse() {
+  @DisplayName("deleteCar throws CascadingException when there exist orders that reference this car.")
+  void deleteCarThrowsCascadingExceptionWhenAnOrderExists() {
     assertThatThrownBy(() -> carService.deleteCar(6, 1)).isInstanceOf(CascadingException.class);
   }
 
   @Test
+  @DisplayName("deleteCarCascading deletes the car and related orders from the repos and submits events.")
   void deleteCarCascadingDeletesCar() {
     carService.deleteCarCascading(1, 42);
 
     assertThatThrownBy(() -> cars.findById(42)).isInstanceOf(RowNotFoundException.class);
     assertThatThrownBy(() -> orders.findById(94)).isInstanceOf(RowNotFoundException.class);
     assertThatThrownBy(() -> orders.findById(273)).isInstanceOf(RowNotFoundException.class);
+
+    inOrder(eventService);
+    verify(eventService).onCarDeleted(1, 42);
+    verify(eventService).onOrderDeleted(1, 94);
+    verify(eventService).onOrderDeleted(1, 273);
   }
 }

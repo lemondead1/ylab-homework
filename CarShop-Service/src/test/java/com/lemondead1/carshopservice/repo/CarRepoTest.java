@@ -9,10 +9,7 @@ import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.DBException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.util.IntRange;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -43,12 +40,13 @@ public class CarRepoTest {
     dbManager.dropSchemas();
   }
 
-  @ParameterizedTest
+  @ParameterizedTest(name = "findById({0}) returns Car({0}, {1}, {2}, {3}, {4}, {5}, {6}).")
   @CsvSource({
       "52, Dodge,      Viper,     1993, 9322589, fair, false",
       "6,  Land Rover, Discovery, 2005, 6085538, poor, false",
       "96, Buick,      Century,   1997, 1497126, fair, true"
   })
+  @DisplayName("findById returns a car with required id.")
   void findByIdReturnsCorrectCar(int id,
                                  String brand,
                                  String model,
@@ -61,6 +59,7 @@ public class CarRepoTest {
 
 
   @Test
+  @DisplayName("create creates a new car that matches arguments.")
   void createdCarMatchesSpec() {
     var created = cars.create("BMW", "X5", 2015, 3000000, "good");
     assertThat(created)
@@ -69,6 +68,7 @@ public class CarRepoTest {
   }
 
   @Test
+  @DisplayName("edit changes the car's fields according to non-null arguments.")
   void editedCarMatchesSpec() {
     var created = cars.create("BMW", "X5", 2015, 3000000, "good");
     var edited = cars.edit(created.id(), null, null, null, 4000000, "mint");
@@ -78,11 +78,13 @@ public class CarRepoTest {
   }
 
   @Test
+  @DisplayName("edit throws RowNotFoundException a car when the given id is not found.")
   void editNonExistingCarThrows() {
     assertThatThrownBy(() -> cars.edit(999, null, null, null, 3000000, null)).isInstanceOf(RowNotFoundException.class);
   }
 
   @Test
+  @DisplayName("delete deletes the car.")
   void deleteTest() {
     var created = cars.create("BMW", "X5", 2015, 3000000, "good");
     assertThat(cars.delete(created.id())).isEqualTo(created);
@@ -90,6 +92,7 @@ public class CarRepoTest {
   }
 
   @Test
+  @DisplayName("delete throws if there exist orders referencing the car.")
   void deletingCarWithExistingOrdersThrows() {
     assertThatThrownBy(() -> cars.delete(1)).isInstanceOf(DBException.class);
   }
@@ -155,6 +158,7 @@ public class CarRepoTest {
         "'11, 40, 80',             '',   '',  ALL,         0 - 2000000,       good, ALL",
         "'90, 96, 97, 100',        '',   '',  ALL,         0 - 2000000,       '',   true",
     })
+    @DisplayName("lookup returns entries matching arguments.")
     void filterTest(@ConvertWith(IntegerArrayConverter.class) Integer[] expectedIds,
                     String brand,
                     String model,
