@@ -23,6 +23,15 @@ import java.util.Set;
 public class EventRepo {
   private final DBManager db;
 
+  /**
+   * Creates a new event
+   *
+   * @param timestamp event timestamp
+   * @param userId    user who trigger the event
+   * @param type      event type
+   * @param json      auxiliary event data
+   * @return the event created
+   */
   public Event create(Instant timestamp, int userId, EventType type, String json) {
     var sql = "insert into events (timestamp, user_id, type, data) values (?, ?, ?::event_type, ?::jsonb)";
 
@@ -44,6 +53,15 @@ public class EventRepo {
     }
   }
 
+  /**
+   * Looks up events matching the query
+   *
+   * @param types    allowed event types
+   * @param dates    date range
+   * @param username username query
+   * @param sorting  sorting
+   * @return List of events matching the arguments
+   */
   public List<Event> lookup(Set<EventType> types, DateRange dates, String username, EventSorting sorting) {
     var sql = Util.format("""
                               select e.id, timestamp, user_id, type, data from events e

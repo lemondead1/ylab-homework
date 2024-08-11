@@ -56,7 +56,7 @@ public class CarRepo {
   }
 
   /**
-   * Performs edit on an existing row. If null is passed as one of parameters, the column stays the same.
+   * Changes the car with given id according to nonnull parameters.
    *
    * @param carId          id
    * @param brand          new brand
@@ -109,6 +109,7 @@ public class CarRepo {
    *
    * @param carId id to be deleted
    * @return old row
+   * @throws RowNotFoundException if a car with given id does not exist.
    */
   public Car delete(int carId) {
     var sql = """
@@ -132,6 +133,13 @@ public class CarRepo {
     }
   }
 
+  /**
+   * Finds a car by its id.
+   *
+   * @param carId id to find
+   * @return a car with the given id
+   * @throws RowNotFoundException if the car was not found
+   */
   public Car findById(int carId) {
     var sql = """
         select id, brand, model, production_year, price, condition,
@@ -154,6 +162,12 @@ public class CarRepo {
     }
   }
 
+  /**
+   * Returns a user that has a purchase order with status 'done' and the given car id in their name.
+   *
+   * @param carId car id
+   * @return {@code some(user)} if such an order exists, {@code empty()} otherwise
+   */
   public Optional<User> findCarOwner(int carId) {
     var sql = """
         select u.id, username, phone_number, email, password, role,
@@ -178,6 +192,18 @@ public class CarRepo {
     }
   }
 
+  /**
+   * Looks up cars matching query
+   *
+   * @param brand car brand query
+   * @param model car model query
+   * @param productionYear production year range
+   * @param price price range
+   * @param condition car condition query
+   * @param availabilityForPurchase availability for purchase
+   * @param sorting sorting
+   * @return List of cars matching the query
+   */
   public List<Car> lookup(String brand,
                           String model,
                           IntRange productionYear,

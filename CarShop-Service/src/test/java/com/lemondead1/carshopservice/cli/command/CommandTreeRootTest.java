@@ -4,6 +4,7 @@ import com.lemondead1.carshopservice.cli.CLI;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -46,7 +47,8 @@ public class CommandTreeRootTest {
   }
 
   @Test
-  void executeWithOneTestExecutesCommandTwoWithTest() {
+  @DisplayName("execute 'two test' command calls commandTwo with 'test'.")
+  void executeWithTwoTestExecutesCommandTwoWithTest() {
     var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
 
     root.execute(dummyUser, cli, "two", "test");

@@ -41,13 +41,13 @@ public class OrderRepo {
         	select * from orders union all select * from o
         )
         select o.id, o.created_at, o.kind, o.state, o.comment,
-        
+                
         u.id, u.username, u.phone_number, u.email, u.password, u.role,
         (select count(*) from all_o where client_id=u.id and kind='purchase' and state='done') as purchase_count,
-        
+                
         c.id, c.brand, c.model, c.production_year, c.price, c.condition,
         c.id not in (select car_id from all_o where state!='cancelled' and kind='purchase') as available_for_purchase
-        
+                
         from o
         join users u on o.client_id=u.id
         join cars c on o.car_id=c.id""";
@@ -69,13 +69,21 @@ public class OrderRepo {
     }
   }
 
-  public Order edit(int id,
-                    @Nullable Instant createdAt,
-                    @Nullable OrderKind kind,
-                    @Nullable OrderState state,
-                    @Nullable Integer clientId,
-                    @Nullable Integer carId,
-                    @Nullable String comments) {
+  /**
+   * Changes the order with the given id according to nonnull arguments.
+   *
+   * @param orderId   id of the modified order
+   * @param createdAt new created at timestamp
+   * @param kind      new order kind
+   * @param state     new order state
+   * @param clientId  new client id
+   * @param carId     new car id
+   * @param comments  new comments
+   * @return The new order
+   * @throws RowNotFoundException if an order with given id has not been found.
+   */
+  public Order edit(int orderId, @Nullable Instant createdAt, @Nullable OrderKind kind, @Nullable OrderState state,
+                    @Nullable Integer clientId, @Nullable Integer carId, @Nullable String comments) {
     var sql = """
         with o as (
           update orders set created_at=coalesce(?, created_at),
@@ -91,13 +99,13 @@ public class OrderRepo {
           select * from orders where id not in (select id from o) union all select * from o
         )
         select o.id, o.created_at, o.kind, o.state, o.comment,
-        
+                
         u.id, u.username, u.phone_number, u.email, u.password, u.role,
         (select count(*) from all_o where client_id=u.id and kind='purchase' and state='done') as purchase_count,
-        
+                
         c.id, c.brand, c.model, c.production_year, c.price, c.condition,
         c.id not in (select car_id from all_o where state!='cancelled' and kind='purchase') as available_for_purchase
-        
+                
         from o
         join users u on o.client_id=u.id
         join cars c on o.car_id=c.id""";
@@ -109,12 +117,12 @@ public class OrderRepo {
       stmt.setObject(4, clientId);
       stmt.setObject(5, carId);
       stmt.setString(6, comments);
-      stmt.setInt(7, id);
+      stmt.setInt(7, orderId);
       stmt.execute();
 
       var results = stmt.getResultSet();
       if (!results.next()) {
-        throw new RowNotFoundException("Order #" + id + " not found.");
+        throw new RowNotFoundException("Order #" + orderId + " not found.");
       }
 
       return readOrder(results);
@@ -123,7 +131,14 @@ public class OrderRepo {
     }
   }
 
-  public Order delete(int id) {
+  /**
+   * Deletes an order with the given id
+   *
+   * @param orderId id of an order
+   * @return the old order
+   * @throws RowNotFoundException if order with the given id could not be found
+   */
+  public Order delete(int orderId) {
     var sql = """
         with o as (
           delete from orders
@@ -134,19 +149,19 @@ public class OrderRepo {
           select * from orders where id not in (select id from o)
         )
         select o.id, o.created_at, o.kind, o.state, o.comment,
-        
+                
         u.id, u.username, u.phone_number, u.email, u.password, u.role,
         (select count(*) from all_o where client_id=u.id and kind='purchase' and state='done') as purchase_count,
-        
+                
         c.id, c.brand, c.model, c.production_year, c.price, c.condition,
         c.id not in (select car_id from all_o where state!='cancelled' and kind='purchase') as available_for_purchase
-        
+                
         from o
         join users u on o.client_id=u.id
         join cars c on o.car_id=c.id""";
 
     try (var stmt = db.connect().prepareStatement(sql)) {
-      stmt.setInt(1, id);
+      stmt.setInt(1, orderId);
       stmt.execute();
 
       var results = stmt.getResultSet();
@@ -157,30 +172,37 @@ public class OrderRepo {
     }
   }
 
-  public Order findById(int id) {
+  /**
+   * Looks up an order by its id
+   *
+   * @param orderId order id
+   * @return an order with the given order id
+   * @throws RowNotFoundException if an order with the given id could not be found
+   */
+  public Order findById(int orderId) {
     var sql = """
         select
         o.id, o.created_at, o.kind, o.state, o.comment,
-        
+                
         u.id, u.username, u.phone_number, u.email, u.password, u.role,
         (select count(*) from orders where client_id=u.id and kind='purchase' and state='done') as purchase_count,
-        
+                
         c.id, c.brand, c.model, c.production_year, c.price, c.condition,
         c.id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase
-        
+                
         from orders o
         join users u on o.client_id=u.id
         join cars c on o.car_id=c.id
         where o.id=?""";
 
     try (var stmt = db.connect().prepareStatement(sql)) {
-      stmt.setInt(1, id);
+      stmt.setInt(1, orderId);
       stmt.execute();
 
       var results = stmt.getResultSet();
 
       if (!results.next()) {
-        throw new RowNotFoundException("Order #" + id + " not found.");
+        throw new RowNotFoundException("Order #" + orderId + " not found.");
       }
 
       return readOrder(results);
@@ -189,6 +211,12 @@ public class OrderRepo {
     }
   }
 
+  /**
+   * Checks whether there exist orders associated with this client.
+   *
+   * @param clientId id of a user
+   * @return {@code true} if such an order exists, {@code false} otherwise
+   */
   public boolean doAnyOrdersExistFor(int clientId) {
     var sql = "select ? in (select client_id from orders)";
 
@@ -204,6 +232,12 @@ public class OrderRepo {
     }
   }
 
+  /**
+   * Checks whether there exist orders associated with this car.
+   *
+   * @param carId id of a car
+   * @return {@code true} if such an order exists, {@code false} otherwise
+   */
   public boolean existCarOrders(int carId) {
     var sql = "select ? in (select car_id from orders)";
 
@@ -219,6 +253,12 @@ public class OrderRepo {
     }
   }
 
+  /**
+   * Counts the orders associated with this user
+   *
+   * @param clientId id of a user
+   * @return The number of orders that are associated with this user.
+   */
   public int countClientOrders(int clientId) {
     var sql = "select count(*) from orders where client_id=?";
 
@@ -235,23 +275,24 @@ public class OrderRepo {
   }
 
   /**
-   * Fetches orders done by that client.
+   * Fetches orders associated with this client.
    * Does not check whether the client exists and in that case returns an empty list.
    *
    * @param clientId id of a client
+   * @param sorting  list sorting
    * @return List of orders done by that client
    */
   public List<Order> findClientOrders(int clientId, OrderSorting sorting) {
     var sql = Util.format("""
                               select
                               o.id, o.created_at, o.kind, o.state, o.comment,
-                              
+                                                            
                               u.id, u.username, u.phone_number, u.email, u.password, u.role,
                               (select count(*) from orders where client_id=u.id and kind='purchase' and state='done') as purchase_count,
-                              
+                                                            
                               c.id, c.brand, c.model, c.production_year, c.price, c.condition,
                               c.id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase
-                              
+                                                            
                               from orders o
                               join users u on o.client_id=u.id
                               join cars c on o.car_id=c.id
@@ -276,17 +317,58 @@ public class OrderRepo {
     }
   }
 
-  public void deleteClientOrders(int clientId) {
-    var sql = "delete from orders where client_id=?";
+  /**
+   * Deletes all orders associated with this user.
+   *
+   * @param clientId client id
+   * @return The deleted orders
+   */
+  public List<Order> deleteClientOrders(int clientId) {
+    var sql = """
+        with o as (
+          delete from orders
+          where client_id=?
+          returning id, created_at, kind, state, client_id, car_id, comment
+        ),
+        all_o as (
+          select * from orders where id not in (select id from o)
+        )
+        select o.id, o.created_at, o.kind, o.state, o.comment,
+                
+        u.id, u.username, u.phone_number, u.email, u.password, u.role,
+        (select count(*) from all_o where client_id=u.id and kind='purchase' and state='done') as purchase_count,
+                
+        c.id, c.brand, c.model, c.production_year, c.price, c.condition,
+        c.id not in (select car_id from all_o where state!='cancelled' and kind='purchase') as available_for_purchase
+                
+        from o
+        join users u on o.client_id=u.id
+        join cars c on o.car_id=c.id""";
 
     try (var stmt = db.connect().prepareStatement(sql)) {
       stmt.setInt(1, clientId);
       stmt.execute();
+
+      var results = stmt.getResultSet();
+
+      List<Order> list = new ArrayList<>();
+
+      while (results.next()) {
+        list.add(readOrder(results));
+      }
+
+      return list;
     } catch (SQLException e) {
       throw new DBException(e);
     }
   }
 
+  /**
+   * Deletes all orders associated with this car.
+   *
+   * @param carId car id
+   * @return The deleted orders.
+   */
   public List<Order> deleteCarOrders(int carId) {
     var sql = """
         with o as (
@@ -298,13 +380,13 @@ public class OrderRepo {
           select * from orders where id not in (select id from o)
         )
         select o.id, o.created_at, o.kind, o.state, o.comment,
-        
+                
         u.id, u.username, u.phone_number, u.email, u.password, u.role,
         (select count(*) from all_o where client_id=u.id and kind='purchase' and state='done') as purchase_count,
-        
+                
         c.id, c.brand, c.model, c.production_year, c.price, c.condition,
         c.id not in (select car_id from all_o where state!='cancelled' and kind='purchase') as available_for_purchase
-        
+                
         from o
         join users u on o.client_id=u.id
         join cars c on o.car_id=c.id""";
@@ -327,17 +409,23 @@ public class OrderRepo {
     }
   }
 
+  /**
+   * Fetches the orders associated with the given car
+   *
+   * @param carId car id
+   * @return A list of such orders
+   */
   public List<Order> findCarOrders(int carId) {
     var sql = """
         select
         o.id, o.created_at, o.kind, o.state, o.comment,
-        
+                
         u.id, u.username, u.phone_number, u.email, u.password, u.role,
         (select count(*) from orders where client_id=u.id and kind='purchase' and state='done') as purchase_count,
-        
+                
         c.id, c.brand, c.model, c.production_year, c.price, c.condition,
         c.id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase
-        
+                
         from orders o
         join users u on o.client_id=u.id
         join cars c on o.car_id=c.id
@@ -361,6 +449,13 @@ public class OrderRepo {
     }
   }
 
+  /**
+   * Checks whether there exist service orders that reference both the given user and car.
+   *
+   * @param clientId id of a user
+   * @param carId    id if a car
+   * @return {@code true} if such orders exist, {@code false} otherwise
+   */
   public boolean doServiceOrdersExistFor(int clientId, int carId) {
     var sql = "select exists (select car_id from orders where kind='service' and car_id=? and client_id=?)";
 
@@ -377,22 +472,29 @@ public class OrderRepo {
     }
   }
 
-  public List<Order> lookup(DateRange dates,
-                            String customerName,
-                            String carBrand,
-                            String carModel,
-                            Set<OrderKind> kinds,
-                            Set<OrderState> states,
-                            OrderSorting sorting) {
+  /**
+   * Looks up the orders that match the query
+   *
+   * @param dates        allowed order creation dates
+   * @param customerName customer username query
+   * @param carBrand     car brand query
+   * @param carModel     car model query
+   * @param kinds        order kinds
+   * @param states       order states
+   * @param sorting      list sorting
+   * @return A list of such orders
+   */
+  public List<Order> lookup(DateRange dates, String customerName, String carBrand, String carModel,
+                            Set<OrderKind> kinds, Set<OrderState> states, OrderSorting sorting) {
     var sql = Util.format("""
                               select o.id, o.created_at, o.kind, o.state, o.comment,
-                              
+                                                            
                               u.id, u.username, u.phone_number, u.email, u.password, u.role,
                               (select count(*) from orders where client_id=u.id and kind='purchase' and state='done') as purchase_count,
-                              
+                                                            
                               c.id, c.brand, c.model, c.production_year, c.price, c.condition,
                               c.id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase
-                              
+                                                            
                               from orders o
                               join users u on o.client_id=u.id
                               join cars c on o.car_id=c.id
@@ -402,9 +504,7 @@ public class OrderRepo {
                               upper(c.model) like '%' || upper(?) || '%' and
                               o.state in ({}) and
                               o.kind in ({})
-                              order by {}""",
-                          Util.serializeSet(states),
-                          Util.serializeSet(kinds),
+                              order by {}""", Util.serializeSet(states), Util.serializeSet(kinds),
                           getOrderingString(sorting));
 
     try (var stmt = db.connect().prepareStatement(sql)) {

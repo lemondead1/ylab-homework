@@ -1,6 +1,6 @@
 package com.lemondead1.carshopservice.enums;
 
-import com.lemondead1.carshopservice.cli.parsing.HasId;
+import com.lemondead1.carshopservice.util.HasId;
 import com.lemondead1.carshopservice.util.Util;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

@@ -1,6 +1,7 @@
 package com.lemondead1.carshopservice.cli.parsing;
 
 import com.lemondead1.carshopservice.exceptions.ParsingException;
+import com.lemondead1.carshopservice.util.HasId;
 import com.lemondead1.carshopservice.util.Util;
 
 import java.util.Map;

@@ -1,6 +1,5 @@
 package com.lemondead1.carshopservice.util;
 
-import com.lemondead1.carshopservice.cli.parsing.HasId;
 import com.lemondead1.carshopservice.cli.validation.PatternValidator;
 import com.lemondead1.carshopservice.cli.validation.Validator;
 

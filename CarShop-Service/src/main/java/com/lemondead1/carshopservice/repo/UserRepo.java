@@ -22,6 +22,16 @@ import java.util.Set;
 public class UserRepo {
   private final DBManager db;
 
+  /**
+   * Creates a new user
+   *
+   * @param username    username
+   * @param phoneNumber phone number
+   * @param email       email
+   * @param password    password
+   * @param role        role
+   * @return the created user
+   */
   public User create(String username, String phoneNumber, String email, String password, UserRole role) {
     var sql = "insert into users (username, phone_number, email, password, role) values (?, ?, ?, ?, ?::user_role)";
 
@@ -44,7 +54,19 @@ public class UserRepo {
     }
   }
 
-  public User edit(int id,
+  /**
+   * Edits the user with the given id according to nonnull arguments
+   *
+   * @param userId      new user id
+   * @param username    new username
+   * @param phoneNumber new phone number
+   * @param email       new email
+   * @param password    new password
+   * @param role        new role
+   * @return New user row
+   * @throws RowNotFoundException if a user with the given id does not exist
+   */
+  public User edit(int userId,
                    @Nullable String username,
                    @Nullable String phoneNumber,
                    @Nullable String email,
@@ -66,13 +88,13 @@ public class UserRepo {
       stmt.setString(3, email);
       stmt.setString(4, password);
       stmt.setString(5, role == null ? null : role.getId());
-      stmt.setInt(6, id);
+      stmt.setInt(6, userId);
       stmt.execute();
 
       var results = stmt.getResultSet();
 
       if (!results.next()) {
-        throw new RowNotFoundException("User #" + id + " does not exist.");
+        throw new RowNotFoundException("User #" + userId + " does not exist.");
       }
 
       return readUser(results, 1);
@@ -81,17 +103,24 @@ public class UserRepo {
     }
   }
 
-  public User delete(int id) {
+  /**
+   * Deletes the user with the given id
+   *
+   * @param userId user id
+   * @return The user that has been deleted
+   * @throws RowNotFoundException if a user with the given id could not be found
+   */
+  public User delete(int userId) {
     var sql = "delete from users where id=? returning id, username, phone_number, email, password, role, 0";
 
     try (var stmt = db.connect().prepareStatement(sql)) {
-      stmt.setInt(1, id);
+      stmt.setInt(1, userId);
       stmt.execute();
 
       var results = stmt.getResultSet();
 
       if (!results.next()) {
-        throw new RowNotFoundException("User #" + id + " does not exist.");
+        throw new RowNotFoundException("User #" + userId + " does not exist.");
       }
 
       return readUser(results, 1);
@@ -100,6 +129,12 @@ public class UserRepo {
     }
   }
 
+  /**
+   * Checks whether a user with the given username exists
+   *
+   * @param username username
+   * @return {@code true} if they exist, {@code false} otherwise
+   */
   public boolean existsUsername(String username) {
     var sql = "select ? in (select username from users)";
 
@@ -115,6 +150,13 @@ public class UserRepo {
     }
   }
 
+  /**
+   * Looks up a user which has the given username
+   *
+   * @param username username
+   * @return A user who has the given username
+   * @throws RowNotFoundException if such a user could not be found
+   */
   public User findByUsername(String username) {
     var sql = """
         select id, username, phone_number, email, password, role,
@@ -138,7 +180,14 @@ public class UserRepo {
     }
   }
 
-  public User findById(int id) {
+  /**
+   * Looks up a user by their id
+   *
+   * @param userId user id
+   * @return The user who has the given id
+   * @throws RowNotFoundException if there is no user with the given id
+   */
+  public User findById(int userId) {
     var sql = """
         select id, username, phone_number, email, password, role,
         (select count(*) from orders where client_id=users.id and kind='purchase' and state='done') as purchase_count
@@ -146,13 +195,13 @@ public class UserRepo {
         where id=?""";
 
     try (var stmt = db.connect().prepareStatement(sql)) {
-      stmt.setInt(1, id);
+      stmt.setInt(1, userId);
       stmt.execute();
 
       var results = stmt.getResultSet();
 
       if (!results.next()) {
-        throw new RowNotFoundException("User #" + id + " does not exist.");
+        throw new RowNotFoundException("User #" + userId + " does not exist.");
       }
 
       return readUser(results, 1);
@@ -161,6 +210,17 @@ public class UserRepo {
     }
   }
 
+  /**
+   * Looks up users by a query
+   *
+   * @param username      username query
+   * @param roles         user roles (except anonymous)
+   * @param phoneNumber   phone number query
+   * @param email         email query
+   * @param purchaseCount user purchase count range
+   * @param sorting       resulting list sorting
+   * @return List of users matching the query
+   */
   public List<User> lookup(String username,
                            Set<UserRole> roles,
                            String phoneNumber,

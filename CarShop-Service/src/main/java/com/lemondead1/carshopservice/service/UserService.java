@@ -73,7 +73,9 @@ public class UserService {
   }
 
   public void deleteUserCascading(int userId, int userIdToDelete) {
-    orders.deleteClientOrders(userIdToDelete);
+    for (var order : orders.deleteClientOrders(userIdToDelete)) {
+      events.onOrderDeleted(userId, order.id());
+    }
 
     users.delete(userIdToDelete);
     events.onUserDeleted(userId, userIdToDelete);

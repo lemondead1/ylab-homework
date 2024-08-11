@@ -4,6 +4,7 @@ import com.lemondead1.carshopservice.controller.MockCLI;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -33,7 +34,7 @@ public class CommandTreeTest {
   CommandTree tree;
 
   @BeforeEach
-  void setup() {
+  void beforeEach() {
     when(commandOne.getName()).thenReturn("one");
     when(commandTwo.getName()).thenReturn("two");
     when(commandThree.getName()).thenReturn("three");
@@ -47,6 +48,7 @@ public class CommandTreeTest {
   }
 
   @Test
+  @DisplayName("execute 'two test' command passes 'test' to commandTwo.")
   void executeWithTwoTestExecutesCommandTwoWithTest() {
     var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
 
@@ -55,6 +57,7 @@ public class CommandTreeTest {
   }
 
   @Test
+  @DisplayName("execute 'two test' by anonymous user prints 'Insufficient permissions.' and returns.")
   void executeTwoWithInsufficientPermissionsPrintsAndReturns() {
     var dummyUser = new User(1, "anonymous", "12346789", "mail@example.com", "pass", UserRole.ANONYMOUS, 0);
     cli.out("Insufficient permissions.\n");
@@ -66,6 +69,7 @@ public class CommandTreeTest {
   }
 
   @Test
+  @DisplayName("execute 'five' prints a command not found message.")
   void executeWithFivePrintsCommandNotFound() {
     var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
     cli.out("Command 'five' not found. Use 'help' to list available commands.\n");
@@ -76,6 +80,7 @@ public class CommandTreeTest {
   }
 
   @Test
+  @DisplayName("execute with no arguments prints help.")
   void executeWithNoArgsPrintsHelp() {
     when(commandOne.getDescription()).thenReturn("1");
     when(commandTwo.getDescription()).thenReturn("2");
@@ -102,6 +107,7 @@ public class CommandTreeTest {
   }
 
   @Test
+  @DisplayName("execute 'help' prints subcommand descriptions in order filtering by user role help.")
   void executeWithHelpPrintsDescriptionInOrderAndFiltersByUserRole() {
     when(commandOne.getDescription()).thenReturn("1");
     when(commandTwo.getDescription()).thenReturn("2");

@@ -1,7 +1,5 @@
 package com.lemondead1.carshopservice.util;
 
-import com.lemondead1.carshopservice.cli.parsing.HasId;
-
 public class JsonUtil {
   public static String escapeCharacters(String raw) {
     var builder = new StringBuilder();

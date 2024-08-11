@@ -65,7 +65,7 @@ public class OrderService {
   }
 
   /**
-   * Checks there are no service orders
+   * Checks if there are no service orders
    *
    * @param clientId client id
    * @param carId    car id
