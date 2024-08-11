@@ -17,7 +17,7 @@ public abstract class CLI {
   }
 
   public final void println(String line) {
-    printf(line + "\n");
+    printf("%s\n", line);
   }
 
   public abstract void printf(String pattern, Object... args);

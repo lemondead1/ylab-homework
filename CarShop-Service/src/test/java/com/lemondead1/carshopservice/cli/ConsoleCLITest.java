@@ -3,6 +3,7 @@ package com.lemondead1.carshopservice.cli;
 import com.lemondead1.carshopservice.cli.parsing.Parser;
 import com.lemondead1.carshopservice.cli.validation.Validator;
 import com.lemondead1.carshopservice.exceptions.ParsingException;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -34,12 +35,18 @@ public class ConsoleCLITest {
   ConsoleCLI cli;
 
   @Test
+  @DisplayName("println('%s') prints '%s\\n'.")
+  void printPercentWorks() {
+    cli.println("%s");
+
+    verify(console).printf("%s\n", "%s");
+  }
+
+  @Test
   void printlnCallsPrintln() {
     cli.println("testString");
 
-    var captor = ArgumentCaptor.forClass(String.class);
-    verify(console, atLeastOnce()).printf(captor.capture());
-    assertThat(String.join("", captor.getAllValues())).isEqualTo("testString\n");
+    verify(console).printf("%s\n", "testString");
   }
 
   @Test
