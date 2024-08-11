@@ -7,5 +7,8 @@ Y_LAB homework
 CarShop-Service
 ---------------
 
-Артефакт находится в папке `CarShop-Service/build/libs` и запускается командой `java -jar CarShop-Service.jar`.
-По умолчанию добавлен пользователь admin с паролем password.
+Проект обновлен для работы с Postgres.
+Артефакт находится в папке `CarShop-Service/build/libs`.
+На вход необходимо подать путь до файла конфигурации.
+`CarShop-Service/example_config.properties` - пример такого файла.
+По умолчанию добавлены сгенерированные данные и пользователь admin с паролем password.
