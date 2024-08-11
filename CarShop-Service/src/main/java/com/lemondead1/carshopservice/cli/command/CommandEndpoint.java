@@ -42,19 +42,19 @@ public class CommandEndpoint implements Command {
       return;
     }
 
-    try {
-      if (path.length >= 1 && "help".equals(path[0])) {
-        cli.println(description);
-      } else {
-        var result = endpoint.execute(currentUser, cli, path);
-        if (result != null) {
-          cli.println(result);
-        }
-      }
-    } catch (WrongUsageException e) {
+    if (path.length >= 1 && "help".equals(path[0])) {
       cli.println(description);
-    } catch (CommandException e) {
-      cli.println(e.getMessage());
+      return;
+    }
+
+    String result;
+    try {
+      result = endpoint.execute(currentUser, cli, path);
+    } catch (WrongUsageException e) {
+      throw new WrongUsageException(description, e);
+    }
+    if (result != null) {
+      cli.println(result);
     }
   }
 }
