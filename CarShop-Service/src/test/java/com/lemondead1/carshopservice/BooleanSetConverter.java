@@ -13,7 +13,7 @@ public class BooleanSetConverter implements ArgumentConverter {
       case "true" -> Set.of(true);
       case "false" -> Set.of(false);
       case "ALL" -> Set.of(true, false);
-      default -> throw new IllegalStateException("Unexpected value: " + (String) source);
+      default -> throw new IllegalStateException("Unexpected value: " + source);
     };
   }
 }

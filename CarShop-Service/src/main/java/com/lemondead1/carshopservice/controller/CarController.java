@@ -18,10 +18,9 @@ import java.util.List;
 import static com.lemondead1.carshopservice.enums.UserRole.*;
 
 @RequiredArgsConstructor
-public class CarController implements Controller {
+public class CarController {
   private final CarService cars;
 
-  @Override
   public void registerEndpoints(TreeCommandBuilder<?> builder) {
     builder.push("car").describe("Use 'car' to access car database.").allow(CLIENT, MANAGER, ADMIN)
 

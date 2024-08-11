@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class CarRepoTest {
-  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres").withReuse(true);
+  static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres").withReuse(true);
 
   static DBManager dbManager;
   static CarRepo cars;

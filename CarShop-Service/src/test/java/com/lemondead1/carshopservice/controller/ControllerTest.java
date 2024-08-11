@@ -28,8 +28,6 @@ public class ControllerTest {
   @Mock
   Runnable exitRunnable;
 
-  MockCLI cli;
-
   LoginController login;
   EventController event;
   HomeController home;
@@ -45,8 +43,6 @@ public class ControllerTest {
     login = new LoginController(session);
     order = new OrderController(orders, cars, users);
     user = new UserController(users);
-
-    cli = new MockCLI();
   }
 
   @Test

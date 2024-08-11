@@ -26,7 +26,7 @@ public class IdListParserTest {
     private final String id;
   }
 
-  IdListParser<HasIdImpl> parser = IdListParser.of(HasIdImpl.class);
+  final IdListParser<HasIdImpl> parser = IdListParser.of(HasIdImpl.class);
 
   @ParameterizedTest
   @CsvSource({

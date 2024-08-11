@@ -17,10 +17,9 @@ import lombok.RequiredArgsConstructor;
 import static com.lemondead1.carshopservice.enums.UserRole.*;
 
 @RequiredArgsConstructor
-public class UserController implements Controller {
+public class UserController {
   private final UserService users;
 
-  @Override
   public void registerEndpoints(TreeCommandBuilder<?> builder) {
     builder.push("user").describe("Use 'user' to access user database.").allow(MANAGER, ADMIN)
 

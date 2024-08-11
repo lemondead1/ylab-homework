@@ -11,10 +11,9 @@ import com.lemondead1.carshopservice.util.Util;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class LoginController implements Controller {
+public class LoginController {
   private final SessionService session;
 
-  @Override
   public void registerEndpoints(TreeCommandBuilder<?> builder) {
     builder.accept("signup", this::signUp)
            .describe("Use 'signup' to sign up.")

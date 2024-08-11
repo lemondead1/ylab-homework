@@ -8,10 +8,9 @@ import lombok.RequiredArgsConstructor;
 import static com.lemondead1.carshopservice.enums.UserRole.*;
 
 @RequiredArgsConstructor
-public class HomeController implements Controller {
+public class HomeController {
   private final Runnable exit;
 
-  @Override
   public void registerEndpoints(TreeCommandBuilder<?> builder) {
     builder.accept("exit", this::exit)
            .describe("Use 'exit' to close the app.")

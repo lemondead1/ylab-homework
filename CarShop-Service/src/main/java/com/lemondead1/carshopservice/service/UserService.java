@@ -25,10 +25,6 @@ public class UserService {
     return users.findById(userId);
   }
 
-  public User findByUsername(String username) {
-    return users.findByUsername(username);
-  }
-
   public List<User> lookupUsers(String username, Collection<UserRole> roles, String phoneNumber, String email,
                                 IntRange purchases, UserSorting sorting) {
     return users.lookup(username, EnumSet.copyOf(roles), phoneNumber, email, purchases, sorting);

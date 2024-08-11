@@ -15,10 +15,9 @@ import lombok.RequiredArgsConstructor;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
-public class EventController implements Controller {
+public class EventController {
   private final EventService events;
 
-  @Override
   public void registerEndpoints(TreeCommandBuilder<?> builder) {
     builder.push("event").describe("Use 'event' to access event database.").allow(UserRole.ADMIN)
 

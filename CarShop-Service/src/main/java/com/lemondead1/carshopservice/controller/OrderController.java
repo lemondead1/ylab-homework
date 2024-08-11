@@ -19,12 +19,11 @@ import lombok.RequiredArgsConstructor;
 import static com.lemondead1.carshopservice.enums.UserRole.*;
 
 @RequiredArgsConstructor
-public class OrderController implements Controller {
+public class OrderController {
   private final OrderService orders;
   private final CarService cars;
   private final UserService users;
 
-  @Override
   public void registerEndpoints(TreeCommandBuilder<?> builder) {
     builder.push("order").describe("Commands for managing orders").allow(CLIENT, MANAGER, ADMIN)
 

@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class UserRepoTest {
-  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres").withReuse(true);
+  static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres").withReuse(true);
 
   static DBManager dbManager;
   static UserRepo users;

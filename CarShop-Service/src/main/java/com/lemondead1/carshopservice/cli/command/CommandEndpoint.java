@@ -3,7 +3,6 @@ package com.lemondead1.carshopservice.cli.command;
 import com.lemondead1.carshopservice.cli.CLI;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.exceptions.WrongUsageException;
 import lombok.RequiredArgsConstructor;
 

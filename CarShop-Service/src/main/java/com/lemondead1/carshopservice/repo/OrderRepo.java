@@ -41,13 +41,13 @@ public class OrderRepo {
         	select * from orders union all select * from o
         )
         select o.id, o.created_at, o.kind, o.state, o.comment,
-                
+        
         u.id, u.username, u.phone_number, u.email, u.password, u.role,
         (select count(*) from all_o where client_id=u.id and kind='purchase' and state='done') as purchase_count,
-                
+        
         c.id, c.brand, c.model, c.production_year, c.price, c.condition,
         c.id not in (select car_id from all_o where state!='cancelled' and kind='purchase') as available_for_purchase
-                
+        
         from o
         join users u on o.client_id=u.id
         join cars c on o.car_id=c.id""";
@@ -99,13 +99,13 @@ public class OrderRepo {
           select * from orders where id not in (select id from o) union all select * from o
         )
         select o.id, o.created_at, o.kind, o.state, o.comment,
-                
+        
         u.id, u.username, u.phone_number, u.email, u.password, u.role,
         (select count(*) from all_o where client_id=u.id and kind='purchase' and state='done') as purchase_count,
-                
+        
         c.id, c.brand, c.model, c.production_year, c.price, c.condition,
         c.id not in (select car_id from all_o where state!='cancelled' and kind='purchase') as available_for_purchase
-                
+        
         from o
         join users u on o.client_id=u.id
         join cars c on o.car_id=c.id""";
@@ -149,13 +149,13 @@ public class OrderRepo {
           select * from orders where id not in (select id from o)
         )
         select o.id, o.created_at, o.kind, o.state, o.comment,
-                
+        
         u.id, u.username, u.phone_number, u.email, u.password, u.role,
         (select count(*) from all_o where client_id=u.id and kind='purchase' and state='done') as purchase_count,
-                
+        
         c.id, c.brand, c.model, c.production_year, c.price, c.condition,
         c.id not in (select car_id from all_o where state!='cancelled' and kind='purchase') as available_for_purchase
-                
+        
         from o
         join users u on o.client_id=u.id
         join cars c on o.car_id=c.id""";
@@ -183,13 +183,13 @@ public class OrderRepo {
     var sql = """
         select
         o.id, o.created_at, o.kind, o.state, o.comment,
-                
+        
         u.id, u.username, u.phone_number, u.email, u.password, u.role,
         (select count(*) from orders where client_id=u.id and kind='purchase' and state='done') as purchase_count,
-                
+        
         c.id, c.brand, c.model, c.production_year, c.price, c.condition,
         c.id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase
-                
+        
         from orders o
         join users u on o.client_id=u.id
         join cars c on o.car_id=c.id
@@ -286,13 +286,13 @@ public class OrderRepo {
     var sql = Util.format("""
                               select
                               o.id, o.created_at, o.kind, o.state, o.comment,
-                                                            
+                              
                               u.id, u.username, u.phone_number, u.email, u.password, u.role,
                               (select count(*) from orders where client_id=u.id and kind='purchase' and state='done') as purchase_count,
-                                                            
+                              
                               c.id, c.brand, c.model, c.production_year, c.price, c.condition,
                               c.id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase
-                                                            
+                              
                               from orders o
                               join users u on o.client_id=u.id
                               join cars c on o.car_id=c.id
@@ -334,13 +334,13 @@ public class OrderRepo {
           select * from orders where id not in (select id from o)
         )
         select o.id, o.created_at, o.kind, o.state, o.comment,
-                
+        
         u.id, u.username, u.phone_number, u.email, u.password, u.role,
         (select count(*) from all_o where client_id=u.id and kind='purchase' and state='done') as purchase_count,
-                
+        
         c.id, c.brand, c.model, c.production_year, c.price, c.condition,
         c.id not in (select car_id from all_o where state!='cancelled' and kind='purchase') as available_for_purchase
-                
+        
         from o
         join users u on o.client_id=u.id
         join cars c on o.car_id=c.id""";
@@ -380,13 +380,13 @@ public class OrderRepo {
           select * from orders where id not in (select id from o)
         )
         select o.id, o.created_at, o.kind, o.state, o.comment,
-                
+        
         u.id, u.username, u.phone_number, u.email, u.password, u.role,
         (select count(*) from all_o where client_id=u.id and kind='purchase' and state='done') as purchase_count,
-                
+        
         c.id, c.brand, c.model, c.production_year, c.price, c.condition,
         c.id not in (select car_id from all_o where state!='cancelled' and kind='purchase') as available_for_purchase
-                
+        
         from o
         join users u on o.client_id=u.id
         join cars c on o.car_id=c.id""";
@@ -419,13 +419,13 @@ public class OrderRepo {
     var sql = """
         select
         o.id, o.created_at, o.kind, o.state, o.comment,
-                
+        
         u.id, u.username, u.phone_number, u.email, u.password, u.role,
         (select count(*) from orders where client_id=u.id and kind='purchase' and state='done') as purchase_count,
-                
+        
         c.id, c.brand, c.model, c.production_year, c.price, c.condition,
         c.id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase
-                
+        
         from orders o
         join users u on o.client_id=u.id
         join cars c on o.car_id=c.id
@@ -488,13 +488,13 @@ public class OrderRepo {
                             Set<OrderKind> kinds, Set<OrderState> states, OrderSorting sorting) {
     var sql = Util.format("""
                               select o.id, o.created_at, o.kind, o.state, o.comment,
-                                                            
+                              
                               u.id, u.username, u.phone_number, u.email, u.password, u.role,
                               (select count(*) from orders where client_id=u.id and kind='purchase' and state='done') as purchase_count,
-                                                            
+                              
                               c.id, c.brand, c.model, c.production_year, c.price, c.condition,
                               c.id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase
-                                                            
+                              
                               from orders o
                               join users u on o.client_id=u.id
                               join cars c on o.car_id=c.id

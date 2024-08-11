@@ -5,7 +5,6 @@ import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
 import com.lemondead1.carshopservice.exceptions.WrongUsernamePasswordException;
-import com.lemondead1.carshopservice.repo.OrderRepo;
 import com.lemondead1.carshopservice.repo.UserRepo;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,11 +18,10 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 public class SessionServiceTest {
-  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres").withReuse(true);
+  static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres").withReuse(true);
 
   static DBManager dbManager;
   static UserRepo users;
-  static OrderRepo orders;
 
   @Mock
   EventService eventService;
@@ -37,7 +35,6 @@ public class SessionServiceTest {
                               postgres.getPassword(), "data", "infra", true);
     dbManager.setupDatabase();
     users = new UserRepo(dbManager);
-    orders = new OrderRepo(dbManager);
   }
 
   @AfterAll

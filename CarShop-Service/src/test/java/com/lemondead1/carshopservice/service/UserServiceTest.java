@@ -14,11 +14,12 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
-  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres").withReuse(true);
+  static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres").withReuse(true);
 
   static DBManager dbManager;
   static UserRepo users;
@@ -99,7 +100,20 @@ public class UserServiceTest {
   @DisplayName("deleteUser deletes user from the repo and calls EventService.onUserDeleted.")
   void deleteUserDeletesUserAndPostsAnEvent() {
     userService.deleteUser(1, 78);
-    assertThatThrownBy(() -> users.findById(78));
+    assertThatThrownBy(() -> users.findById(78)).isInstanceOf(RowNotFoundException.class);
     verify(eventService).onUserDeleted(1, 78);
+  }
+
+  @Test
+  @DisplayName("deleteUserCascade deletes the user and associated orders and submits events.")
+  void deleteUserCascadeTest() {
+    userService.deleteUserCascading(1, 18);
+
+    assertThatThrownBy(() -> users.findById(18)).isInstanceOf(RowNotFoundException.class);
+    assertThatThrownBy(() -> orders.findById(253)).isInstanceOf(RowNotFoundException.class);
+
+    inOrder(eventService);
+    verify(eventService).onUserDeleted(1, 18);
+    verify(eventService).onOrderDeleted(1, 253);
   }
 }

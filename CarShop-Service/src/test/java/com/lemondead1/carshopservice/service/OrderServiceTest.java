@@ -8,9 +8,7 @@ import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.repo.CarRepo;
-import com.lemondead1.carshopservice.repo.EventRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
-import com.lemondead1.carshopservice.repo.UserRepo;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -27,13 +25,11 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderServiceTest {
-  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres").withReuse(true);
+  static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres").withReuse(true);
 
   static DBManager dbManager;
   static CarRepo cars;
-  static UserRepo users;
   static OrderRepo orders;
-  static EventRepo events;
 
   @Mock
   EventService eventService;
@@ -50,9 +46,7 @@ public class OrderServiceTest {
                               postgres.getPassword(), "data", "infra", true);
     dbManager.setupDatabase();
     cars = new CarRepo(dbManager);
-    users = new UserRepo(dbManager);
     orders = new OrderRepo(dbManager);
-    events = new EventRepo(dbManager);
   }
 
   @AfterAll
