@@ -33,7 +33,8 @@ public class SessionServiceTest {
   @BeforeAll
   static void beforeAll() {
     postgres.start();
-    dbManager = new DBManager(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword(), "data", "infra");
+    dbManager = new DBManager(postgres.getJdbcUrl(), postgres.getUsername(),
+                              postgres.getPassword(), "data", "infra", true);
     dbManager.setupDatabase();
     users = new UserRepo(dbManager);
     orders = new OrderRepo(dbManager);

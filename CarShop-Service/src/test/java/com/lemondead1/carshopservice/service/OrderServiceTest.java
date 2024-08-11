@@ -46,7 +46,8 @@ public class OrderServiceTest {
   @BeforeAll
   static void beforeAll() {
     postgres.start();
-    dbManager = new DBManager(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword(), "data", "infra");
+    dbManager = new DBManager(postgres.getJdbcUrl(), postgres.getUsername(),
+                              postgres.getPassword(), "data", "infra", true);
     dbManager.setupDatabase();
     cars = new CarRepo(dbManager);
     users = new UserRepo(dbManager);

@@ -3,7 +3,6 @@ package com.lemondead1.carshopservice.cli.command;
 import com.lemondead1.carshopservice.controller.MockCLI;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.exceptions.WrongUsageException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Set;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -75,23 +75,12 @@ public class CommandEndpointTest {
   }
 
   @Test
-  void commandPrintsHelpOnWrongUsageException() {
+  void commandRethrowsOnWrongUsageException() {
     var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
     when(endpoint.execute(dummyUser, cli, "path")).thenThrow(new WrongUsageException());
-    cli.out("testDescription\n");
 
-    command.execute(dummyUser, cli, "path");
-
-    cli.assertMatchesHistory();
-  }
-
-  @Test
-  void commandPrintsMessageOnCommandException() {
-    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
-    when(endpoint.execute(dummyUser, cli, "path")).thenThrow(new CommandException("message"));
-    cli.out("message\n");
-
-    command.execute(dummyUser, cli, "path");
+    assertThatThrownBy(() -> command.execute(dummyUser, cli, "path")).isInstanceOf(WrongUsageException.class)
+                                                                     .hasMessage("testDescription");
 
     cli.assertMatchesHistory();
   }
