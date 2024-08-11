@@ -50,7 +50,7 @@ public class CarShopServiceApplication {
 
     var rootCommand = commandBuilder.build();
 
-    new CommandAcceptor(() -> !exited, cli, sessionService, rootCommand).acceptCommands();
+    new CommandAcceptor(() -> !exited, cli, sessionService, rootCommand, dbManager).acceptCommands();
   }
 
   private static DBManager createDBManagerWithConfigFilePath(String configPath) throws IOException {
@@ -63,6 +63,7 @@ public class CarShopServiceApplication {
                          cfg.getProperty("database_user"),
                          cfg.getProperty("database_password"),
                          cfg.getProperty("data_schema"),
-                         cfg.getProperty("infra_schema"));
+                         cfg.getProperty("infra_schema"),
+                         false);
   }
 }

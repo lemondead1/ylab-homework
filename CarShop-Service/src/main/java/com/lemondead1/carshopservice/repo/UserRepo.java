@@ -25,7 +25,7 @@ public class UserRepo {
   public User create(String username, String phoneNumber, String email, String password, UserRole role) {
     var sql = "insert into users (username, phone_number, email, password, role) values (?, ?, ?, ?, ?::user_role)";
 
-    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+    try (var stmt = db.connect().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
       stmt.setString(1, username);
       stmt.setString(2, phoneNumber);
       stmt.setString(3, email);
@@ -60,7 +60,7 @@ public class UserRepo {
         returning id, username, phone_number, email, password, role,
         (select count(*) from orders where client_id=users.id and kind='purchase' and state='done') as purchase_count""";
 
-    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
+    try (var stmt = db.connect().prepareStatement(sql)) {
       stmt.setString(1, username);
       stmt.setString(2, phoneNumber);
       stmt.setString(3, email);
@@ -84,7 +84,7 @@ public class UserRepo {
   public User delete(int id) {
     var sql = "delete from users where id=? returning id, username, phone_number, email, password, role, 0";
 
-    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
+    try (var stmt = db.connect().prepareStatement(sql)) {
       stmt.setInt(1, id);
       stmt.execute();
 
@@ -103,7 +103,7 @@ public class UserRepo {
   public boolean existsUsername(String username) {
     var sql = "select ? in (select username from users)";
 
-    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
+    try (var stmt = db.connect().prepareStatement(sql)) {
       stmt.setString(1, username);
       stmt.execute();
 
@@ -122,7 +122,7 @@ public class UserRepo {
         from users
         where username=?""";
 
-    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
+    try (var stmt = db.connect().prepareStatement(sql)) {
       stmt.setString(1, username);
       stmt.execute();
 
@@ -145,7 +145,7 @@ public class UserRepo {
         from users
         where id=?""";
 
-    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
+    try (var stmt = db.connect().prepareStatement(sql)) {
       stmt.setInt(1, id);
       stmt.execute();
 
@@ -184,7 +184,7 @@ public class UserRepo {
                              Util.serializeSet(roles),
                              getOrderingString(sorting));
 
-    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
+    try (var stmt = db.connect().prepareStatement(sql)) {
       stmt.setString(1, username);
       stmt.setString(2, phoneNumber);
       stmt.setString(3, email);

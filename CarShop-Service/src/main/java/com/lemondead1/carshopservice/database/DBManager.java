@@ -6,36 +6,36 @@ import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
+import lombok.RequiredArgsConstructor;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+@RequiredArgsConstructor
 public class DBManager {
   private final String url;
   private final String user;
   private final String password;
   private final String schema;
   private final String liquibaseSchema;
+  private final boolean autocommit;
 
-  public DBManager(String url, String user, String password, String schema, String liquibaseSchema) {
-    this.url = url;
-    this.user = user;
-    this.password = password;
-    this.schema = schema;
-    this.liquibaseSchema = liquibaseSchema;
-  }
+  private Connection connection;
 
   public void setupDatabase() {
-    try (var conn = DriverManager.getConnection(url, user, password)) {
+    try {
+      var conn = connect();
       conn.prepareStatement("create schema if not exists " + schema).execute();
       conn.prepareStatement("create schema if not exists " + liquibaseSchema).execute();
 
       var database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(conn));
       database.setDefaultSchemaName(schema);
       database.setLiquibaseSchemaName(liquibaseSchema);
+
       var liquibase = new Liquibase("db/changelog/changelog.yaml", new ClassLoaderResourceAccessor(), database);
       liquibase.update();
+      conn.commit();
     } catch (SQLException | LiquibaseException e) {
       throw new DBException("Failed to init the database", e);
     }
@@ -50,8 +50,31 @@ public class DBManager {
   }
 
   public Connection connect() throws SQLException {
-    var connection = DriverManager.getConnection(url, user, password);
+    if (connection == null) {
+      connection = DriverManager.getConnection(url, user, password);
+    }
     connection.setSchema(schema);
+    connection.setAutoCommit(autocommit);
     return connection;
+  }
+
+  public void commit() {
+    if (connection != null) {
+      try {
+        connection.commit();
+      } catch (SQLException e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
+  public void rollback() {
+    if (connection != null) {
+      try {
+        connection.rollback();
+      } catch (SQLException e) {
+        e.printStackTrace();
+      }
+    }
   }
 }

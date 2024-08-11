@@ -26,7 +26,7 @@ public class EventRepo {
   public Event create(Instant timestamp, int userId, EventType type, String json) {
     var sql = "insert into events (timestamp, user_id, type, data) values (?, ?, ?::event_type, ?::jsonb)";
 
-    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+    try (var stmt = db.connect().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
       stmt.setObject(1, timestamp.atOffset(ZoneOffset.UTC));
       stmt.setInt(2, userId);
       stmt.setString(3, type.getId());
@@ -55,7 +55,7 @@ public class EventRepo {
                           Util.serializeSet(types),
                           getOrderingString(sorting));
 
-    try (var conn = db.connect(); var stmt = conn.prepareStatement(sql)) {
+    try (var stmt = db.connect().prepareStatement(sql)) {
       stmt.setObject(1, dates.min().atOffset(ZoneOffset.UTC));
       stmt.setObject(2, dates.max().atOffset(ZoneOffset.UTC));
       stmt.setString(3, username);
