@@ -20,4 +20,34 @@ public class JsonUtil {
     }
     return builder.toString();
   }
+
+  public static Builder jsonBuilder() {
+    return new Builder();
+  }
+
+  public static class Builder {
+    private final StringBuilder builder = new StringBuilder("{");
+
+    public Builder append(String key, Object value) {
+      builder.append('"').append(key).append("\": ");
+
+      if (value instanceof Number) {
+        builder.append(value);
+      } else if (value instanceof HasId) {
+        builder.append('"').append(((HasId) value).getId()).append('"');
+      } else {
+        builder.append('"').append(escapeCharacters(value.toString())).append('"');
+      }
+
+      builder.append(", ");
+
+      return this;
+    }
+
+    public String build() {
+      builder.setLength(builder.length() - 2);
+      builder.append('}');
+      return builder.toString();
+    }
+  }
 }

@@ -1,9 +1,10 @@
 package com.lemondead1.carshopservice.cli.command;
 
-import com.lemondead1.carshopservice.cli.ConsoleIO;
+import com.lemondead1.carshopservice.cli.CLI;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.service.SessionService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -31,10 +32,7 @@ public class CommandTreeRootTest {
   Command commandFour;
 
   @Mock
-  SessionService session;
-
-  @Mock
-  ConsoleIO cli;
+  CLI cli;
 
   CommandTreeRoot root;
 
@@ -49,19 +47,26 @@ public class CommandTreeRootTest {
   }
 
   @Test
-  void executeWithOneTestExecutesCommandTwoWithTest() {
-    root.execute(session, cli, "two", "test");
-    verify(commandTwo).execute(session, cli, "test");
+  @DisplayName("execute 'two test' command calls commandTwo with 'test'.")
+  void executeWithTwoTestExecutesCommandTwoWithTest() {
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+
+    root.execute(dummyUser, cli, "two", "test");
+    verify(commandTwo).execute(dummyUser, cli, "test");
   }
 
   @Test
   void executeWithFivePrintsCommandNotFound() {
-    root.execute(session, cli, "five", "test");
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+
+    root.execute(dummyUser, cli, "five", "test");
     verify(cli).println("Command 'five' not found. Use 'help' to list available commands.");
   }
 
   @Test
   void executeWithNoArgsPrintsHelp() {
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+
     when(commandOne.getDescription()).thenReturn("1");
     when(commandTwo.getDescription()).thenReturn("2");
     when(commandThree.getDescription()).thenReturn("3");
@@ -72,9 +77,7 @@ public class CommandTreeRootTest {
     when(commandThree.getAllowedRoles()).thenReturn(Set.of(UserRole.CLIENT));
     when(commandFour.getAllowedRoles()).thenReturn(Set.of(UserRole.CLIENT));
 
-    when(session.getCurrentUserRole()).thenReturn(UserRole.CLIENT);
-
-    root.execute(session, cli);
+    root.execute(dummyUser, cli);
 
     var captor = ArgumentCaptor.forClass(String.class);
     verify(cli, times(5)).println(captor.capture());
@@ -88,6 +91,8 @@ public class CommandTreeRootTest {
 
   @Test
   void executeWithHelpPrintsDescriptionInOrderAndFiltersByUserRole() {
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+
     when(commandOne.getDescription()).thenReturn("1");
     when(commandTwo.getDescription()).thenReturn("2");
     when(commandFour.getDescription()).thenReturn("4");
@@ -97,9 +102,7 @@ public class CommandTreeRootTest {
     when(commandThree.getAllowedRoles()).thenReturn(Set.of(UserRole.ADMIN));
     when(commandFour.getAllowedRoles()).thenReturn(Set.of(UserRole.CLIENT));
 
-    when(session.getCurrentUserRole()).thenReturn(UserRole.CLIENT);
-
-    root.execute(session, cli, "help");
+    root.execute(dummyUser, cli, "help");
 
     var captor = ArgumentCaptor.forClass(String.class);
     verify(cli, times(4)).println(captor.capture());

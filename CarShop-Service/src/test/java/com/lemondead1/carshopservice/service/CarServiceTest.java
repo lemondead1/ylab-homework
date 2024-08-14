@@ -1,85 +1,104 @@
 package com.lemondead1.carshopservice.service;
 
-import com.lemondead1.carshopservice.dto.Car;
-import com.lemondead1.carshopservice.enums.*;
-import com.lemondead1.carshopservice.event.CarEvent;
+import com.lemondead1.carshopservice.database.DBManager;
+import com.lemondead1.carshopservice.entity.Car;
+import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.repo.CarRepo;
-import com.lemondead1.carshopservice.repo.EventRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
-import com.lemondead1.carshopservice.repo.UserRepo;
-import com.lemondead1.carshopservice.util.DateRange;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.time.Instant;
-import java.util.Set;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verify;
 
+@ExtendWith(MockitoExtension.class)
 public class CarServiceTest {
-  CarRepo cars;
-  UserRepo users;
-  OrderRepo orders;
-  EventRepo events;
+  static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres").withReuse(true);
+
+  static DBManager dbManager;
+  static CarRepo cars;
+  static OrderRepo orders;
+
+  @Mock
   EventService eventService;
   CarService carService;
 
+  @BeforeAll
+  static void beforeAll() {
+    postgres.start();
+    dbManager = new DBManager(postgres.getJdbcUrl(), postgres.getUsername(),
+                              postgres.getPassword(), "data", "infra", true);
+    dbManager.setupDatabase();
+    cars = new CarRepo(dbManager);
+    orders = new OrderRepo(dbManager);
+  }
+
+  @AfterAll
+  static void afterAll() {
+    dbManager.dropSchemas();
+  }
+
   @BeforeEach
   void beforeEach() {
-    cars = new CarRepo();
-    users = new UserRepo();
-    orders = new OrderRepo();
-    events = new EventRepo();
-    cars.setOrders(orders);
-    users.setOrders(orders);
-    orders.setCars(cars);
-    orders.setUsers(users);
-    events.setUsers(users);
-    eventService = new EventService(events, new TimeService());
     carService = new CarService(cars, orders, eventService);
   }
 
   @Test
+  @DisplayName("createCar creates a car in the repo and submits an event.")
   void createCarCreatesCarAndPostsEvent() {
-    carService.createCar(4, "Tesla", "Model 3", 2020, 5000000, "mint");
-    assertThat(cars.findById(1)).isEqualTo(new Car(1, "Tesla", "Model 3", 2020, 5000000, "mint"));
-    assertThat(events.lookup(Set.of(EventType.CAR_CREATED), DateRange.ALL, "", EventSorting.USERNAME_ASC))
-        .hasSize(1).map(e -> (CarEvent.Created) e).allMatch(e -> e.getUserId() == 4 && e.getCarId() == 1);
+    var createdCar = carService.createCar(4, "Tesla", "Model 3", 2020, 5000000, "mint");
+
+    Car expectedCar = new Car(createdCar.id(), "Tesla", "Model 3", 2020, 5000000, "mint", true);
+
+    assertThat(createdCar).isEqualTo(cars.findById(createdCar.id())).isEqualTo(expectedCar);
+
+    verify(eventService).onCarCreated(4, expectedCar);
   }
 
   @Test
+  @DisplayName("editCar edits the car in the repo and submits an event.")
   void editCarEditsCarAndPostsEvent() {
-    carService.createCar(4, "Tesla", "Model 3", 2020, 5000000, "mint");
-    var car = carService.editCar(5, 1, "Tesla", "Model 3", 2020, 3000000, "used");
-    assertThat(cars.findById(1)).isEqualTo(car).isEqualTo(new Car(1, "Tesla", "Model 3", 2020, 3000000, "used"));
-    assertThat(events.lookup(Set.of(EventType.CAR_MODIFIED), DateRange.ALL, "", EventSorting.USERNAME_ASC))
-        .hasSize(1).map(e -> (CarEvent.Modified) e).allMatch(e -> e.getUserId() == 5 && e.getCarId() == 1);
+    var editedCar = carService.editCar(5, 35, null, null, 2021, 454636, "good");
+
+    assertThat(editedCar)
+        .isEqualTo(cars.findById(35))
+        .matches(c -> c.productionYear() == 2021 && c.price() == 454636 && "good".equals(c.condition()));
+
+    verify(eventService).onCarEdited(5, editedCar);
   }
 
   @Test
+  @DisplayName("deleteCar deletes the car from the repo and submits an event.")
   void deleteCarDeletesCarAndPostsEvent() {
-    carService.createCar(6, "Chevrolet", "Corvette", 1999, 10000000, "used");
-    carService.deleteCar(10, 1, false);
-    assertThatThrownBy(() -> cars.findById(1)).isInstanceOf(RowNotFoundException.class);
+    carService.deleteCar(10, 99);
+    assertThatThrownBy(() -> cars.findById(99)).isInstanceOf(RowNotFoundException.class);
+    verify(eventService).onCarDeleted(10, 99);
   }
 
   @Test
-  void deleteCarThrowsCascadingExceptionWhenAnOrderExistsAndCascadeIsFalse() {
-    users.create("alex", "8800555", "test@example.com", "password", UserRole.CLIENT);
-    carService.createCar(53, "Chevrolet", "Camaro", 1999, 10000000, "used");
-    orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.NEW, 1, 1, "");
-    assertThatThrownBy(() -> carService.deleteCar(6, 1, false));
+  @DisplayName("deleteCar throws CascadingException when there exist orders that reference this car.")
+  void deleteCarThrowsCascadingExceptionWhenAnOrderExists() {
+    assertThatThrownBy(() -> carService.deleteCar(6, 1)).isInstanceOf(CascadingException.class);
   }
 
   @Test
-  void deleteCarDeletesCarAndOrdersWhenCascadeIsTrue() {
-    users.create("alex", "8800555", "test@example.com", "password", UserRole.CLIENT);
-    carService.createCar(53, "Chevrolet", "Camaro", 1999, 10000000, "used");
-    orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.NEW, 1, 1, "");
-    carService.deleteCar(6, 1, true);
-    assertThatThrownBy(() -> cars.findById(1)).isInstanceOf(RowNotFoundException.class);
-    assertThatThrownBy(() -> orders.findById(1)).isInstanceOf(RowNotFoundException.class);
+  @DisplayName("deleteCarCascading deletes the car and related orders from the repos and submits events.")
+  void deleteCarCascadingDeletesCar() {
+    carService.deleteCarCascading(1, 42);
+
+    assertThatThrownBy(() -> cars.findById(42)).isInstanceOf(RowNotFoundException.class);
+    assertThatThrownBy(() -> orders.findById(94)).isInstanceOf(RowNotFoundException.class);
+    assertThatThrownBy(() -> orders.findById(273)).isInstanceOf(RowNotFoundException.class);
+
+    inOrder(eventService);
+    verify(eventService).onCarDeleted(1, 42);
+    verify(eventService).onOrderDeleted(1, 94);
+    verify(eventService).onOrderDeleted(1, 273);
   }
 }

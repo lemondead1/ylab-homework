@@ -1,13 +1,13 @@
 package com.lemondead1.carshopservice.controller;
 
-import com.lemondead1.carshopservice.dto.Car;
-import com.lemondead1.carshopservice.dto.CarWithAvailability;
+import com.lemondead1.carshopservice.entity.Car;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.Availability;
 import com.lemondead1.carshopservice.enums.CarSorting;
+import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.exceptions.WrongUsageException;
 import com.lemondead1.carshopservice.service.CarService;
-import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.service.UserService;
 import com.lemondead1.carshopservice.util.IntRange;
 import com.lemondead1.carshopservice.util.TableFormatter;
@@ -29,12 +29,9 @@ public class CarControllerTest {
   CarService cars;
 
   @Mock
-  SessionService session;
-
-  @Mock
   UserService users;
 
-  MockConsoleIO cli;
+  MockCLI cli;
 
   CarController car;
 
@@ -42,23 +39,26 @@ public class CarControllerTest {
   void setup() {
     car = new CarController(cars);
 
-    cli = new MockConsoleIO();
+    cli = new MockCLI();
   }
 
   @Test
   void byIdThrowsWithoutArguments() {
-    assertThatThrownBy(() -> car.byId(session, cli)).isInstanceOf(WrongUsageException.class);
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+
+    assertThatThrownBy(() -> car.byId(dummyUser, cli)).isInstanceOf(WrongUsageException.class);
 
     verifyNoInteractions(cars, users);
   }
 
   @Test
   void byIdSuccess() {
-    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", true);
 
-    when(cars.findById(3)).thenReturn(mockCar);
+    when(cars.findById(3)).thenReturn(dummyCar);
 
-    assertThat(car.byId(session, cli, "3")).isEqualTo("Found " + mockCar.prettyFormat());
+    assertThat(car.byId(dummyUser, cli, "3")).isEqualTo("Found " + dummyCar.prettyFormat() + ".");
 
     cli.assertMatchesHistory();
     verify(cars).findById(3);
@@ -66,7 +66,9 @@ public class CarControllerTest {
 
   @Test
   void carDeleteFailsWhenNoParameterIsPresent() {
-    assertThatThrownBy(() -> car.deleteCar(session, cli)).isInstanceOf(WrongUsageException.class);
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+
+    assertThatThrownBy(() -> car.deleteCar(dummyUser, cli)).isInstanceOf(WrongUsageException.class);
 
     cli.assertMatchesHistory();
     verifyNoInteractions(cars, users);
@@ -74,78 +76,81 @@ public class CarControllerTest {
 
   @Test
   void carDeleteCancelled() {
-    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.ADMIN, 0);
+    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", true);
 
-    cli.out("Deleting \"Brand\" \"Model\" of 2001 p/y priced 1000000 in \"poor\" condition with id 3")
+    cli.out("Deleting \"Brand\" \"Model\" of 2001 p/y priced 1000000 in \"poor\" condition with id 3.\n")
        .out("Confirm [y/N] > ").in("not");
 
     when(cars.findById(3)).thenReturn(mockCar);
 
-    assertThat(car.deleteCar(session, cli, "3")).isEqualTo("Cancelled");
+    assertThat(car.deleteCar(dummyUser, cli, "3")).isEqualTo("Cancelled");
 
     cli.assertMatchesHistory();
   }
 
   @Test
   void carDeleteCascadeCancelled() {
-    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyUser = new User(5, "username", "12346789", "mail@example.com", "pass", UserRole.ADMIN, 0);
+    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", true);
 
-    cli.out("Deleting \"Brand\" \"Model\" of 2001 p/y priced 1000000 in \"poor\" condition with id 3")
+    cli.out("Deleting \"Brand\" \"Model\" of 2001 p/y priced 1000000 in \"poor\" condition with id 3.\n")
        .out("Confirm [y/N] > ").in("yes")
        .out("Cascading\n")
        .out("Delete them [y/N] > ").in("not");
 
-    when(cars.findById(3)).thenReturn(mockCar);
-    doThrow(new CascadingException("Cascading")).when(cars).deleteCar(5, 3, false);
-    when(session.getCurrentUserId()).thenReturn(5);
+    when(cars.findById(3)).thenReturn(dummyCar);
+    doThrow(new CascadingException("Cascading")).when(cars).deleteCar(5, 3);
 
-    assertThat(car.deleteCar(session, cli, "3")).isEqualTo("Cancelled");
+    assertThat(car.deleteCar(dummyUser, cli, "3")).isEqualTo("Cancelled");
 
     cli.assertMatchesHistory();
-    verify(cars, times(0)).deleteCar(5, 3, true);
+    verify(cars, times(0)).deleteCarCascading(5, 3);
   }
 
   @Test
   void carDeleteSuccess() {
-    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyUser = new User(5, "username", "12346789", "mail@example.com", "pass", UserRole.ADMIN, 0);
+    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", true);
 
-    cli.out("Deleting \"Brand\" \"Model\" of 2001 p/y priced 1000000 in \"poor\" condition with id 3")
+    cli.out("Deleting \"Brand\" \"Model\" of 2001 p/y priced 1000000 in \"poor\" condition with id 3.\n")
        .out("Confirm [y/N] > ").in("yes");
 
     when(cars.findById(3)).thenReturn(mockCar);
-    doNothing().when(cars).deleteCar(5, 3, false);
-    when(session.getCurrentUserId()).thenReturn(5);
+    doNothing().when(cars).deleteCar(5, 3);
 
-    assertThat(car.deleteCar(session, cli, "3")).isEqualTo("Done");
+    assertThat(car.deleteCar(dummyUser, cli, "3")).isEqualTo("Deleted");
 
     cli.assertMatchesHistory();
-    verify(cars).deleteCar(5, 3, false);
+    verify(cars).deleteCar(5, 3);
   }
 
   @Test
   void carDeleteCascadingSuccess() {
-    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyUser = new User(5, "username", "12346789", "mail@example.com", "pass", UserRole.ADMIN, 0);
+    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", false);
 
-    cli.out("Deleting \"Brand\" \"Model\" of 2001 p/y priced 1000000 in \"poor\" condition with id 3")
+    cli.out("Deleting \"Brand\" \"Model\" of 2001 p/y priced 1000000 in \"poor\" condition with id 3.\n")
        .out("Confirm [y/N] > ").in("yes")
        .out("Cascading\n")
        .out("Delete them [y/N] > ").in("yes");
 
     when(cars.findById(3)).thenReturn(mockCar);
-    doThrow(new CascadingException("Cascading")).when(cars).deleteCar(5, 3, false);
-    doNothing().when(cars).deleteCar(5, 3, true);
-    when(session.getCurrentUserId()).thenReturn(5);
+    doThrow(new CascadingException("Cascading")).when(cars).deleteCar(5, 3);
+    doNothing().when(cars).deleteCarCascading(5, 3);
 
-    assertThat(car.deleteCar(session, cli, "3")).isEqualTo("Done");
+    assertThat(car.deleteCar(dummyUser, cli, "3")).isEqualTo("Deleted");
 
     cli.assertMatchesHistory();
-    verify(cars).deleteCar(5, 3, false);
-    verify(cars).deleteCar(5, 3, true);
+    verify(cars).deleteCar(5, 3);
+    verify(cars).deleteCarCascading(5, 3);
   }
 
   @Test
   void carEditFailsWithNoArgument() {
-    assertThatThrownBy(() -> car.editCar(session, cli)).isInstanceOf(WrongUsageException.class);
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.ADMIN, 0);
+
+    assertThatThrownBy(() -> car.editCar(dummyUser, cli)).isInstanceOf(WrongUsageException.class);
 
     cli.assertMatchesHistory();
     verifyNoInteractions(cars);
@@ -153,8 +158,9 @@ public class CarControllerTest {
 
   @Test
   void carEditSuccess() {
-    var oldCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
-    var newCar = new Car(3, "Brand", "Model", 2001, 2000000, "ok");
+    var dummyUser = new User(5, "username", "12346789", "mail@example.com", "pass", UserRole.ADMIN, 0);
+    var oldCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", true);
+    var newCar = new Car(3, "Brand", "Model", 2001, 2000000, "ok", true);
 
     cli.out("Brand (Brand) > ").in("")
        .out("Model (Model) > ").in("")
@@ -162,11 +168,10 @@ public class CarControllerTest {
        .out("Price (1000000) > ").in("2000000")
        .out("Condition (poor) > ").in("ok");
 
-    when(session.getCurrentUserId()).thenReturn(5);
     when(cars.findById(3)).thenReturn(oldCar);
     when(cars.editCar(5, 3, null, null, 2001, 2000000, "ok")).thenReturn(newCar);
 
-    assertThat(car.editCar(session, cli, "3")).isEqualTo("Saved changes to " + newCar.prettyFormat());
+    assertThat(car.editCar(dummyUser, cli, "3")).isEqualTo("Saved changes to " + newCar.prettyFormat() + ".");
 
     cli.assertMatchesHistory();
     verify(cars).findById(3);
@@ -176,7 +181,8 @@ public class CarControllerTest {
 
   @Test
   void createCarSuccess() {
-    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyUser = new User(6, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", true);
 
     cli.out("Brand > ").in("Brand")
        .out("Model > ").in("Model")
@@ -184,10 +190,9 @@ public class CarControllerTest {
        .out("Price > ").in("1000000")
        .out("Condition > ").in("poor");
 
-    when(session.getCurrentUserId()).thenReturn(6);
     when(cars.createCar(6, "Brand", "Model", 2001, 1000000, "poor")).thenReturn(mockCar);
 
-    assertThat(car.createCar(session, cli)).isEqualTo("Created " + mockCar.prettyFormat());
+    assertThat(car.createCar(dummyUser, cli)).isEqualTo("Created " + mockCar.prettyFormat() + ".");
 
     cli.assertMatchesHistory();
     verify(cars).createCar(6, "Brand", "Model", 2001, 1000000, "poor");
@@ -196,9 +201,10 @@ public class CarControllerTest {
 
   @Test
   void listCarsTest() {
-    CarWithAvailability[] dummyCars = {
-        new CarWithAvailability(3, "Brand", "Model", 2001, 1000000, "poor", Availability.UNAVAILABLE),
-        new CarWithAvailability(64, "Toyota", "Corolla", 2009, 2000000, "ok", Availability.AVAILABLE)
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+    Car[] dummyCars = {
+        new Car(3, "Brand", "Model", 2001, 1000000, "poor", false),
+        new Car(64, "Toyota", "Corolla", 2009, 2000000, "ok", true)
     };
 
     cli.out("Brand > ").in("")
@@ -209,15 +215,15 @@ public class CarControllerTest {
        .out("Availability for purchase > ").in("available,unavailable")
        .out("Sorting > ").in("");
 
-    when(cars.lookupCars(eq(""), eq(""), refEq(new IntRange(2000, 2010)), refEq(new IntRange(100000,10000000)), eq("o"),
-                         eq(List.of(Availability.AVAILABLE, Availability.UNAVAILABLE)), eq(CarSorting.NAME_ASC)))
+    when(cars.lookupCars("", "", new IntRange(2000, 2010), new IntRange(100000, 10000000), "o",
+                         List.of(Availability.AVAILABLE, Availability.UNAVAILABLE), CarSorting.NAME_ASC))
         .thenReturn(List.of(dummyCars));
 
-    var table = new TableFormatter("ID", "Brand", "Model", "Prod. year", "Price", "Condition", "Available for purchase");
-    table.addRow(3, "Brand", "Model", 2001, 1000000, "poor", "No");
-    table.addRow(64, "Toyota", "Corolla", 2009, 2000000, "ok", "Yes");
+    var tab = new TableFormatter("ID", "Brand", "Model", "Prod. year", "Price", "Condition", "Available for purchase");
+    tab.addRow(3, "Brand", "Model", 2001, 1000000, "poor", "No");
+    tab.addRow(64, "Toyota", "Corolla", 2009, 2000000, "ok", "Yes");
 
-    assertThat(car.listCars(session, cli)).isEqualTo(table.format(true));
+    assertThat(car.listCars(dummyUser, cli)).isEqualTo(tab.format(true));
 
     cli.assertMatchesHistory();
   }

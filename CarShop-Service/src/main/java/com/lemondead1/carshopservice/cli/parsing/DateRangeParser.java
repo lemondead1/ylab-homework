@@ -2,7 +2,6 @@ package com.lemondead1.carshopservice.cli.parsing;
 
 import com.lemondead1.carshopservice.exceptions.ParsingException;
 import com.lemondead1.carshopservice.util.DateRange;
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
 import java.time.Instant;
@@ -13,7 +12,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.function.Supplier;
 
-@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
+@RequiredArgsConstructor
 public class DateRangeParser implements Parser<DateRange> {
   public static final DateRangeParser INSTANCE = new DateRangeParser(ZoneId::systemDefault);
 

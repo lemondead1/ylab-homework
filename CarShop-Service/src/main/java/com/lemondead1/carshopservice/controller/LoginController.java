@@ -1,20 +1,19 @@
 package com.lemondead1.carshopservice.controller;
 
-import com.lemondead1.carshopservice.cli.ConsoleIO;
+import com.lemondead1.carshopservice.cli.CLI;
 import com.lemondead1.carshopservice.cli.command.builders.TreeCommandBuilder;
 import com.lemondead1.carshopservice.cli.parsing.StringParser;
-import com.lemondead1.carshopservice.cli.validation.PatternValidator;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.ValidationException;
 import com.lemondead1.carshopservice.service.SessionService;
-import com.lemondead1.carshopservice.service.UserService;
+import com.lemondead1.carshopservice.util.Util;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class LoginController implements Controller {
-  private final UserService users;
+public class LoginController {
+  private final SessionService session;
 
-  @Override
   public void registerEndpoints(TreeCommandBuilder<?> builder) {
     builder.accept("signup", this::signUp)
            .describe("Use 'signup' to sign up.")
@@ -32,28 +31,28 @@ public class LoginController implements Controller {
            .pop();
   }
 
-  String signUp(SessionService session, ConsoleIO cli, String... params) {
-    String username = cli.parse("Username > ", StringParser.INSTANCE, PatternValidator.USERNAME, value -> {
-      if (!users.checkUsernameFree(value)) {
+  String signUp(User currentUser, CLI cli, String... args) {
+    String username = cli.parse("Username > ", StringParser.INSTANCE, Util.USERNAME, value -> {
+      if (!session.checkUsernameFree(value)) {
         throw new ValidationException("Username '" + value + "' is already taken.");
       }
     });
-    String phoneNumber = cli.parse("Phone number > ", StringParser.INSTANCE, PatternValidator.PHONE_NUMBER);
-    String email = cli.parse("Email > ", StringParser.INSTANCE, PatternValidator.EMAIL);
-    String password = cli.parse("Password > ", StringParser.INSTANCE, true, PatternValidator.PASSWORD);
-    users.signUserUp(username, phoneNumber, email, password);
+    String phoneNumber = cli.parse("Phone number > ", StringParser.INSTANCE, Util.PHONE_NUMBER);
+    String email = cli.parse("Email > ", StringParser.INSTANCE, Util.EMAIL);
+    String password = cli.parse("Password > ", StringParser.INSTANCE, true, Util.PASSWORD);
+    session.signUserUp(username, phoneNumber, email, password);
     return "Signed up successfully!";
   }
 
-  String login(SessionService session, ConsoleIO cli, String... params) {
+  String login(User currentUser, CLI cli, String... args) {
     String username = cli.parse("Username > ", StringParser.INSTANCE);
     String password = cli.parse("Password > ", StringParser.INSTANCE, true);
-    users.login(username, password, session);
+    session.login(username, password);
     return "Welcome, " + username + "!";
   }
 
-  String logout(SessionService session, ConsoleIO cli, String... params) {
-    session.setCurrentUserId(0);
+  String logout(User currentUser, CLI cli, String... args) {
+    session.logout();
     return "Logout";
   }
 }

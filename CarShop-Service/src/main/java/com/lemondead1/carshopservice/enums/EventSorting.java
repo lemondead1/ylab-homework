@@ -1,8 +1,10 @@
 package com.lemondead1.carshopservice.enums;
 
-import com.lemondead1.carshopservice.cli.parsing.HasId;
+import com.lemondead1.carshopservice.util.HasId;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+@Getter
 @RequiredArgsConstructor
 public enum EventSorting implements HasId {
   TIMESTAMP_DESC("newer_first"),
@@ -13,9 +15,4 @@ public enum EventSorting implements HasId {
   TYPE_DESC("type_reversed");
 
   private final String id;
-
-  @Override
-  public String getId() {
-    return id;
-  }
 }

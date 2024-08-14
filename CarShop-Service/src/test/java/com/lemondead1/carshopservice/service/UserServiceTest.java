@@ -1,105 +1,119 @@
 package com.lemondead1.carshopservice.service;
 
-import com.lemondead1.carshopservice.enums.EventSorting;
-import com.lemondead1.carshopservice.enums.EventType;
+import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.event.UserEvent;
 import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
-import com.lemondead1.carshopservice.exceptions.WrongUsernamePasswordException;
-import com.lemondead1.carshopservice.repo.CarRepo;
-import com.lemondead1.carshopservice.repo.EventRepo;
+import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
 import com.lemondead1.carshopservice.repo.OrderRepo;
 import com.lemondead1.carshopservice.repo.UserRepo;
-import com.lemondead1.carshopservice.util.DateRange;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.util.Set;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verify;
 
+@ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
-  CarRepo cars;
-  UserRepo users;
-  OrderRepo orders;
-  EventRepo events;
+  static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres").withReuse(true);
+
+  static DBManager dbManager;
+  static UserRepo users;
+  static OrderRepo orders;
+
+  @Mock
   EventService eventService;
   UserService userService;
-  SessionService session;
+
+  @BeforeAll
+  static void beforeAll() {
+    postgres.start();
+    dbManager = new DBManager(postgres.getJdbcUrl(), postgres.getUsername(),
+                              postgres.getPassword(), "data", "infra", true);
+    dbManager.setupDatabase();
+    users = new UserRepo(dbManager);
+    orders = new OrderRepo(dbManager);
+  }
+
+  @AfterAll
+  static void afterAll() {
+    dbManager.dropSchemas();
+  }
 
   @BeforeEach
   void beforeEach() {
-    cars = new CarRepo();
-    users = new UserRepo();
-    orders = new OrderRepo();
-    events = new EventRepo();
-    cars.setOrders(orders);
-    users.setOrders(orders);
-    orders.setCars(cars);
-    orders.setUsers(users);
-    events.setUsers(users);
-    eventService = new EventService(events, new TimeService());
-    userService = new UserService(users, eventService);
-    session = new SessionService(userService);
+    userService = new UserService(users, orders, eventService);
   }
 
   @Test
+  @DisplayName("createUser saves user into the repo and calls EventService.onUserCreated.")
   void createUserSavesUserAndPostsEvent() {
-    var user = userService.createUser(3, "username", "+73462684906", "test@example.com", "password", UserRole.CLIENT);
-    assertThat(users.findById(1)).isEqualTo(user);
-    assertThat(events.lookup(Set.of(EventType.USER_CREATED), DateRange.ALL, "", EventSorting.USERNAME_ASC))
-        .hasSize(1).map(e -> (UserEvent.Created) e).allMatch(e -> e.getUserId() == 3 && e.getCreatedUserId() == 1);
+    var user = userService.createUser(3, "obemna", "+73462684906", "test@example.com", "password", UserRole.CLIENT);
+    assertThat(users.findById(user.id())).isEqualTo(user);
+    verify(eventService).onUserCreated(3, user);
   }
 
   @Test
-  void signUserUpCreatesUserAndPostsEvent() {
-    var user = userService.signUserUp("username", "+73462684906", "test@example.com", "password");
-    assertThat(users.findById(1)).isEqualTo(user);
-    assertThat(events.lookup(Set.of(EventType.USER_SIGNED_UP), DateRange.ALL, "", EventSorting.USERNAME_ASC))
-        .hasSize(1).map(e -> (UserEvent.SignUp) e).allMatch(e -> e.getUserId() == 1);
+  @DisplayName("createUser throws UserAlreadyExistsException when attempting to add a user with a taken username.")
+  void createUserThrowsOnDuplicateUsername() {
+    assertThatThrownBy(() -> userService.createUser(1, "admin", "123456789", "test@x.com", "password", UserRole.CLIENT))
+        .isInstanceOf(UserAlreadyExistsException.class);
   }
 
   @Test
-  void loginThrowsWrongUsernamePasswordOnWrongUsername() {
-    userService.signUserUp("username", "+73462684906", "test@example.com", "password");
-    assertThatThrownBy(() -> userService.login("doesnotexist", "password", session))
-        .isInstanceOf(WrongUsernamePasswordException.class);
+  @DisplayName("createUser throws IllegalArgumentException when passed UserRole.ANONYMOUS.")
+  void createUserThrowsOnAnonymousRole() {
+    assertThatThrownBy(() -> userService.createUser(1, "newname", "123456789", "test@x.com",
+                                                    "password", UserRole.ANONYMOUS))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
-  void loginThrowsWrongUsernamePasswordOnWrongPassword() {
-    userService.signUserUp("username", "+73462684906", "test@example.com", "password");
-    assertThatThrownBy(() -> userService.login("username", "wrong", session))
-        .isInstanceOf(WrongUsernamePasswordException.class);
-  }
-
-  @Test
-  void loginSetsCurrentUserOnCorrectCredentials() {
-    userService.signUserUp("username", "+73462684906", "test@example.com", "password");
-    userService.login("username", "password", session);
-    assertThat(session.getCurrentUserId()).isEqualTo(1);
-  }
-
-  @Test
+  @DisplayName("editUser edits the user in the repo and calls EventService.onUserEdited.")
   void editSavesNewUserAndPostsAnEvent() {
-    userService.createUser(3, "username", "+73462684906", "test@example.com", "password", UserRole.CLIENT);
-    var user = userService.editUser(5, 1, "newUsername", "+5334342", "test1@example.com", "password", UserRole.CLIENT);
-    assertThat(users.findById(1)).isEqualTo(user);
-    assertThat(events.lookup(Set.of(EventType.USER_MODIFIED), DateRange.ALL, "", EventSorting.USERNAME_ASC))
-        .hasSize(1).map(e -> (UserEvent.Edited) e).allMatch(e -> e.getUserId() == 5 && e.getChangedUserId() == 1);
+    var oldUser = userService.createUser(3, "steve", "+73462684906", "test@example.com", "password", UserRole.CLIENT);
+    var newUser = userService.editUser(5, oldUser.id(), "bob", "+5334342", "test@ya.com", "password", UserRole.CLIENT);
+    assertThat(users.findById(oldUser.id())).isEqualTo(newUser);
+    verify(eventService).onUserEdited(5, oldUser, newUser);
   }
 
   @Test
+  @DisplayName("editUser throws a RowNotFoundException when userId is not found.")
   void editThrowsOnNonExistentUser() {
-    assertThatThrownBy(() -> userService.editUser(5, 1, "newUsername", "+5334342",
+    assertThatThrownBy(() -> userService.editUser(5, 500, "newUsername", "+5334342",
                                                   "test1@example.com", "password", UserRole.CLIENT))
         .isInstanceOf(RowNotFoundException.class);
   }
 
   @Test
-  void deleteUserDeletesUser() {
-    userService.signUserUp("username", "+73462684906", "test@example.com", "password");
-    userService.deleteUser(5, 1);
+  @DisplayName("editUser throws IllegalArgumentException when role is UserRole.ANONYMOUS.")
+  void editThrowsOnAnonymousRole() {
+    assertThatThrownBy(() -> userService.editUser(1, 1, null, null, null, null, UserRole.ANONYMOUS))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  @DisplayName("deleteUser deletes user from the repo and calls EventService.onUserDeleted.")
+  void deleteUserDeletesUserAndPostsAnEvent() {
+    userService.deleteUser(1, 78);
+    assertThatThrownBy(() -> users.findById(78)).isInstanceOf(RowNotFoundException.class);
+    verify(eventService).onUserDeleted(1, 78);
+  }
+
+  @Test
+  @DisplayName("deleteUserCascade deletes the user and associated orders and submits events.")
+  void deleteUserCascadeTest() {
+    userService.deleteUserCascading(1, 18);
+
+    assertThatThrownBy(() -> users.findById(18)).isInstanceOf(RowNotFoundException.class);
+    assertThatThrownBy(() -> orders.findById(253)).isInstanceOf(RowNotFoundException.class);
+
+    inOrder(eventService);
+    verify(eventService).onUserDeleted(1, 18);
+    verify(eventService).onOrderDeleted(1, 253);
   }
 }

@@ -1,6 +1,7 @@
 package com.lemondead1.carshopservice.cli.parsing;
 
 import com.lemondead1.carshopservice.exceptions.ParsingException;
+import com.lemondead1.carshopservice.util.HasId;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -25,7 +26,7 @@ public class IdListParserTest {
     private final String id;
   }
 
-  IdListParser<HasIdImpl> parser = IdListParser.of(HasIdImpl.class);
+  final IdListParser<HasIdImpl> parser = IdListParser.of(HasIdImpl.class);
 
   @ParameterizedTest
   @CsvSource({

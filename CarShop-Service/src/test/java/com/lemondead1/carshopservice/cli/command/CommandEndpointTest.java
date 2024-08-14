@@ -1,10 +1,9 @@
 package com.lemondead1.carshopservice.cli.command;
 
-import com.lemondead1.carshopservice.cli.ConsoleIO;
+import com.lemondead1.carshopservice.controller.MockCLI;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.exceptions.WrongUsageException;
-import com.lemondead1.carshopservice.service.SessionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Set;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -20,83 +20,68 @@ public class CommandEndpointTest {
   @Mock
   Endpoint endpoint;
 
-  @Mock
-  ConsoleIO cli;
-
-  @Mock
-  SessionService session;
-
+  MockCLI cli;
   CommandEndpoint command;
 
   @BeforeEach
   void setup() {
+    cli = new MockCLI();
     command = new CommandEndpoint("testCommand", "testDescription", Set.of(UserRole.CLIENT), endpoint);
   }
 
   @Test
   void commandExecutesEndpointOnCorrectInputs() {
-    String[] path = { "path" };
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+    when(endpoint.execute(dummyUser, cli, "path")).thenReturn("printed");
+    cli.out("printed\n");
 
-    when(session.getCurrentUserRole()).thenReturn(UserRole.CLIENT);
-    when(endpoint.execute(session, cli, path)).thenReturn("printed");
-    command.execute(session, cli, path);
+    command.execute(dummyUser, cli, "path");
 
-    verify(endpoint).execute(session, cli, path);
-    verify(cli).println("printed");
+    verify(endpoint).execute(dummyUser, cli, "path");
+    cli.assertMatchesHistory();
   }
 
   @Test
   void commandExecutesEndpointOnCorrectInputsAndPrintsNothingOnNull() {
-    String[] path = { "path" };
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+    when(endpoint.execute(dummyUser, cli, "path")).thenReturn(null);
 
-    when(session.getCurrentUserRole()).thenReturn(UserRole.CLIENT);
-    when(endpoint.execute(session, cli, path)).thenReturn(null);
-    command.execute(session, cli, path);
+    command.execute(dummyUser, cli, "path");
 
-    verify(endpoint).execute(session, cli, path);
-    verifyNoInteractions(cli);
+    verify(endpoint).execute(dummyUser, cli, "path");
+    cli.assertMatchesHistory();
   }
 
   @Test
   void commandPrintsInsufficientPermissionsOnWrongUserRole() {
-    String[] path = { "path" };
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.ANONYMOUS, 0);
+    cli.out("Insufficient permissions.\n");
 
-    when(session.getCurrentUserRole()).thenReturn(UserRole.ANONYMOUS);
-    command.execute(session, cli, path);
+    command.execute(dummyUser, cli, "path");
 
     verifyNoInteractions(endpoint);
-    verify(cli).println("Insufficient permissions.");
+    cli.assertMatchesHistory();
   }
 
   @Test
   void commandPrintsHelpOnHelpSubcommand() {
-    String[] path = { "help" };
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+    cli.out("testDescription\n");
 
-    when(session.getCurrentUserRole()).thenReturn(UserRole.CLIENT);
-    command.execute(session, cli, path);
+    command.execute(dummyUser, cli, "help");
 
     verifyNoInteractions(endpoint);
-    verify(cli).println("testDescription");
+    cli.assertMatchesHistory();
   }
 
   @Test
-  void commandPrintsHelpOnWrongUsageException() {
-    String[] path = { "path" };
-    when(session.getCurrentUserRole()).thenReturn(UserRole.CLIENT);
-    when(endpoint.execute(session, cli, path)).thenThrow(new WrongUsageException());
-    command.execute(session, cli, path);
-    verify(cli).println("testDescription");
-  }
+  void commandRethrowsOnWrongUsageException() {
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+    when(endpoint.execute(dummyUser, cli, "path")).thenThrow(new WrongUsageException());
 
-  @Test
-  void commandPrintsMessageOnCommandException() {
-    String[] path = { "path" };
+    assertThatThrownBy(() -> command.execute(dummyUser, cli, "path")).isInstanceOf(WrongUsageException.class)
+                                                                     .hasMessage("testDescription");
 
-    when(session.getCurrentUserRole()).thenReturn(UserRole.CLIENT);
-    when(endpoint.execute(session, cli, path)).thenThrow(new CommandException("message"));
-
-    command.execute(session, cli, path);
-
-    verify(cli).println("message");
+    cli.assertMatchesHistory();
   }
 }

@@ -1,10 +1,9 @@
 package com.lemondead1.carshopservice.cli.command;
 
-import com.lemondead1.carshopservice.cli.ConsoleIO;
+import com.lemondead1.carshopservice.cli.CLI;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.exceptions.WrongUsageException;
-import com.lemondead1.carshopservice.service.SessionService;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Collection;
@@ -36,25 +35,25 @@ public class CommandEndpoint implements Command {
   }
 
   @Override
-  public void execute(SessionService currentUser, ConsoleIO cli, String... path) {
-    if (!getAllowedRoles().contains(currentUser.getCurrentUserRole())) {
+  public void execute(User currentUser, CLI cli, String... path) {
+    if (!getAllowedRoles().contains(currentUser.role())) {
       cli.println("Insufficient permissions.");
       return;
     }
 
-    try {
-      if (path.length >= 1 && "help".equals(path[0])) {
-        cli.println(description);
-      } else {
-        var result = endpoint.execute(currentUser, cli, path);
-        if (result != null) {
-          cli.println(result);
-        }
-      }
-    } catch (WrongUsageException e) {
+    if (path.length >= 1 && "help".equals(path[0])) {
       cli.println(description);
-    } catch (CommandException e) {
-      cli.println(e.getMessage());
+      return;
+    }
+
+    String result;
+    try {
+      result = endpoint.execute(currentUser, cli, path);
+    } catch (WrongUsageException e) {
+      throw new WrongUsageException(description, e);
+    }
+    if (result != null) {
+      cli.println(result);
     }
   }
 }

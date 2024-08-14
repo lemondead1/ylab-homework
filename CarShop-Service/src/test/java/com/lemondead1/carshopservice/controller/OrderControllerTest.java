@@ -1,8 +1,8 @@
 package com.lemondead1.carshopservice.controller;
 
-import com.lemondead1.carshopservice.dto.Car;
-import com.lemondead1.carshopservice.dto.Order;
-import com.lemondead1.carshopservice.dto.User;
+import com.lemondead1.carshopservice.entity.Car;
+import com.lemondead1.carshopservice.entity.Order;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.enums.UserRole;
@@ -10,7 +10,6 @@ import com.lemondead1.carshopservice.exceptions.CommandException;
 import com.lemondead1.carshopservice.exceptions.WrongUsageException;
 import com.lemondead1.carshopservice.service.CarService;
 import com.lemondead1.carshopservice.service.OrderService;
-import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,12 +32,9 @@ public class OrderControllerTest {
   OrderService orders;
 
   @Mock
-  SessionService session;
-
-  @Mock
   UserService users;
 
-  MockConsoleIO cli;
+  MockCLI cli;
 
   OrderController order;
 
@@ -46,12 +42,14 @@ public class OrderControllerTest {
   void setup() {
     order = new OrderController(orders, cars, users);
 
-    cli = new MockConsoleIO();
+    cli = new MockCLI();
   }
 
   @Test
   void byIdThrowsWithoutArguments() {
-    assertThatThrownBy(() -> order.byId(session, cli)).isInstanceOf(WrongUsageException.class);
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+
+    assertThatThrownBy(() -> order.byId(dummyUser, cli)).isInstanceOf(WrongUsageException.class);
 
     verifyNoInteractions(orders);
   }
@@ -59,12 +57,12 @@ public class OrderControllerTest {
   @Test
   void byIdSuccess() {
     var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
-    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", false);
     var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
 
     when(orders.findById(10)).thenReturn(dummyOrder);
 
-    assertThat(order.byId(session, cli, "10")).isEqualTo("Found " + dummyOrder.prettyFormat());
+    assertThat(order.byId(dummyUser, cli, "10")).isEqualTo("Found " + dummyOrder.prettyFormat());
 
     cli.assertMatchesHistory();
     verify(orders).findById(10);
@@ -72,7 +70,9 @@ public class OrderControllerTest {
 
   @Test
   void orderPurchaseFailsWithNoParameters() {
-    assertThatThrownBy(() -> order.purchase(session, cli)).isInstanceOf(WrongUsageException.class);
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+
+    assertThatThrownBy(() -> order.purchase(dummyUser, cli)).isInstanceOf(WrongUsageException.class);
 
     cli.assertMatchesHistory();
     verifyNoInteractions(orders);
@@ -80,7 +80,9 @@ public class OrderControllerTest {
 
   @Test
   void orderPurchaseCancelled() {
-    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+
+    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", true);
 
     cli.out("Comments > ").in("")
        .out("Ordering " + mockCar.prettyFormat() + ".\n")
@@ -88,7 +90,7 @@ public class OrderControllerTest {
 
     when(cars.findById(3)).thenReturn(mockCar);
 
-    assertThat(order.purchase(session, cli, "3")).isEqualTo("Cancelled");
+    assertThat(order.purchase(dummyUser, cli, "3")).isEqualTo("Cancelled");
 
     cli.assertMatchesHistory();
 
@@ -99,17 +101,19 @@ public class OrderControllerTest {
 
   @Test
   void orderPurchaseSuccess() {
-    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyUser = new User(50, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
+    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", true);
+    var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
+
 
     cli.out("Comments > ").in("ASAP")
-       .out("Ordering " + mockCar.prettyFormat() + ".\n")
+       .out("Ordering " + dummyCar.prettyFormat() + ".\n")
        .out("Confirm [y/N] > ").in("y");
 
-    when(session.getCurrentUserId()).thenReturn(50);
-    when(cars.findById(3)).thenReturn(mockCar);
-    when(orders.purchase(50, 3, "ASAP")).thenReturn(mockCar);
+    when(cars.findById(3)).thenReturn(dummyCar);
+    when(orders.purchase(50, 3, "ASAP")).thenReturn(dummyOrder);
 
-    assertThat(order.purchase(session, cli, "3")).isEqualTo("Ordered " + mockCar.prettyFormat());
+    assertThat(order.purchase(dummyUser, cli, "3")).isEqualTo("Ordered " + dummyCar.prettyFormat());
 
     cli.assertMatchesHistory();
 
@@ -121,21 +125,24 @@ public class OrderControllerTest {
 
   @Test
   void orderServiceThrowsWithoutArguments() {
-    assertThatThrownBy(() -> order.service(session, cli)).isInstanceOf(WrongUsageException.class);
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+
+    assertThatThrownBy(() -> order.service(dummyUser, cli)).isInstanceOf(WrongUsageException.class);
 
     verifyNoInteractions(orders, cars, users);
   }
 
   @Test
   void orderServiceSuccess() {
-    var mockCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyUser = new User(50, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
+    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", false);
+    var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
 
     cli.out("Comments > ").in("ASAP");
 
-    when(session.getCurrentUserId()).thenReturn(50);
-    when(orders.orderService(50, 3, "ASAP")).thenReturn(mockCar);
+    when(orders.orderService(50, 3, "ASAP")).thenReturn(dummyOrder);
 
-    assertThat(order.service(session, cli, "3")).isEqualTo("Scheduled service for " + mockCar.prettyFormat());
+    assertThat(order.service(dummyUser, cli, "3")).isEqualTo("Scheduled service for " + dummyCar.prettyFormat());
 
     cli.assertMatchesHistory();
 
@@ -146,85 +153,83 @@ public class OrderControllerTest {
 
   @Test
   void orderCancelThrowsWithNoArguments() {
-    assertThatThrownBy(() -> order.cancel(session, cli)).isInstanceOf(WrongUsageException.class);
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.CLIENT, 0);
+
+    assertThatThrownBy(() -> order.cancel(dummyUser, cli)).isInstanceOf(WrongUsageException.class);
 
     verifyNoInteractions(orders, cars, users);
   }
 
   @Test
   void orderCancelThrowsWhenCancellingAnotherUserOrder() {
-    var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
-    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
-    var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
+    var dummyUser = new User(5, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
+    var orderOwner = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
+    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", false);
+    var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, orderOwner, dummyCar, "");
 
-
-    when(session.getCurrentUserRole()).thenReturn(UserRole.CLIENT);
-    when(session.getCurrentUserId()).thenReturn(2);
     when(orders.findById(10)).thenReturn(dummyOrder);
 
-    assertThatThrownBy(() -> order.cancel(session, cli, "10")).isInstanceOf(CommandException.class);
+    assertThatThrownBy(() -> order.cancel(dummyUser, cli, "10")).isInstanceOf(CommandException.class);
   }
 
   @Test
   void orderCancelSuccess() {
     var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
-    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", false);
     var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
 
-    when(session.getCurrentUserRole()).thenReturn(UserRole.CLIENT);
-    when(session.getCurrentUserId()).thenReturn(3);
     when(orders.findById(10)).thenReturn(dummyOrder);
 
-    assertThat(order.cancel(session, cli, "10")).isEqualTo("Cancelled " + dummyOrder.prettyFormat());
+    assertThat(order.cancel(dummyUser, cli, "10")).isEqualTo("Cancelled " + dummyOrder.prettyFormat());
 
     verify(orders).cancel(3, 10);
   }
 
   @Test
   void cancelOtherUsersOrderByManagerSuccess() {
+    var managerUser = new User(2, "manager", "12346789", "mail@example.com", "pass", UserRole.MANAGER, 0);
     var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
-    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", false);
     var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
 
-    when(session.getCurrentUserRole()).thenReturn(UserRole.MANAGER);
-    when(session.getCurrentUserId()).thenReturn(2);
     when(orders.findById(10)).thenReturn(dummyOrder);
 
-    assertThat(order.cancel(session, cli, "10")).isEqualTo("Cancelled " + dummyOrder.prettyFormat());
+    assertThat(order.cancel(managerUser, cli, "10")).isEqualTo("Cancelled " + dummyOrder.prettyFormat());
 
     verify(orders).cancel(2, 10);
   }
 
   @Test
   void orderUpdateStateThrowsWithFewerThan2Arguments() {
-    assertThatThrownBy(() -> order.updateState(session, cli, "5")).isInstanceOf(WrongUsageException.class);
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.MANAGER, 0);
+
+    assertThatThrownBy(() -> order.updateState(dummyUser, cli, "5")).isInstanceOf(WrongUsageException.class);
 
     verifyNoInteractions(orders, cars, users);
   }
 
   @Test
   void orderUpdateStateThrowsOnNoStateChange() {
-    var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
-    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.MANAGER, 0);
+    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", false);
     var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
 
     when(orders.findById(10)).thenReturn(dummyOrder);
 
-    assertThatThrownBy(() -> order.updateState(session, cli, "10", "new")).isInstanceOf(CommandException.class);
+    assertThatThrownBy(() -> order.updateState(dummyUser, cli, "10", "new")).isInstanceOf(CommandException.class);
   }
 
   @Test
   void orderUpdateStateSuccess() {
-    var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
-    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyUser = new User(20, "username", "8457435345", "test@example.com", "password", UserRole.MANAGER, 0);
+    var dummyCar = new Car(3, "Brand", "Model", 2001, 1000000, "poor", false);
     var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
 
     when(orders.findById(10)).thenReturn(dummyOrder);
-    when(session.getCurrentUserId()).thenReturn(20);
 
     cli.out("Append comment > ").in("Nothing");
 
-    assertThat(order.updateState(session, cli, "10", "performing")).isEqualTo("Done");
+    assertThat(order.updateState(dummyUser, cli, "10", "performing")).isEqualTo("Done");
 
     cli.assertMatchesHistory();
 
@@ -233,15 +238,18 @@ public class OrderControllerTest {
 
   @Test
   void orderCreateThrowsOnLessThan2Arguments() {
-    assertThatThrownBy(() -> order.create(session, cli, "5")).isInstanceOf(WrongUsageException.class);
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.ADMIN, 0);
+
+    assertThatThrownBy(() -> order.create(dummyUser, cli, "5")).isInstanceOf(WrongUsageException.class);
 
     verifyNoInteractions(orders, cars, users);
   }
 
   @Test
   void orderCreateSuccess() {
+    var managerUser = new User(63, "username", "12346789", "mail@example.com", "pass", UserRole.MANAGER, 0);
     var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
-    var dummyCar = new Car(5, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyCar = new Car(5, "Brand", "Model", 2001, 1000000, "poor", false);
     var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
 
     cli.out("Kind > ").in("purchase")
@@ -251,9 +259,8 @@ public class OrderControllerTest {
     when(orders.createOrder(63, 3, 5, OrderKind.PURCHASE, OrderState.PERFORMING, "Comment")).thenReturn(dummyOrder);
     when(users.findById(3)).thenReturn(dummyUser);
     when(cars.findById(5)).thenReturn(dummyCar);
-    when(session.getCurrentUserId()).thenReturn(63);
 
-    assertThat(order.create(session, cli, "3", "5")).isEqualTo("Created " + dummyOrder.prettyFormat() + ".");
+    assertThat(order.create(managerUser, cli, "3", "5")).isEqualTo("Created " + dummyOrder.prettyFormat() + ".");
 
     cli.assertMatchesHistory();
 
@@ -262,15 +269,18 @@ public class OrderControllerTest {
 
   @Test
   void orderDeleteThrowsWithoutArguments() {
-    assertThatThrownBy(() -> order.deleteOrder(session, cli)).isInstanceOf(WrongUsageException.class);
+    var dummyUser = new User(1, "username", "12346789", "mail@example.com", "pass", UserRole.ADMIN, 0);
+
+    assertThatThrownBy(() -> order.deleteOrder(dummyUser, cli)).isInstanceOf(WrongUsageException.class);
 
     verifyNoInteractions(orders, cars, users);
   }
 
   @Test
   void orderDeleteCancelled() {
+    var dummyManager = new User(33, "username", "12346789", "mail@example.com", "pass", UserRole.MANAGER, 0);
     var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
-    var dummyCar = new Car(5, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyCar = new Car(5, "Brand", "Model", 2001, 1000000, "poor", false);
     var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
 
     cli.out("Deleting " + dummyOrder.prettyFormat() + "\n")
@@ -278,7 +288,7 @@ public class OrderControllerTest {
 
     when(orders.findById(10)).thenReturn(dummyOrder);
 
-    assertThat(order.deleteOrder(session, cli, "10")).isEqualTo("Cancelled");
+    assertThat(order.deleteOrder(dummyManager, cli, "10")).isEqualTo("Cancelled");
 
     cli.assertMatchesHistory();
 
@@ -287,17 +297,17 @@ public class OrderControllerTest {
 
   @Test
   void orderDeleteSuccess() {
+    var dummyManager = new User(33, "username", "12346789", "mail@example.com", "pass", UserRole.MANAGER, 0);
     var dummyUser = new User(3, "username", "8457435345", "test@example.com", "password", UserRole.CLIENT, 0);
-    var dummyCar = new Car(5, "Brand", "Model", 2001, 1000000, "poor");
+    var dummyCar = new Car(5, "Brand", "Model", 2001, 1000000, "poor", false);
     var dummyOrder = new Order(10, Instant.now(), OrderKind.SERVICE, OrderState.NEW, dummyUser, dummyCar, "");
 
     cli.out("Deleting " + dummyOrder.prettyFormat() + "\n")
        .out("Confirm [y/N] > ").in("yes");
 
     when(orders.findById(10)).thenReturn(dummyOrder);
-    when(session.getCurrentUserId()).thenReturn(33);
 
-    assertThat(order.deleteOrder(session, cli, "10")).isEqualTo("Deleted");
+    assertThat(order.deleteOrder(dummyManager, cli, "10")).isEqualTo("Deleted");
 
     cli.assertMatchesHistory();
 

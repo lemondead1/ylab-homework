@@ -1,8 +1,8 @@
 package com.lemondead1.carshopservice.cli.command;
 
-import com.lemondead1.carshopservice.cli.ConsoleIO;
+import com.lemondead1.carshopservice.cli.CLI;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.service.SessionService;
 
 import java.util.Collection;
 
@@ -13,5 +13,5 @@ public interface Command {
 
   Collection<UserRole> getAllowedRoles();
 
-  void execute(SessionService currentUser, ConsoleIO cli, String... path);
+  void execute(User currentUser, CLI cli, String... path);
 }
