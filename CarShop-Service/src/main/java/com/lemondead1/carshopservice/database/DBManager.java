@@ -19,6 +19,7 @@ public class DBManager {
   private final String password;
   private final String schema;
   private final String liquibaseSchema;
+  private final String changelogPath;
   private final boolean autocommit;
 
   private Connection connection;
@@ -33,7 +34,7 @@ public class DBManager {
       database.setDefaultSchemaName(schema);
       database.setLiquibaseSchemaName(liquibaseSchema);
 
-      var liquibase = new Liquibase("db/changelog/changelog.yaml", new ClassLoaderResourceAccessor(), database);
+      var liquibase = new Liquibase(changelogPath, new ClassLoaderResourceAccessor(), database);
       liquibase.update();
       conn.commit();
     } catch (SQLException | LiquibaseException e) {

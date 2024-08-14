@@ -36,9 +36,30 @@ dependencies {
 
 jar {
     manifest.attributes('Main-Class': application.mainClass)
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
+    duplicatesStrategy DuplicatesStrategy.WARN
 }
 
 test {
     useJUnitPlatform()
     environment("TESTCONTAINERS_REUSE_ENABLE", "true")
+}
+
+tasks.register('buildDockerImage', Exec) {
+    doFirst {
+        mkdir "${layout.buildDirectory.get()}/docker"
+    }
+
+    dependsOn jar
+
+    workingDir = "${projectDir}"
+    commandLine "docker", "build", "-t=carshop-service", "--build-arg=JAR_PATH=build/libs/CarShop-Service.jar", "."
+}
+
+build {
+    dependsOn buildDockerImage
 }
