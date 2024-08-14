@@ -12,19 +12,13 @@ import com.lemondead1.carshopservice.repo.UserRepo;
 import com.lemondead1.carshopservice.service.*;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Properties;
 
 public class CarShopServiceApplication {
   private static boolean exited = false;
 
   public static void main(String[] args) throws IOException {
-    if (args.length == 0) {
-      throw new IllegalStateException("Config path expected as an argument.");
-    }
-
-    var dbManager = createDBManagerWithConfigFilePath(args[0]);
+    var dbManager = createDBManagerWithConfigFile();
     dbManager.setupDatabase();
 
     var userRepo = new UserRepo(dbManager);
@@ -53,10 +47,9 @@ public class CarShopServiceApplication {
     new CommandAcceptor(() -> !exited, cli, sessionService, rootCommand, dbManager).acceptCommands();
   }
 
-  private static DBManager createDBManagerWithConfigFilePath(String configPath) throws IOException {
-    var path = Path.of(configPath);
+  private static DBManager createDBManagerWithConfigFile() throws IOException {
     var cfg = new Properties();
-    try (var reader = Files.newBufferedReader(path)) {
+    try (var reader = ClassLoader.getSystemResourceAsStream("config.properties")) {
       cfg.load(reader);
     }
     return new DBManager(cfg.getProperty("jdbc_url"),
@@ -64,6 +57,7 @@ public class CarShopServiceApplication {
                          cfg.getProperty("database_password"),
                          cfg.getProperty("data_schema"),
                          cfg.getProperty("infra_schema"),
+                         "db/changelog/changelog.yaml",
                          false);
   }
 }

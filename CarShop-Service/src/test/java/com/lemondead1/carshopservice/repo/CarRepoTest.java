@@ -31,7 +31,7 @@ public class CarRepoTest {
   static void beforeAll() {
     postgres.start();
     dbManager = new DBManager(postgres.getJdbcUrl(), postgres.getUsername(),
-                              postgres.getPassword(), "data", "infra", true);
+                              postgres.getPassword(), "data", "infra", "db/changelog/test-changelog.yaml", true);
     dbManager.setupDatabase();
     cars = new CarRepo(dbManager);
   }
