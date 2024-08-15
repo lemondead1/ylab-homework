@@ -1,6 +1,5 @@
 package com.lemondead1.carshopservice.cli.command;
 
-import com.lemondead1.carshopservice.cli.command.builders.CommandRootBuilder;
 import com.lemondead1.carshopservice.cli.command.builders.TreeSubcommandBuilder;
 import com.lemondead1.carshopservice.controller.MockCLI;
 import com.lemondead1.carshopservice.entity.User;

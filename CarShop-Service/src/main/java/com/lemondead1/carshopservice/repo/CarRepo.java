@@ -36,7 +36,7 @@ public class CarRepo {
   public Car create(String brand, String model, int productionYear, int price, String condition) {
     var sql = "insert into cars (brand, model, production_year, price, condition) values (?, ?, ?, ?, ?)";
 
-    try (var stmt = db.connect().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+    try (var stmt = db.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
       stmt.setString(1, brand);
       stmt.setString(2, model);
       stmt.setInt(3, productionYear);
@@ -82,7 +82,7 @@ public class CarRepo {
         returning id, brand, model, production_year, price, condition,
                   c.id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase""";
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setString(1, brand);
       stmt.setString(2, model);
       stmt.setObject(3, productionYear);
@@ -117,7 +117,7 @@ public class CarRepo {
         returning id, brand, model, production_year, price, condition,
                   id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase""";
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setInt(1, carId);
       stmt.execute();
 
@@ -146,7 +146,7 @@ public class CarRepo {
                id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase
         from cars where id=?""";
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setInt(1, carId);
       stmt.execute();
 
@@ -176,7 +176,7 @@ public class CarRepo {
         join orders o on o.client_id=u.id
         where o.car_id=? and o.state='done' and o.kind='purchase'""";
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setInt(1, carId);
       stmt.execute();
 
@@ -228,7 +228,7 @@ public class CarRepo {
                           Util.serializeBooleans(availabilityForPurchase),
                           getOrderingString(sorting));
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setString(1, brand);
       stmt.setString(2, model);
       stmt.setInt(3, productionYear.min());

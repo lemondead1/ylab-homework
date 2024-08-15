@@ -52,7 +52,7 @@ public class OrderRepo {
         join users u on o.client_id=u.id
         join cars c on o.car_id=c.id""";
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setObject(1, createdAt.atOffset(ZoneOffset.UTC));
       stmt.setString(2, kind.getId());
       stmt.setString(3, state.getId());
@@ -110,7 +110,7 @@ public class OrderRepo {
         join users u on o.client_id=u.id
         join cars c on o.car_id=c.id""";
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setObject(1, createdAt);
       stmt.setString(2, kind == null ? null : kind.getId());
       stmt.setString(3, state == null ? null : state.getId());
@@ -160,7 +160,7 @@ public class OrderRepo {
         join users u on o.client_id=u.id
         join cars c on o.car_id=c.id""";
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setInt(1, orderId);
       stmt.execute();
 
@@ -195,7 +195,7 @@ public class OrderRepo {
         join cars c on o.car_id=c.id
         where o.id=?""";
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setInt(1, orderId);
       stmt.execute();
 
@@ -220,7 +220,7 @@ public class OrderRepo {
   public boolean doAnyOrdersExistFor(int clientId) {
     var sql = "select ? in (select client_id from orders)";
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setInt(1, clientId);
       stmt.execute();
 
@@ -241,7 +241,7 @@ public class OrderRepo {
   public boolean existCarOrders(int carId) {
     var sql = "select ? in (select car_id from orders)";
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setInt(1, carId);
       stmt.execute();
 
@@ -262,7 +262,7 @@ public class OrderRepo {
   public int countClientOrders(int clientId) {
     var sql = "select count(*) from orders where client_id=?";
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setInt(1, clientId);
       stmt.execute();
 
@@ -299,7 +299,7 @@ public class OrderRepo {
                               where o.client_id=?
                               order by {}""", getOrderingString(sorting));
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setInt(1, clientId);
       stmt.execute();
 
@@ -345,7 +345,7 @@ public class OrderRepo {
         join users u on o.client_id=u.id
         join cars c on o.car_id=c.id""";
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setInt(1, clientId);
       stmt.execute();
 
@@ -391,7 +391,7 @@ public class OrderRepo {
         join users u on o.client_id=u.id
         join cars c on o.car_id=c.id""";
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setInt(1, carId);
       stmt.execute();
 
@@ -431,7 +431,7 @@ public class OrderRepo {
         join cars c on o.car_id=c.id
         where o.car_id=?""";
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setInt(1, carId);
       stmt.execute();
 
@@ -459,7 +459,7 @@ public class OrderRepo {
   public boolean doServiceOrdersExistFor(int clientId, int carId) {
     var sql = "select exists (select car_id from orders where kind='service' and car_id=? and client_id=?)";
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setInt(1, carId);
       stmt.setInt(2, clientId);
       stmt.execute();
@@ -507,7 +507,7 @@ public class OrderRepo {
                               order by {}""", Util.serializeSet(states), Util.serializeSet(kinds),
                           getOrderingString(sorting));
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setObject(1, dates.min().atOffset(ZoneOffset.UTC));
       stmt.setObject(2, dates.max().atOffset(ZoneOffset.UTC));
       stmt.setString(3, customerName);

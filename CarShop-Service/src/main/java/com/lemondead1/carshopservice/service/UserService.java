@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -27,7 +28,7 @@ public class UserService {
 
   public List<User> lookupUsers(String username, Collection<UserRole> roles, String phoneNumber, String email,
                                 IntRange purchases, UserSorting sorting) {
-    return users.lookup(username, EnumSet.copyOf(roles), phoneNumber, email, purchases, sorting);
+    return users.lookup(username, new HashSet<>(roles), phoneNumber, email, purchases, sorting);
   }
 
   public User createUser(int creatorId, String username, String phoneNumber,

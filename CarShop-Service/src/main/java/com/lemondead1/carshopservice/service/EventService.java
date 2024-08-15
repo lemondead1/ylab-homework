@@ -1,5 +1,7 @@
 package com.lemondead1.carshopservice.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.entity.Event;
 import com.lemondead1.carshopservice.entity.Order;
@@ -16,9 +18,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class is responsible for interfacing with the event database.
@@ -26,8 +26,23 @@ import java.util.List;
  */
 @RequiredArgsConstructor
 public class EventService {
+  private final ObjectMapper objectMapper;
   private final EventRepo events;
   private final TimeService time;
+
+  public void postEvent(int userId, EventType eventType, Map<String, Object> data) {
+    var now = time.now();
+    var dataCopy = new LinkedHashMap<>(data);
+    dataCopy.put("type", eventType);
+    dataCopy.put("userId", userId);
+    String json;
+    try {
+      json = objectMapper.writeValueAsString(dataCopy);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
+    events.create(now, userId, eventType, json);
+  }
 
   public void onCarCreated(int userId, Car car) {
     var now = time.now();

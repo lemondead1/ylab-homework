@@ -1,6 +1,5 @@
 package com.lemondead1.carshopservice.controller;
 
-import com.lemondead1.carshopservice.cli.command.builders.CommandRootBuilder;
 import com.lemondead1.carshopservice.service.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

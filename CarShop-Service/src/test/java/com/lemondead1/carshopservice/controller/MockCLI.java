@@ -1,7 +1,5 @@
 package com.lemondead1.carshopservice.controller;
 
-import com.lemondead1.carshopservice.cli.CLI;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
