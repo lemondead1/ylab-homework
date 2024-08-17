@@ -1,12 +1,11 @@
 package com.lemondead1.carshopservice.service;
 
+import com.lemondead1.carshopservice.annotations.Transactional;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
+import com.lemondead1.carshopservice.exceptions.NotFoundException;
 import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
 import com.lemondead1.carshopservice.repo.UserRepo;
-import com.lemondead1.carshopservice.security.CustomUserPrincipal;
-import com.lemondead1.carshopservice.util.MapStruct;
 import lombok.RequiredArgsConstructor;
 import org.eclipse.jetty.security.AbstractLoginService;
 import org.eclipse.jetty.security.RolePrincipal;
@@ -21,30 +20,10 @@ import java.util.function.Function;
 
 @RequiredArgsConstructor
 public class SessionService extends AbstractLoginService {
-  private static final User anonymous = new User(0, "anonymous", "+71234567890", "test@example.com",
-                                                 "password", UserRole.ANONYMOUS, 0);
-
-  private final MapStruct mapStruct;
   private final UserRepo users;
   private final EventService events;
-  private int currentUserId;
 
-  public User getCurrentUser() {
-    if (currentUserId == 0) {
-      return anonymous;
-    }
-    try {
-      return users.findById(currentUserId);
-    } catch (RowNotFoundException e) {
-      currentUserId = 0;
-      return anonymous;
-    }
-  }
-
-  public boolean checkUsernameFree(String username) {
-    return !users.existsUsername(username);
-  }
-
+  @Transactional
   public User signUserUp(String username, String phoneNumber, String email, String password) {
     if (users.existsUsername(username)) {
       throw new UserAlreadyExistsException("Username '" + username + "' is already taken.");
@@ -56,6 +35,7 @@ public class SessionService extends AbstractLoginService {
 
   @Override
   @Nullable
+  @Transactional
   public UserIdentity login(String username,
                             Object credentials,
                             Request request,
@@ -64,21 +44,21 @@ public class SessionService extends AbstractLoginService {
     if (login == null) {
       return null;
     }
-    events.onUserLoggedIn(((CustomUserPrincipal) login.getUserPrincipal()).getId());
+    events.onUserLoggedIn(((User) login.getUserPrincipal()).id());
     return login;
   }
 
   @Override
   protected List<RolePrincipal> loadRoleInfo(UserPrincipal user) {
-    return List.of(((CustomUserPrincipal) user).getRole());
+    return List.of(((User) user).role());
   }
 
   @Override
   @Nullable
   protected UserPrincipal loadUserInfo(String username) {
     try {
-      return mapStruct.userToCustomUserPrincipal(users.findByUsername(username));
-    } catch (RowNotFoundException e) {
+      return users.findByUsername(username);
+    } catch (NotFoundException e) {
       return null;
     }
   }

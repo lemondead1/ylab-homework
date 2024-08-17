@@ -1,11 +1,14 @@
 package com.lemondead1.carshopservice.repo;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.entity.Event;
 import com.lemondead1.carshopservice.enums.EventSorting;
 import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.exceptions.DBException;
-import com.lemondead1.carshopservice.util.DateRange;
+import com.lemondead1.carshopservice.util.Range;
 import com.lemondead1.carshopservice.util.Util;
 import lombok.RequiredArgsConstructor;
 
@@ -17,11 +20,13 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @RequiredArgsConstructor
 public class EventRepo {
   private final DBManager db;
+  private final ObjectMapper objectMapper;
 
   /**
    * Creates a new event
@@ -32,14 +37,18 @@ public class EventRepo {
    * @param json      auxiliary event data
    * @return the event created
    */
-  public Event create(Instant timestamp, int userId, EventType type, String json) {
+  public Event create(Instant timestamp, int userId, EventType type, Map<String, Object> json) {
     var sql = "insert into events (timestamp, user_id, type, data) values (?, ?, ?::event_type, ?::jsonb)";
 
     try (var stmt = db.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
       stmt.setObject(1, timestamp.atOffset(ZoneOffset.UTC));
       stmt.setInt(2, userId);
       stmt.setString(3, type.getId());
-      stmt.setString(4, json);
+      try {
+        stmt.setString(4, objectMapper.writeValueAsString(json));
+      } catch (JsonProcessingException e) {
+        throw new IllegalArgumentException(e);
+      }
       stmt.execute();
 
       var results = stmt.getGeneratedKeys();
@@ -62,11 +71,11 @@ public class EventRepo {
    * @param sorting  sorting
    * @return List of events matching the arguments
    */
-  public List<Event> lookup(Set<EventType> types, DateRange dates, String username, EventSorting sorting) {
+  public List<Event> lookup(Set<EventType> types, Range<Instant> dates, String username, EventSorting sorting) {
     var sql = Util.format("""
                               select e.id, timestamp, user_id, type, data from events e
                               left join users u on u.id = e.user_id where
-                              timestamp between ? and ? and
+                              timestamp between coalesce(?, '-infinity'::timestamp) and coalesce(?, '+infinity'::timestamp) and
                               upper(coalesce(u.username, 'removed')) like '%' || upper(?) || '%' and
                               type in ({})
                               order by {}""",
@@ -74,8 +83,8 @@ public class EventRepo {
                           getOrderingString(sorting));
 
     try (var stmt = db.getConnection().prepareStatement(sql)) {
-      stmt.setObject(1, dates.min().atOffset(ZoneOffset.UTC));
-      stmt.setObject(2, dates.max().atOffset(ZoneOffset.UTC));
+      stmt.setObject(1, dates.min() == null ? null : dates.min().atOffset(ZoneOffset.UTC));
+      stmt.setObject(2, dates.max() == null ? null : dates.max().atOffset(ZoneOffset.UTC));
       stmt.setString(3, username);
 
       stmt.execute();
@@ -110,7 +119,15 @@ public class EventRepo {
     var timestamp = results.getObject(2, OffsetDateTime.class).toInstant();
     var userId = results.getInt(3);
     var type = EventType.parse(results.getString(4));
-    var data = results.getString(5);
+    var rawData = results.getString(5);
+
+    Map<String, Object> data;
+    try {
+      data = objectMapper.readValue(rawData, new TypeReference<>() { });
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
+
     return new Event(id, timestamp, userId, type, data);
   }
 }

@@ -7,8 +7,7 @@ import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.entity.Event;
 import com.lemondead1.carshopservice.enums.EventSorting;
 import com.lemondead1.carshopservice.enums.EventType;
-import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
-import com.lemondead1.carshopservice.util.DateRange;
+import com.lemondead1.carshopservice.exceptions.NotFoundException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
@@ -94,7 +93,7 @@ public class EventRepoTest {
     String getUsername(Event event) {
       try {
         return users.findById(event.userId()).username();
-      } catch (RowNotFoundException e) {
+      } catch (NotFoundException e) {
         return "removed";
       }
     }

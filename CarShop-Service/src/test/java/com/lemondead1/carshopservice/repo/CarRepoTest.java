@@ -7,8 +7,7 @@ import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.DBException;
-import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
-import com.lemondead1.carshopservice.util.IntRange;
+import com.lemondead1.carshopservice.exceptions.NotFoundException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
@@ -81,7 +80,7 @@ public class CarRepoTest {
   @Test
   @DisplayName("edit throws RowNotFoundException a car when the given id is not found.")
   void editNonExistingCarThrows() {
-    assertThatThrownBy(() -> cars.edit(999, null, null, null, 3000000, null)).isInstanceOf(RowNotFoundException.class);
+    assertThatThrownBy(() -> cars.edit(999, null, null, null, 3000000, null)).isInstanceOf(NotFoundException.class);
   }
 
   @Test
@@ -89,7 +88,7 @@ public class CarRepoTest {
   void deleteTest() {
     var created = cars.create("BMW", "X5", 2015, 3000000, "good");
     assertThat(cars.delete(created.id())).isEqualTo(created);
-    assertThatThrownBy(() -> cars.findById(created.id())).isInstanceOf(RowNotFoundException.class);
+    assertThatThrownBy(() -> cars.findById(created.id())).isInstanceOf(NotFoundException.class);
   }
 
   @Test

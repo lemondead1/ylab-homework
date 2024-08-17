@@ -3,10 +3,10 @@ package com.lemondead1.carshopservice.service;
 import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderState;
-import com.lemondead1.carshopservice.exceptions.CarReservedException;
+import com.lemondead1.carshopservice.exceptions.ForbiddenException;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
-import com.lemondead1.carshopservice.exceptions.CommandException;
-import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
+import com.lemondead1.carshopservice.exceptions.RequestException;
+import com.lemondead1.carshopservice.exceptions.NotFoundException;
 import com.lemondead1.carshopservice.repo.CarRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
 import org.junit.jupiter.api.*;
@@ -74,7 +74,7 @@ public class OrderServiceTest {
   @Test
   @DisplayName("purchase throws CarReservedException when the car is not available for purchase.")
   void createPurchaseOrderThrowsCarReservedExceptionWhenThereIsActiveOrder() {
-    assertThatThrownBy(() -> orderService.purchase(71, 4, "None")).isInstanceOf(CarReservedException.class);
+    assertThatThrownBy(() -> orderService.purchase(71, 4, "None")).isInstanceOf(ForbiddenException.class);
   }
 
   @Test
@@ -92,7 +92,7 @@ public class OrderServiceTest {
   @Test
   @DisplayName("orderService throws CarReservedException when the car does not belong to the user.")
   void createServiceOrderThrowsCarReservedExceptionWhenNoPurchaseWasPerformed() {
-    assertThatThrownBy(() -> orderService.orderService(1, 1, "None")).isInstanceOf(CarReservedException.class);
+    assertThatThrownBy(() -> orderService.orderService(1, 1, "None")).isInstanceOf(ForbiddenException.class);
   }
 
   @Test
@@ -100,7 +100,7 @@ public class OrderServiceTest {
   void deleteOrderDeletesOrderAndPostsEvent() {
     orderService.deleteOrder(1, 232);
 
-    assertThatThrownBy(() -> orders.findById(232)).isInstanceOf(RowNotFoundException.class);
+    assertThatThrownBy(() -> orders.findById(232)).isInstanceOf(NotFoundException.class);
     verify(eventService).onOrderDeleted(1, 232);
   }
 
@@ -130,7 +130,7 @@ public class OrderServiceTest {
   @Test
   @DisplayName("cancel edits the order state to 'cancelled' and submits an event.")
   void cancelOrderEditsStateToCancelledAndPostsEvent() {
-    orderService.cancel(6, 218);
+    orderService.cancel(218);
 
     var found = orders.findById(218);
     assertThat(found).matches(o -> o.state() == OrderState.CANCELLED);
@@ -141,14 +141,14 @@ public class OrderServiceTest {
   @DisplayName("cancel throws when the order is in 'done' state.")
   void cancelOrderThrowsWhenDone() {
     orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.DONE, 1, 1, "");
-    assertThatThrownBy(() -> orderService.cancel(6, 1)).isInstanceOf(CommandException.class);
+    assertThatThrownBy(() -> orderService.cancel(1)).isInstanceOf(RequestException.class);
   }
 
   @Test
   @DisplayName("cancel throws when order is in 'cancelled' state.")
   void cancelOrderThrowsWhenCancelled() {
     orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.CANCELLED, 1, 1, "");
-    assertThatThrownBy(() -> orderService.cancel(6, 1)).isInstanceOf(CommandException.class);
+    assertThatThrownBy(() -> orderService.cancel(1)).isInstanceOf(RequestException.class);
   }
 
   @Test

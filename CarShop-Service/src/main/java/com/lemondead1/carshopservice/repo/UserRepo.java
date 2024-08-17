@@ -5,8 +5,8 @@ import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.enums.UserSorting;
 import com.lemondead1.carshopservice.exceptions.DBException;
-import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
-import com.lemondead1.carshopservice.util.IntRange;
+import com.lemondead1.carshopservice.exceptions.NotFoundException;
+import com.lemondead1.carshopservice.util.Range;
 import com.lemondead1.carshopservice.util.Util;
 import lombok.RequiredArgsConstructor;
 
@@ -64,7 +64,7 @@ public class UserRepo {
    * @param password    new password
    * @param role        new role
    * @return New user row
-   * @throws RowNotFoundException if a user with the given id does not exist
+   * @throws NotFoundException if a user with the given id does not exist
    */
   public User edit(int userId,
                    @Nullable String username,
@@ -94,7 +94,7 @@ public class UserRepo {
       var results = stmt.getResultSet();
 
       if (!results.next()) {
-        throw new RowNotFoundException("User #" + userId + " does not exist.");
+        throw new NotFoundException("User #" + userId + " does not exist.");
       }
 
       return readUser(results, 1);
@@ -108,7 +108,7 @@ public class UserRepo {
    *
    * @param userId user id
    * @return The user that has been deleted
-   * @throws RowNotFoundException if a user with the given id could not be found
+   * @throws NotFoundException if a user with the given id could not be found
    */
   public User delete(int userId) {
     var sql = "delete from users where id=? returning id, username, phone_number, email, password, role, 0";
@@ -120,7 +120,7 @@ public class UserRepo {
       var results = stmt.getResultSet();
 
       if (!results.next()) {
-        throw new RowNotFoundException("User #" + userId + " does not exist.");
+        throw new NotFoundException("User #" + userId + " does not exist.");
       }
 
       return readUser(results, 1);
@@ -155,7 +155,7 @@ public class UserRepo {
    *
    * @param username username
    * @return A user who has the given username
-   * @throws RowNotFoundException if such a user could not be found
+   * @throws NotFoundException if such a user could not be found
    */
   public User findByUsername(String username) {
     var sql = """
@@ -171,7 +171,7 @@ public class UserRepo {
       var results = stmt.getResultSet();
 
       if (!results.next()) {
-        throw new RowNotFoundException("User with username '" + username + "' does not exist.");
+        throw new NotFoundException("User with username '" + username + "' does not exist.");
       }
 
       return readUser(results, 1);
@@ -185,7 +185,7 @@ public class UserRepo {
    *
    * @param userId user id
    * @return The user who has the given id
-   * @throws RowNotFoundException if there is no user with the given id
+   * @throws NotFoundException if there is no user with the given id
    */
   public User findById(int userId) {
     var sql = """
@@ -201,7 +201,7 @@ public class UserRepo {
       var results = stmt.getResultSet();
 
       if (!results.next()) {
-        throw new RowNotFoundException("User #" + userId + " does not exist.");
+        throw new NotFoundException("User #" + userId + " does not exist.");
       }
 
       return readUser(results, 1);
@@ -225,7 +225,7 @@ public class UserRepo {
                            Set<UserRole> roles,
                            String phoneNumber,
                            String email,
-                           IntRange purchaseCount,
+                           Range<Integer> purchaseCount,
                            UserSorting sorting) {
     String sql = Util.format("""
                                  select id, username, phone_number, email, password, role, purchase_count
@@ -238,7 +238,7 @@ public class UserRepo {
                                  upper(username) like '%' || upper(?) || '%' and
                                  upper(phone_number) like '%' || upper(?) || '%' and
                                  upper(email) like '%' || upper(?) || '%' and
-                                 purchase_count between ? and ? and
+                                 purchase_count between coalesce(?, '-infinity'::float) and coalesce(?, '+infinity'::float) and
                                  role in ({})
                                  order by {}""",
                              Util.serializeSet(roles),
@@ -248,8 +248,8 @@ public class UserRepo {
       stmt.setString(1, username);
       stmt.setString(2, phoneNumber);
       stmt.setString(3, email);
-      stmt.setInt(4, purchaseCount.min());
-      stmt.setInt(5, purchaseCount.max());
+      stmt.setObject(4, purchaseCount.min());
+      stmt.setObject(5, purchaseCount.max());
       stmt.execute();
 
       var results = stmt.getResultSet();

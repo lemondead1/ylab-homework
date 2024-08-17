@@ -1,18 +1,24 @@
 package com.lemondead1.carshopservice.service;
 
+import com.lemondead1.carshopservice.annotations.Audited;
+import com.lemondead1.carshopservice.annotations.Transactional;
 import com.lemondead1.carshopservice.entity.Order;
 import com.lemondead1.carshopservice.entity.User;
+import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;
-import com.lemondead1.carshopservice.exceptions.CarReservedException;
+import com.lemondead1.carshopservice.exceptions.ForbiddenException;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
-import com.lemondead1.carshopservice.exceptions.CommandException;
+import com.lemondead1.carshopservice.exceptions.ConflictException;
 import com.lemondead1.carshopservice.repo.CarRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
-import com.lemondead1.carshopservice.util.DateRange;
+import com.lemondead1.carshopservice.util.Range;
+import com.lemondead1.carshopservice.util.Util;
 import lombok.RequiredArgsConstructor;
 
+import javax.annotation.Nullable;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
@@ -21,43 +27,25 @@ import java.util.List;
 public class OrderService {
   private final OrderRepo orders;
   private final CarRepo cars;
-  private final EventService events;
   private final TimeService time;
 
-  public Order purchase(int userId, int carId, String comments) {
-    return createOrder(userId, userId, carId, OrderKind.PURCHASE, OrderState.NEW, comments);
-  }
+  @Transactional
+  @Audited(EventType.ORDER_CREATED)
+  public Order createOrder(@Audited.Param("client_id") int clientId,
+                           @Audited.Param("car_id") int carId,
+                           @Audited.Param("kind") OrderKind kind,
+                           @Audited.Param("state") OrderState state,
+                           @Audited.Param("comment") String comments) {
+    if (kind == OrderKind.PURCHASE && !cars.findById(carId).availableForPurchase()) {
+      throw new ForbiddenException("Car #" + carId + " is not available for purchase.");
+    }
 
-  public Order orderService(int userId, int carId, String comments) {
-    return createOrder(userId, userId, carId, OrderKind.SERVICE, OrderState.NEW, comments);
-  }
-
-  /**
-   * Checks for car status and creates an order.
-   *
-   * @param userId   user that performed the action
-   * @param clientId the recipient of the order
-   * @param carId    car
-   * @param kind     type
-   * @param state    initial order state
-   * @param comment  comment
-   * @return the order created
-   */
-  public Order createOrder(int userId, int clientId, int carId, OrderKind kind, OrderState state, String comment) {
     //Check if the client has bought the car.
     if (kind == OrderKind.SERVICE && cars.findCarOwner(carId).map(User::id).map(id -> id != clientId).orElse(true)) {
-      var message = clientId == userId ? "Car #" + carId + " is not yours."
-                                       : "Client #" + clientId + " is not the owner of #" + carId + ".";
-      throw new CarReservedException(message);
+      throw new ForbiddenException("Client #" + clientId + " is not the owner of #" + carId + ".");
     }
 
-    if (kind == OrderKind.PURCHASE && !cars.findById(carId).availableForPurchase()) {
-      throw new CarReservedException("Car #" + carId + " is not available for purchase.");
-    }
-
-    var order = orders.create(time.now(), kind, state, clientId, carId, comment);
-    events.onOrderCreated(userId, order);
-    return order;
+    return orders.create(time.now(), kind, state, clientId, carId, comments);
   }
 
   public Order findById(int orderId) {
@@ -79,55 +67,62 @@ public class OrderService {
   /**
    * Deletes the order verifying consistency
    *
-   * @param userId  id of the user that performed the action
    * @param orderId order to be deleted
    */
-  public void deleteOrder(int userId, int orderId) {
+  @Transactional
+  @Audited(EventType.ORDER_DELETED)
+  public void deleteOrder(@Audited.Param("order_id") int orderId) {
     var old = orders.findById(orderId);
     if (old.type() == OrderKind.PURCHASE) {
       checkNoServiceOrdersExist(old.client().id(), old.car().id());
     }
 
     orders.delete(orderId);
-    events.onOrderDeleted(userId, orderId);
   }
 
   /**
    * Updates order state verifying consistency
    *
-   * @param userId        id of the user that performed the action
    * @param orderId       id of the order
    * @param newState      new state
    * @param appendComment string that is appended to comment
    */
-  public void updateState(int userId, int orderId, OrderState newState, String appendComment) {
+  @Transactional
+  @Audited(EventType.ORDER_MODIFIED)
+  public Order updateState(@Audited.Param("order_id") int orderId,
+                           @Audited.Param("new_state") @Nullable OrderState newState,
+                           @Audited.Param("appended_comment") String appendComment) {
     var oldOrder = orders.findById(orderId);
 
-    if (oldOrder.state() == OrderState.DONE && oldOrder.type() == OrderKind.PURCHASE && newState != OrderState.DONE) {
+    if (oldOrder.state() == OrderState.DONE && oldOrder.type() == OrderKind.PURCHASE &&
+        newState != null && newState != OrderState.DONE) {
       checkNoServiceOrdersExist(oldOrder.client().id(), oldOrder.car().id());
     }
 
-    var newRow = orders.edit(orderId, null, null, newState, null, null, oldOrder.comments() + appendComment);
-    events.onOrderEdited(userId, newRow);
+    return orders.edit(orderId, null, null, newState, null, null, oldOrder.comments() + appendComment);
   }
 
-  public void cancel(int userId, int orderId) {
-    var order = orders.findById(orderId);
-    switch (order.state()) {
-      case CANCELLED -> throw new CommandException("This order has already been cancelled.");
-      case DONE -> throw new CommandException("You cannot cancel finished orders.");
-      default -> {
-        var newRow = orders.edit(orderId, null, null, OrderState.CANCELLED, null, null, null);
-        events.onOrderEdited(userId, newRow);
-      }
-    }
+  @Transactional
+  @Audited(EventType.ORDER_MODIFIED)
+  public Order cancel(@Audited.Param("order_id") int orderId,
+                      @Audited.Param("appended_comment") String appendComment) {
+    var oldOrder = orders.findById(orderId);
+    return switch (oldOrder.state()) {
+      case CANCELLED -> throw new ConflictException("This order has already been cancelled.");
+      case DONE -> throw new ConflictException("You cannot cancel finished orders.");
+      default -> orders.edit(orderId, null, null,
+                             OrderState.CANCELLED, null, null,
+                             oldOrder.comments() + appendComment);
+    };
   }
 
+  @Transactional
   public List<Order> findClientOrders(int userId, OrderSorting sorting) {
     return orders.findClientOrders(userId, sorting);
   }
 
-  public List<Order> lookupOrders(DateRange dates,
+  @Transactional
+  public List<Order> lookupOrders(Range<Instant> dates,
                                   String username,
                                   String carBrand,
                                   String carModel,

@@ -161,3 +161,67 @@ databaseChangeLog:
             sql: drop type user_role
         - sql:
             sql: drop type event_type
+  - changeSet:
+      id: add-remarks-1
+      author: Olexy
+      changes:
+        - setTableRemarks:
+            tableName: cars
+            remarks: This table stores all of the cars that are being sold or have been sold.
+        - setColumnRemarks:
+            tableName: cars
+            columnName: brand
+            remarks: The car manufacturer, ex. BMW, Audi, Toyota.
+        - setColumnRemarks:
+            tableName: cars
+            columnName: model
+            remarks: The car model, ex. X5, Corolla, Diablo.
+        - setColumnRemarks:
+            tableName: cars
+            columnName: production_year
+            remarks: The year the car was produced.
+        - setColumnRemarks:
+            tableName: cars
+            columnName: price
+            remarks: The car's price in rubles.
+        - setColumnRemarks:
+            tableName: cars
+            columnName: condition
+            remarks: The car's condition, ex. 'mint', 'good', 'poor
+        - setTableRemarks:
+            tableName: users
+            remarks: The table of all users, including managers and admins.
+        - setColumnRemarks:
+            tableName: users
+            columnName: phone_number
+            remarks: The user's phone number, ex. +71234567890, 81234567890.
+        - setColumnRemarks:
+            tableName: users
+            columnName: email
+            remarks: The user's email, ex. email@example.com.
+        - setTableRemarks:
+            tableName: orders
+            remarks: Contains both purchase and service orders.
+        - setColumnRemarks:
+            tableName: orders
+            columnName: created_at
+            remarks: The timestamp of order creation.
+        - setColumnRemarks:
+            tableName: orders
+            columnName: client_id
+            remarks: The id of the user that is going to receive the order.
+        - setColumnRemarks:
+            tableName: orders
+            columnName: car_id
+            remarks: The id of the car that is ordered for purchase or service.
+        - setTableRemarks:
+            tableName: events
+            remarks: Contains all of the audit events.
+        - setColumnRemarks:
+            tableName: events
+            columnName: user_id
+            remarks: The id of the user who performed this action. Can point to a deleted user.
+        - setColumnRemarks:
+            tableName: events
+            columnName: data
+            remarks: Additional data. The contents depend on the type of the event.

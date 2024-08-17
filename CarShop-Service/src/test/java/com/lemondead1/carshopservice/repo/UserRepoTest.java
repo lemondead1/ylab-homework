@@ -9,8 +9,7 @@ import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.enums.UserSorting;
 import com.lemondead1.carshopservice.exceptions.DBException;
-import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
-import com.lemondead1.carshopservice.util.IntRange;
+import com.lemondead1.carshopservice.exceptions.NotFoundException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
@@ -92,7 +91,7 @@ public class UserRepoTest {
   @DisplayName("edit throws when a user with the requested id does not exist.")
   void editNotExistingUserThrows() {
     assertThatThrownBy(() -> users.edit(4636, "username", null, null, "password", UserRole.ADMIN))
-        .isInstanceOf(RowNotFoundException.class);
+        .isInstanceOf(NotFoundException.class);
   }
 
   @Test
@@ -108,14 +107,14 @@ public class UserRepoTest {
   void deleteReturnsOldUser() {
     var created = users.create("blaze", "88005553535", "test@example.com", "password", UserRole.CLIENT);
     assertThat(users.delete(created.id())).isEqualTo(created);
-    assertThatThrownBy(() -> users.findById(created.id())).isInstanceOf(RowNotFoundException.class);
-    assertThatThrownBy(() -> users.findByUsername("user")).isInstanceOf(RowNotFoundException.class);
+    assertThatThrownBy(() -> users.findById(created.id())).isInstanceOf(NotFoundException.class);
+    assertThatThrownBy(() -> users.findByUsername("user")).isInstanceOf(NotFoundException.class);
   }
 
   @Test
   @DisplayName("delete throws RowNotFoundException when a user with the given id does not exist.")
   void deleteThrowsOnAbsentId() {
-    assertThatThrownBy(() -> users.delete(6534)).isInstanceOf(RowNotFoundException.class);
+    assertThatThrownBy(() -> users.delete(6534)).isInstanceOf(NotFoundException.class);
   }
 
   @Test
@@ -168,53 +167,53 @@ public class UserRepoTest {
 
     @Test
     void sortingTestUsernameDesc() {
-      assertThat(users.lookup("", Set.copyOf(UserRole.AUTHORIZED), "", "", IntRange.ALL, UserSorting.USERNAME_DESC))
+      assertThat(users.lookup("", Set.copyOf(UserRole.ALL), "", "", IntRange.ALL, UserSorting.USERNAME_DESC))
           .isSortedAccordingTo(Comparator.comparing(User::username, String::compareToIgnoreCase).reversed())
           .hasSize(151);
     }
 
     @Test
     void sortingTestUsernameAsc() {
-      assertThat(users.lookup("", Set.copyOf(UserRole.AUTHORIZED), "", "", IntRange.ALL, UserSorting.USERNAME_ASC))
+      assertThat(users.lookup("", Set.copyOf(UserRole.ALL), "", "", IntRange.ALL, UserSorting.USERNAME_ASC))
           .isSortedAccordingTo(Comparator.comparing(User::username, String::compareToIgnoreCase))
           .hasSize(151);
     }
 
     @Test
     void sortingTestEmailDesc() {
-      assertThat(users.lookup("", Set.copyOf(UserRole.AUTHORIZED), "", "", IntRange.ALL, UserSorting.EMAIL_DESC))
+      assertThat(users.lookup("", Set.copyOf(UserRole.ALL), "", "", IntRange.ALL, UserSorting.EMAIL_DESC))
           .isSortedAccordingTo(Comparator.comparing(User::email, String::compareToIgnoreCase).reversed())
           .hasSize(151);
     }
 
     @Test
     void sortingTestEmailAsc() {
-      assertThat(users.lookup("", Set.copyOf(UserRole.AUTHORIZED), "", "", IntRange.ALL, UserSorting.EMAIL_ASC))
+      assertThat(users.lookup("", Set.copyOf(UserRole.ALL), "", "", IntRange.ALL, UserSorting.EMAIL_ASC))
           .isSortedAccordingTo(Comparator.comparing(User::email, String::compareToIgnoreCase))
           .hasSize(151);
     }
 
     @Test
     void sortingTestRoleDesc() {
-      assertThat(users.lookup("", Set.copyOf(UserRole.AUTHORIZED), "", "", IntRange.ALL, UserSorting.ROLE_DESC))
+      assertThat(users.lookup("", Set.copyOf(UserRole.ALL), "", "", IntRange.ALL, UserSorting.ROLE_DESC))
           .isSortedAccordingTo(Comparator.comparing(User::role).reversed()).hasSize(151);
     }
 
     @Test
     void sortingTestRoleAsc() {
-      assertThat(users.lookup("", Set.copyOf(UserRole.AUTHORIZED), "", "", IntRange.ALL, UserSorting.ROLE_ASC))
+      assertThat(users.lookup("", Set.copyOf(UserRole.ALL), "", "", IntRange.ALL, UserSorting.ROLE_ASC))
           .isSortedAccordingTo(Comparator.comparing(User::role)).hasSize(151);
     }
 
     @Test
     void sortingTestPurchasesDesc() {
-      assertThat(users.lookup("", Set.copyOf(UserRole.AUTHORIZED), "", "", IntRange.ALL, UserSorting.PURCHASES_DESC))
+      assertThat(users.lookup("", Set.copyOf(UserRole.ALL), "", "", IntRange.ALL, UserSorting.PURCHASES_DESC))
           .isSortedAccordingTo(Comparator.comparing(User::purchaseCount).reversed()).hasSize(151);
     }
 
     @Test
     void sortingTestPurchasesAsc() {
-      assertThat(users.lookup("", Set.copyOf(UserRole.AUTHORIZED), "", "", IntRange.ALL, UserSorting.PURCHASES_ASC))
+      assertThat(users.lookup("", Set.copyOf(UserRole.ALL), "", "", IntRange.ALL, UserSorting.PURCHASES_ASC))
           .isSortedAccordingTo(Comparator.comparing(User::purchaseCount)).hasSize(151);
     }
   }

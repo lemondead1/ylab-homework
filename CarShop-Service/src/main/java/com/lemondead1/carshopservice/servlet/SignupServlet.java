@@ -1,9 +1,11 @@
 package com.lemondead1.carshopservice.servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lemondead1.carshopservice.dto.ResponseDTO;
 import com.lemondead1.carshopservice.dto.SignupDTO;
 import com.lemondead1.carshopservice.service.SessionService;
+import com.lemondead1.carshopservice.util.MapStruct;
+import com.lemondead1.carshopservice.util.Util;
+import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,20 +14,30 @@ import org.eclipse.jetty.http.HttpStatus;
 
 import java.io.IOException;
 
+import static com.lemondead1.carshopservice.cli.validation.Validated.validate;
+
+@WebServlet(value = "/signup", asyncSupported = true)
 @RequiredArgsConstructor
 public class SignupServlet extends HttpServlet {
   private final ObjectMapper objectMapper;
   private final SessionService sessionService;
+  private final MapStruct mapStruct;
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     var signup = objectMapper.readValue(req.getInputStream(), SignupDTO.class);
-    signup.validate();
-    sessionService.signUserUp(signup.username(), signup.phoneNumber(), signup.username(), signup.password());
 
-    resp.setContentType("application/json");
+    var user = sessionService.signUserUp(
+        validate(signup.username()).by(Util.USERNAME).nonnull("Username is required"),
+        validate(signup.phoneNumber()).by(Util.PHONE_NUMBER).nonnull("Phone number is required"),
+        validate(signup.email()).by(Util.EMAIL).nonnull("Email is required"),
+        validate(signup.password()).by(Util.PASSWORD).nonnull("Password is required")
+    );
+
+    var userDto = mapStruct.userToUserDto(user);
+
     resp.setStatus(HttpStatus.CREATED_201);
-    var responseMessage = new ResponseDTO(HttpStatus.CREATED_201, "Registered a new user.");
-    objectMapper.writeValue(resp.getWriter(), responseMessage);
+    resp.setContentType("application/json");
+    objectMapper.writeValue(resp.getWriter(), userDto);
   }
 }

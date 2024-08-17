@@ -69,10 +69,8 @@ public class DBManager {
     }
   }
 
-  @Transactional
   public void setupDatabase() {
-    var conn = getConnection();
-    try (var stmt = conn.createStatement()) {
+    try (var conn = DriverManager.getConnection(url, user, password); var stmt = conn.createStatement()) {
       stmt.execute("create schema if not exists " + schema);
       stmt.execute("create schema if not exists " + liquibaseSchema);
 

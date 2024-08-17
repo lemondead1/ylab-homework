@@ -6,8 +6,8 @@ import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.exceptions.DBException;
-import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
-import com.lemondead1.carshopservice.util.DateRange;
+import com.lemondead1.carshopservice.exceptions.NotFoundException;
+import com.lemondead1.carshopservice.util.Range;
 import com.lemondead1.carshopservice.util.Util;
 import lombok.RequiredArgsConstructor;
 
@@ -80,7 +80,7 @@ public class OrderRepo {
    * @param carId     new car id
    * @param comments  new comments
    * @return The new order
-   * @throws RowNotFoundException if an order with given id has not been found.
+   * @throws NotFoundException if an order with given id has not been found.
    */
   public Order edit(int orderId, @Nullable Instant createdAt, @Nullable OrderKind kind, @Nullable OrderState state,
                     @Nullable Integer clientId, @Nullable Integer carId, @Nullable String comments) {
@@ -122,7 +122,7 @@ public class OrderRepo {
 
       var results = stmt.getResultSet();
       if (!results.next()) {
-        throw new RowNotFoundException("Order #" + orderId + " not found.");
+        throw new NotFoundException("Order #" + orderId + " not found.");
       }
 
       return readOrder(results);
@@ -136,7 +136,7 @@ public class OrderRepo {
    *
    * @param orderId id of an order
    * @return the old order
-   * @throws RowNotFoundException if order with the given id could not be found
+   * @throws NotFoundException if order with the given id could not be found
    */
   public Order delete(int orderId) {
     var sql = """
@@ -177,7 +177,7 @@ public class OrderRepo {
    *
    * @param orderId order id
    * @return an order with the given order id
-   * @throws RowNotFoundException if an order with the given id could not be found
+   * @throws NotFoundException if an order with the given id could not be found
    */
   public Order findById(int orderId) {
     var sql = """
@@ -202,7 +202,7 @@ public class OrderRepo {
       var results = stmt.getResultSet();
 
       if (!results.next()) {
-        throw new RowNotFoundException("Order #" + orderId + " not found.");
+        throw new NotFoundException("Order #" + orderId + " not found.");
       }
 
       return readOrder(results);
@@ -484,7 +484,7 @@ public class OrderRepo {
    * @param sorting      list sorting
    * @return A list of such orders
    */
-  public List<Order> lookup(DateRange dates, String customerName, String carBrand, String carModel,
+  public List<Order> lookup(Range<Instant> dates, String customerName, String carBrand, String carModel,
                             Set<OrderKind> kinds, Set<OrderState> states, OrderSorting sorting) {
     var sql = Util.format("""
                               select o.id, o.created_at, o.kind, o.state, o.comment,
@@ -498,18 +498,20 @@ public class OrderRepo {
                               from orders o
                               join users u on o.client_id=u.id
                               join cars c on o.car_id=c.id
-                              where o.created_at between ? and ? and
+                              where o.created_at between coalesce(?, '-infinity'::timestamp) and coalesce(?, '+infinity'::timestamp) and
                               upper(u.username) like '%' || upper(?) || '%' and
                               upper(c.brand) like '%' || upper(?) || '%' and
                               upper(c.model) like '%' || upper(?) || '%' and
                               o.state in ({}) and
                               o.kind in ({})
-                              order by {}""", Util.serializeSet(states), Util.serializeSet(kinds),
+                              order by {}""",
+                          Util.serializeSet(states),
+                          Util.serializeSet(kinds),
                           getOrderingString(sorting));
 
     try (var stmt = db.getConnection().prepareStatement(sql)) {
-      stmt.setObject(1, dates.min().atOffset(ZoneOffset.UTC));
-      stmt.setObject(2, dates.max().atOffset(ZoneOffset.UTC));
+      stmt.setObject(1, dates.min() == null ? null : dates.min().atOffset(ZoneOffset.UTC));
+      stmt.setObject(2, dates.max() == null ? null : dates.max().atOffset(ZoneOffset.UTC));
       stmt.setString(3, customerName);
       stmt.setString(4, carBrand);
       stmt.setString(5, carModel);

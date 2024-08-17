@@ -14,11 +14,16 @@ public @interface Audited {
 
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.PARAMETER)
-  @interface UserId { }
+  @interface Param {
+    String value();
+  }
 
+  /**
+   * Checks if argument is null and outputs true to audit if it is nonnull.
+   */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.PARAMETER)
-  @interface Param {
+  @interface PresenceCheck {
     String value();
   }
 }

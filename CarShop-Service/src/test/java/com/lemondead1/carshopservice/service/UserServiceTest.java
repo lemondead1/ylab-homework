@@ -2,7 +2,7 @@ package com.lemondead1.carshopservice.service;
 
 import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
+import com.lemondead1.carshopservice.exceptions.NotFoundException;
 import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
 import com.lemondead1.carshopservice.repo.OrderRepo;
 import com.lemondead1.carshopservice.repo.UserRepo;
@@ -86,7 +86,7 @@ public class UserServiceTest {
   void editThrowsOnNonExistentUser() {
     assertThatThrownBy(() -> userService.editUser(5, 500, "newUsername", "+5334342",
                                                   "test1@example.com", "password", UserRole.CLIENT))
-        .isInstanceOf(RowNotFoundException.class);
+        .isInstanceOf(NotFoundException.class);
   }
 
   @Test
@@ -100,7 +100,7 @@ public class UserServiceTest {
   @DisplayName("deleteUser deletes user from the repo and calls EventService.onUserDeleted.")
   void deleteUserDeletesUserAndPostsAnEvent() {
     userService.deleteUser(1, 78);
-    assertThatThrownBy(() -> users.findById(78)).isInstanceOf(RowNotFoundException.class);
+    assertThatThrownBy(() -> users.findById(78)).isInstanceOf(NotFoundException.class);
     verify(eventService).onUserDeleted(1, 78);
   }
 
@@ -109,8 +109,8 @@ public class UserServiceTest {
   void deleteUserCascadeTest() {
     userService.deleteUserCascading(1, 18);
 
-    assertThatThrownBy(() -> users.findById(18)).isInstanceOf(RowNotFoundException.class);
-    assertThatThrownBy(() -> orders.findById(253)).isInstanceOf(RowNotFoundException.class);
+    assertThatThrownBy(() -> users.findById(18)).isInstanceOf(NotFoundException.class);
+    assertThatThrownBy(() -> orders.findById(253)).isInstanceOf(NotFoundException.class);
 
     inOrder(eventService);
     verify(eventService).onUserDeleted(1, 18);

@@ -10,8 +10,7 @@ import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.exceptions.DBException;
-import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
-import com.lemondead1.carshopservice.util.DateRange;
+import com.lemondead1.carshopservice.exceptions.NotFoundException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
@@ -126,7 +125,7 @@ public class OrderRepoTest {
   @DisplayName("edit throws RowNotFoundException when a car with the given id does not exist.")
   void editNonExistingOrderThrows() {
     assertThatThrownBy(() -> orders.edit(1000, null, null, OrderState.PERFORMING, null, null, null))
-        .isInstanceOf(RowNotFoundException.class);
+        .isInstanceOf(NotFoundException.class);
   }
 
   @Test
@@ -139,7 +138,7 @@ public class OrderRepoTest {
         .isEqualTo(new Order(created.id(), now, OrderKind.PURCHASE,
                              OrderState.NEW, users.findById(101), cars.findById(98), ""));
 
-    assertThatThrownBy(() -> orders.findById(created.id())).isInstanceOf(RowNotFoundException.class);
+    assertThatThrownBy(() -> orders.findById(created.id())).isInstanceOf(NotFoundException.class);
     assertThat(orders.findCarOrders(98)).isEmpty();
     assertThat(orders.findClientOrders(101, OrderSorting.CREATED_AT_DESC)).isEmpty();
   }

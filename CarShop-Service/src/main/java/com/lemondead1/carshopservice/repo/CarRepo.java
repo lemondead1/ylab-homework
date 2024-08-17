@@ -5,8 +5,8 @@ import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.DBException;
-import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
-import com.lemondead1.carshopservice.util.IntRange;
+import com.lemondead1.carshopservice.exceptions.NotFoundException;
+import com.lemondead1.carshopservice.util.Range;
 import com.lemondead1.carshopservice.util.Util;
 import lombok.RequiredArgsConstructor;
 
@@ -95,7 +95,7 @@ public class CarRepo {
       var results = stmt.getResultSet();
 
       if (!results.next()) {
-        throw new RowNotFoundException("Car #" + carId + " not found.");
+        throw new NotFoundException("Car #" + carId + " not found.");
       }
 
       return readCar(results, 1);
@@ -109,7 +109,7 @@ public class CarRepo {
    *
    * @param carId id to be deleted
    * @return old row
-   * @throws RowNotFoundException if a car with given id does not exist.
+   * @throws NotFoundException if a car with given id does not exist.
    */
   public Car delete(int carId) {
     var sql = """
@@ -124,7 +124,7 @@ public class CarRepo {
       var results = stmt.getResultSet();
 
       if (!results.next()) {
-        throw new RowNotFoundException("Car #" + carId + " not found.");
+        throw new NotFoundException("Car #" + carId + " not found.");
       }
 
       return readCar(results, 1);
@@ -138,7 +138,7 @@ public class CarRepo {
    *
    * @param carId id to find
    * @return a car with the given id
-   * @throws RowNotFoundException if the car was not found
+   * @throws NotFoundException if the car was not found
    */
   public Car findById(int carId) {
     var sql = """
@@ -153,7 +153,7 @@ public class CarRepo {
       var results = stmt.getResultSet();
 
       if (!results.next()) {
-        throw new RowNotFoundException("Car #" + carId + " not found.");
+        throw new NotFoundException("Car #" + carId + " not found.");
       }
 
       return readCar(results, 1);
@@ -206,8 +206,8 @@ public class CarRepo {
    */
   public List<Car> lookup(String brand,
                           String model,
-                          IntRange productionYear,
-                          IntRange price,
+                          Range<Integer> productionYear,
+                          Range<Integer> price,
                           String condition,
                           Set<Boolean> availabilityForPurchase,
                           CarSorting sorting) {
@@ -220,8 +220,8 @@ public class CarRepo {
                               )
                               where upper(brand) like '%' || upper(?) || '%' and
                                     upper(model) like '%' || upper(?) || '%' and
-                                    production_year between ? and ? and
-                                    price between ? and ? and
+                                    production_year between coalesce(?, '-infinity'::float) and coalesce(?, '+infinity'::float) and
+                                    price between coalesce(?, '-infinity'::float) and coalesce(?, '+infinity'::float) and
                                     upper(condition) like '%' || upper(?) || '%' and
                                     available_for_purchase in ({})
                                     order by {}""",
@@ -231,10 +231,10 @@ public class CarRepo {
     try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setString(1, brand);
       stmt.setString(2, model);
-      stmt.setInt(3, productionYear.min());
-      stmt.setInt(4, productionYear.max());
-      stmt.setInt(5, price.min());
-      stmt.setInt(6, price.max());
+      stmt.setObject(3, productionYear.min());
+      stmt.setObject(4, productionYear.max());
+      stmt.setObject(5, price.min());
+      stmt.setObject(6, price.max());
       stmt.setString(7, condition);
       stmt.execute();
 

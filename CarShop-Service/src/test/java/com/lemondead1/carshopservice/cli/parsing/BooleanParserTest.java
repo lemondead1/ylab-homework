@@ -1,6 +1,5 @@
 package com.lemondead1.carshopservice.cli.parsing;
 
-import com.lemondead1.carshopservice.exceptions.ParsingException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 

@@ -3,7 +3,7 @@ package com.lemondead1.carshopservice.service;
 import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
-import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
+import com.lemondead1.carshopservice.exceptions.NotFoundException;
 import com.lemondead1.carshopservice.repo.CarRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
 import org.junit.jupiter.api.*;
@@ -77,7 +77,7 @@ public class CarServiceTest {
   @DisplayName("deleteCar deletes the car from the repo and submits an event.")
   void deleteCarDeletesCarAndPostsEvent() {
     carService.deleteCar(10, 99);
-    assertThatThrownBy(() -> cars.findById(99)).isInstanceOf(RowNotFoundException.class);
+    assertThatThrownBy(() -> cars.findById(99)).isInstanceOf(NotFoundException.class);
     verify(eventService).onCarDeleted(10, 99);
   }
 
@@ -92,9 +92,9 @@ public class CarServiceTest {
   void deleteCarCascadingDeletesCar() {
     carService.deleteCarCascading(1, 42);
 
-    assertThatThrownBy(() -> cars.findById(42)).isInstanceOf(RowNotFoundException.class);
-    assertThatThrownBy(() -> orders.findById(94)).isInstanceOf(RowNotFoundException.class);
-    assertThatThrownBy(() -> orders.findById(273)).isInstanceOf(RowNotFoundException.class);
+    assertThatThrownBy(() -> cars.findById(42)).isInstanceOf(NotFoundException.class);
+    assertThatThrownBy(() -> orders.findById(94)).isInstanceOf(NotFoundException.class);
+    assertThatThrownBy(() -> orders.findById(273)).isInstanceOf(NotFoundException.class);
 
     inOrder(eventService);
     verify(eventService).onCarDeleted(1, 42);
