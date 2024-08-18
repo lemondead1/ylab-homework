@@ -68,7 +68,7 @@ public class DBManager {
 
     resetConnection(conn);
     if (freeConnections.offer(conn)) {
-      log.debug("Returned a transaction to the pool.");
+      log.debug("Returned a connection to the pool.");
     } else {
       conn.close();
       log.debug("Closing an excess connection.");

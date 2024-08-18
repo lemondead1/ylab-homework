@@ -26,6 +26,7 @@ public class UtilTest {
 
   @Test
   @DisplayName("coalesce throws if both arguments are null.")
+  @SuppressWarnings("all")
   void coalesceThrowsIfBothArgumentsAreNull() {
     assertThatThrownBy(() -> Util.coalesce(null, null)).isInstanceOf(NullPointerException.class);
   }

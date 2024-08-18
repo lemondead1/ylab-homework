@@ -66,6 +66,7 @@ public class Util {
     return items.stream().map(b -> Boolean.toString(b)).collect(Collectors.joining(","));
   }
 
+  @SafeVarargs
   public static <V extends HasId> Map<String, V> createIdToValueMap(V... array) {
     Map<String, V> map = new LinkedHashMap<>();
     for (V v : array) {
