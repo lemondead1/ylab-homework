@@ -7,10 +7,10 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 
+@Setter
 @Aspect
 public class TransactionalAspect {
-  @Setter
-  private static DBManager dbManager;
+  private DBManager dbManager;
 
   @Pointcut("execution(@com.lemondead1.carshopservice.annotations.Transactional * * (..))")
   public void annotatedByTransactional() { }

@@ -43,12 +43,6 @@ public final class User extends UserPrincipal {
     this.purchaseCount = purchaseCount;
   }
 
-  public String prettyFormat() {
-    var format = """
-        user #%d named "%s" with phone number "%s", email "%s" and %d purchases on role %s""";
-    return String.format(format, id, username, phoneNumber, email, purchaseCount, role.getPrettyName());
-  }
-
   @Override
   public String getName() {
     return username;

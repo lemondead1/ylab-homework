@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.Set;
 
 import static com.lemondead1.carshopservice.util.Util.coalesce;
@@ -26,7 +27,7 @@ public class CarSearchServlet extends HttpServlet {
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-    var query = objectMapper.readValue(req.getInputStream(), CarQueryDTO.class);
+    var query = objectMapper.readValue(req.getReader(), CarQueryDTO.class);
 
     var result = carService.lookupCars(
         coalesce(query.brand(), ""),
@@ -34,12 +35,12 @@ public class CarSearchServlet extends HttpServlet {
         coalesce(query.productionYear(), Range.all()),
         coalesce(query.price(), Range.all()),
         coalesce(query.condition(), ""),
-        query.availability() == null ? Set.of(true, false) : Set.of(query.availability()),
+        Optional.ofNullable(query.availability()).map(Set::of).orElse(Set.of(true, false)),
         coalesce(query.sorting(), CarSorting.NAME_ASC)
     );
 
     var resultDto = mapStruct.carListToDtoList(result);
     resp.setContentType("application/json");
-    objectMapper.writeValue(resp.getOutputStream(), resultDto);
+    objectMapper.writeValue(resp.getWriter(), resultDto);
   }
 }

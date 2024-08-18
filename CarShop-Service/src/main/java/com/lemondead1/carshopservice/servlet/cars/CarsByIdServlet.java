@@ -1,8 +1,7 @@
 package com.lemondead1.carshopservice.servlet.cars;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lemondead1.carshopservice.cli.validation.PastYearValidator;
-import com.lemondead1.carshopservice.dto.car.ExistingCarDTO;
+import com.lemondead1.carshopservice.validation.PastYearValidator;
 import com.lemondead1.carshopservice.dto.car.NewCarDTO;
 import com.lemondead1.carshopservice.exceptions.BadRequestException;
 import com.lemondead1.carshopservice.service.CarService;
@@ -16,10 +15,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.eclipse.jetty.http.HttpStatus;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 
-import static com.lemondead1.carshopservice.cli.validation.Validated.validate;
+import static com.lemondead1.carshopservice.validation.Validated.validate;
 
 @WebServlet(value = "/cars/*", asyncSupported = true)
 @ServletSecurity(httpMethodConstraints = {
@@ -39,13 +39,13 @@ public class CarsByIdServlet extends HttpServlet {
     var car = carService.findById(id);
     var carDto = mapStruct.carToCarDto(car);
     resp.setContentType("application/json");
-    objectMapper.writeValue(resp.getOutputStream(), carDto);
+    objectMapper.writeValue(resp.getWriter(), carDto);
   }
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     int id = parseCarId(req);
-    var receivedCarDto = objectMapper.readValue(req.getInputStream(), NewCarDTO.class);
+    var receivedCarDto = objectMapper.readValue(req.getReader(), NewCarDTO.class);
     var newCar = carService.editCar(
         id,
         receivedCarDto.brand(),
@@ -57,7 +57,7 @@ public class CarsByIdServlet extends HttpServlet {
 
     var newCarDto = mapStruct.carToCarDto(newCar);
     resp.setContentType("application/json");
-    objectMapper.writeValue(resp.getOutputStream(), newCarDto);
+    objectMapper.writeValue(resp.getWriter(), newCarDto);
   }
 
   @Override
@@ -65,14 +65,15 @@ public class CarsByIdServlet extends HttpServlet {
     int id = parseCarId(req);
     var cascade = "true".equals(req.getParameter("cascade"));
     if (cascade) {
-      carService.deleteCar(id);
-    } else {
       carService.deleteCarCascading(id);
+    } else {
+      carService.deleteCar(id);
     }
     resp.setStatus(HttpStatus.NO_CONTENT_204);
   }
 
-  private int parseCarId(HttpServletRequest req) {
+  @VisibleForTesting
+  int parseCarId(HttpServletRequest req) {
     var split = req.getPathInfo().split("/");
     if (split.length < 2) {
       throw new BadRequestException("Car id must be specified.");

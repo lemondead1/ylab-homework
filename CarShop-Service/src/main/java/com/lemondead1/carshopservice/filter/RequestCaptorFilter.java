@@ -14,10 +14,10 @@ import java.io.IOException;
 
 @WebFilter(value = "/*", asyncSupported = true, dispatcherTypes = DispatcherType.REQUEST)
 public class RequestCaptorFilter extends HttpFilter {
-  private static final ThreadLocal<HttpServletRequest> requests = new ThreadLocal<>();
+  private final ThreadLocal<HttpServletRequest> requests = new ThreadLocal<>();
 
   @Nullable
-  public static User getCurrentPrincipal() {
+  public User getCurrentPrincipal() {
     var request = requests.get();
     if (request == null) {
       throw new IllegalStateException("No request is available.");

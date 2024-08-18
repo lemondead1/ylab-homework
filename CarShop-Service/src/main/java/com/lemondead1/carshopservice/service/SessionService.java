@@ -1,5 +1,6 @@
 package com.lemondead1.carshopservice.service;
 
+import com.lemondead1.carshopservice.annotations.Timed;
 import com.lemondead1.carshopservice.annotations.Transactional;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
@@ -18,6 +19,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.function.Function;
 
+@Timed
 @RequiredArgsConstructor
 public class SessionService extends AbstractLoginService {
   private final UserRepo users;

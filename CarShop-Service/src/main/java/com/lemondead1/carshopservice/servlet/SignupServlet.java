@@ -14,7 +14,7 @@ import org.eclipse.jetty.http.HttpStatus;
 
 import java.io.IOException;
 
-import static com.lemondead1.carshopservice.cli.validation.Validated.validate;
+import static com.lemondead1.carshopservice.validation.Validated.validate;
 
 @WebServlet(value = "/signup", asyncSupported = true)
 @RequiredArgsConstructor
@@ -25,7 +25,7 @@ public class SignupServlet extends HttpServlet {
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-    var signup = objectMapper.readValue(req.getInputStream(), SignupDTO.class);
+    var signup = objectMapper.readValue(req.getReader(), SignupDTO.class);
 
     var user = sessionService.signUserUp(
         validate(signup.username()).by(Util.USERNAME).nonnull("Username is required"),

@@ -1,4 +1,4 @@
-package com.lemondead1.carshopservice.cli.validation;
+package com.lemondead1.carshopservice.validation;
 
 public interface Validator<T> {
   /**

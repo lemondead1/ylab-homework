@@ -20,7 +20,7 @@ import org.eclipse.jetty.http.HttpStatus;
 
 import java.io.IOException;
 
-import static com.lemondead1.carshopservice.cli.validation.Validated.validate;
+import static com.lemondead1.carshopservice.validation.Validated.validate;
 
 @WebServlet(value = "/orders")
 @ServletSecurity(@HttpConstraint(rolesAllowed = { "client", "manager", "admin" }))
@@ -34,11 +34,15 @@ public class OrderCreationServlet extends HttpServlet {
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     var currentUser = (User) req.getUserPrincipal();
 
-    var newOrderDto = objectMapper.readValue(req.getInputStream(), NewOrderDTO.class);
+    var newOrderDto = objectMapper.readValue(req.getReader(), NewOrderDTO.class);
 
-    if (currentUser.role() == UserRole.CLIENT &&
-        newOrderDto.clientId() != null && newOrderDto.clientId() != currentUser.id()) {
-      throw new ForbiddenException("Clients cannot create orders for other users.");
+    if (currentUser.role() == UserRole.CLIENT) {
+      if (newOrderDto.clientId() != null && newOrderDto.clientId() != currentUser.id()) {
+        throw new ForbiddenException("Clients cannot create orders for other users.");
+      }
+      if (newOrderDto.state() != null && newOrderDto.state() != OrderState.NEW) {
+        throw new ForbiddenException("Clients cannot set order state.");
+      }
     }
 
     var createdOrder = orderService.createOrder(
@@ -52,6 +56,6 @@ public class OrderCreationServlet extends HttpServlet {
     resp.setStatus(HttpStatus.CREATED_201);
     resp.setContentType("application/json");
     var createdOrderDto = mapStruct.orderToOrderDto(createdOrder);
-    objectMapper.writeValue(resp.getOutputStream(), createdOrderDto);
+    objectMapper.writeValue(resp.getWriter(), createdOrderDto);
   }
 }

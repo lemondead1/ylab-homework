@@ -1,104 +1,104 @@
 package com.lemondead1.carshopservice.service;
 
+import com.lemondead1.carshopservice.DBConnector;
+import com.lemondead1.carshopservice.aspect.AuditedAspect;
 import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.entity.Car;
+import com.lemondead1.carshopservice.entity.User;
+import com.lemondead1.carshopservice.enums.EventType;
+import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.exceptions.NotFoundException;
 import com.lemondead1.carshopservice.repo.CarRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
-import org.junit.jupiter.api.*;
+import org.aspectj.lang.Aspects;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.testcontainers.containers.PostgreSQLContainer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.inOrder;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 public class CarServiceTest {
-  static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres").withReuse(true);
-
-  static DBManager dbManager;
-  static CarRepo cars;
-  static OrderRepo orders;
+  private static final CarRepo cars = DBConnector.CAR_REPO;
+  private static final OrderRepo orders = DBConnector.ORDER_REPO;
 
   @Mock
   EventService eventService;
+
   CarService carService;
 
-  @BeforeAll
-  static void beforeAll() {
-    postgres.start();
-    dbManager = new DBManager(postgres.getJdbcUrl(), postgres.getUsername(),
-                              postgres.getPassword(), "data", "infra", "db/changelog/test-changelog.yaml", true);
-    dbManager.setupDatabase();
-    cars = new CarRepo(dbManager);
-    orders = new OrderRepo(dbManager);
-  }
-
-  @AfterAll
-  static void afterAll() {
-    dbManager.dropSchemas();
-  }
+  private final User dummyUser = new User(5, "dummy", "123456789", "dummy@example.com", "password", UserRole.ADMIN, 0);
 
   @BeforeEach
   void beforeEach() {
-    carService = new CarService(cars, orders, eventService);
+    Aspects.aspectOf(AuditedAspect.class).setCurrentUserProvider(() -> dummyUser);
+    Aspects.aspectOf(AuditedAspect.class).setEventService(eventService);
+    carService = new CarService(cars, orders);
+  }
+
+  @AfterEach
+  void afterEach() {
+    DBConnector.DB_MANAGER.rollback();
   }
 
   @Test
   @DisplayName("createCar creates a car in the repo and submits an event.")
   void createCarCreatesCarAndPostsEvent() {
-    var createdCar = carService.createCar(4, "Tesla", "Model 3", 2020, 5000000, "mint");
+    var createdCar = carService.createCar("Tesla", "Model 3", 2020, 5000000, "mint");
 
-    Car expectedCar = new Car(createdCar.id(), "Tesla", "Model 3", 2020, 5000000, "mint", true);
+    assertThat(createdCar)
+        .isEqualTo(cars.findById(createdCar.id()))
+        .isEqualTo(new Car(createdCar.id(), "Tesla", "Model 3", 2020, 5000000, "mint", true));
 
-    assertThat(createdCar).isEqualTo(cars.findById(createdCar.id())).isEqualTo(expectedCar);
-
-    verify(eventService).onCarCreated(4, expectedCar);
+    verify(eventService).postEvent(eq(5), eq(EventType.CAR_CREATED), any());
   }
 
   @Test
   @DisplayName("editCar edits the car in the repo and submits an event.")
   void editCarEditsCarAndPostsEvent() {
-    var editedCar = carService.editCar(5, 35, null, null, 2021, 454636, "good");
+    var editedCar = carService.editCar(35, null, null, 2021, 454636, "good");
 
     assertThat(editedCar)
         .isEqualTo(cars.findById(35))
         .matches(c -> c.productionYear() == 2021 && c.price() == 454636 && "good".equals(c.condition()));
 
-    verify(eventService).onCarEdited(5, editedCar);
+    verify(eventService).postEvent(eq(5), eq(EventType.CAR_MODIFIED), any());
   }
 
   @Test
   @DisplayName("deleteCar deletes the car from the repo and submits an event.")
   void deleteCarDeletesCarAndPostsEvent() {
-    carService.deleteCar(10, 99);
+    carService.deleteCar(99);
+
     assertThatThrownBy(() -> cars.findById(99)).isInstanceOf(NotFoundException.class);
-    verify(eventService).onCarDeleted(10, 99);
+
+    verify(eventService).postEvent(eq(5), eq(EventType.CAR_DELETED), any());
   }
 
   @Test
   @DisplayName("deleteCar throws CascadingException when there exist orders that reference this car.")
   void deleteCarThrowsCascadingExceptionWhenAnOrderExists() {
-    assertThatThrownBy(() -> carService.deleteCar(6, 1)).isInstanceOf(CascadingException.class);
+    assertThatThrownBy(() -> carService.deleteCar(1)).isInstanceOf(CascadingException.class);
   }
 
   @Test
   @DisplayName("deleteCarCascading deletes the car and related orders from the repos and submits events.")
   void deleteCarCascadingDeletesCar() {
-    carService.deleteCarCascading(1, 42);
+    carService.deleteCarCascading(42);
 
     assertThatThrownBy(() -> cars.findById(42)).isInstanceOf(NotFoundException.class);
     assertThatThrownBy(() -> orders.findById(94)).isInstanceOf(NotFoundException.class);
     assertThatThrownBy(() -> orders.findById(273)).isInstanceOf(NotFoundException.class);
 
-    inOrder(eventService);
-    verify(eventService).onCarDeleted(1, 42);
-    verify(eventService).onOrderDeleted(1, 94);
-    verify(eventService).onOrderDeleted(1, 273);
+    verify(eventService).postEvent(eq(5), eq(EventType.CAR_DELETED), any());
   }
 }

@@ -29,7 +29,7 @@ public class EventSearchServlet extends HttpServlet {
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-    var query = objectMapper.readValue(req.getInputStream(), EventQueryDTO.class);
+    var query = objectMapper.readValue(req.getReader(), EventQueryDTO.class);
 
     var result = eventService.findEvents(
         coalesce(query.types(), EventType.ALL),
@@ -40,6 +40,6 @@ public class EventSearchServlet extends HttpServlet {
 
     resp.setContentType("application/json");
     var resultDto = mapStruct.eventListToDtoList(result);
-    objectMapper.writeValue(resp.getOutputStream(), resultDto);
+    objectMapper.writeValue(resp.getWriter(), resultDto);
   }
 }

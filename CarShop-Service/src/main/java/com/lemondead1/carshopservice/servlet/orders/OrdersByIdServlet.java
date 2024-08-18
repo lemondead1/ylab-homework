@@ -19,8 +19,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.eclipse.jetty.http.HttpStatus;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
+
+import static java.util.Optional.ofNullable;
 
 @WebServlet("/orders/*")
 @ServletSecurity(httpMethodConstraints = {
@@ -46,14 +49,14 @@ public class OrdersByIdServlet extends HttpServlet {
 
     resp.setContentType("application/json");
     var orderDto = mapStruct.orderToOrderDto(order);
-    objectMapper.writeValue(resp.getOutputStream(), orderDto);
+    objectMapper.writeValue(resp.getWriter(), orderDto);
   }
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     int id = parseOrderId(req);
     var currentUser = (User) req.getUserPrincipal();
-    var editDto = objectMapper.readValue(req.getInputStream(), EditOrderDTO.class);
+    var editDto = objectMapper.readValue(req.getReader(), EditOrderDTO.class);
 
     Order editedOrder;
 
@@ -65,16 +68,16 @@ public class OrdersByIdServlet extends HttpServlet {
       if (editDto.state() != OrderState.CANCELLED) {
         throw new ForbiddenException("Clients can only cancel their orders.");
       }
-      editedOrder = orderService.cancel(id, editDto.appendComment() == null ? "" : "\n" + editDto.appendComment());
+      editedOrder = orderService.cancel(id, ofNullable(editDto.appendComment()).map(c -> "\n" + c).orElse(""));
     } else {
       editedOrder = orderService.updateState(id,
                                              editDto.state(),
-                                             editDto.appendComment() == null ? "" : "\n" + editDto.appendComment());
+                                             ofNullable(editDto.appendComment()).map(c -> "\n" + c).orElse(""));
     }
 
     resp.setContentType("application/json");
     var editedDto = mapStruct.orderToOrderDto(editedOrder);
-    objectMapper.writeValue(resp.getOutputStream(), editedDto);
+    objectMapper.writeValue(resp.getWriter(), editedDto);
   }
 
   @Override
@@ -84,7 +87,8 @@ public class OrdersByIdServlet extends HttpServlet {
     resp.setStatus(HttpStatus.NO_CONTENT_204);
   }
 
-  private int parseOrderId(HttpServletRequest req) {
+  @VisibleForTesting
+  int parseOrderId(HttpServletRequest req) {
     var split = req.getPathInfo().split("/");
     if (split.length < 2) {
       throw new BadRequestException("Order id must be specified.");

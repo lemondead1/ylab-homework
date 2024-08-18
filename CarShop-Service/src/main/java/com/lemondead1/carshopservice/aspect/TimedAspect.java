@@ -10,10 +10,14 @@ import org.aspectj.lang.annotation.Pointcut;
 @Slf4j
 public class TimedAspect {
   @Pointcut("execution(@com.lemondead1.carshopservice.annotations.Timed * * (..))")
-  public void annotatedWithTimed() { }
+  public void methodsWithTimed() { }
 
-  @Around("annotatedWithTimed()")
+  @Pointcut("within(@com.lemondead1.carshopservice.annotations.Timed *) && execution(* * (..))")
+  public void methodsInClassesWithTimed() { }
+
+  @Around("methodsWithTimed() || methodsInClassesWithTimed()")
   public Object around(ProceedingJoinPoint pjp) throws Throwable {
+    log.debug("Entering {}", pjp.getSignature().getName());
     long startNanoTime = System.nanoTime();
     try {
       return pjp.proceed();

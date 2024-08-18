@@ -29,7 +29,7 @@ public class UserSearchServlet extends HttpServlet {
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-    var query = objectMapper.readValue(req.getInputStream(), UserQueryDTO.class);
+    var query = objectMapper.readValue(req.getReader(), UserQueryDTO.class);
 
     var searchResult = users.lookupUsers(
         coalesce(query.username(), ""),
@@ -43,6 +43,6 @@ public class UserSearchServlet extends HttpServlet {
     var searchResultDto = mapStruct.userToUserDtoList(searchResult);
 
     resp.setContentType("application/json");
-    objectMapper.writeValue(resp.getOutputStream(), searchResultDto);
+    objectMapper.writeValue(resp.getWriter(), searchResultDto);
   }
 }

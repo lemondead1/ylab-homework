@@ -1,6 +1,6 @@
 package com.lemondead1.carshopservice.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lemondead1.carshopservice.annotations.Timed;
 import com.lemondead1.carshopservice.annotations.Transactional;
 import com.lemondead1.carshopservice.entity.Event;
 import com.lemondead1.carshopservice.entity.User;
@@ -20,13 +20,12 @@ import java.util.Map;
  * This class is responsible for interfacing with the event database.
  * It provides convenience methods for both submitting and querying events.
  */
+@Timed
 @RequiredArgsConstructor
 public class EventService {
-  private final ObjectMapper objectMapper;
   private final EventRepo events;
   private final TimeService time;
 
-  @Transactional
   public void postEvent(int userId, EventType eventType, Map<String, Object> data) {
     var now = time.now();
     events.create(now, userId, eventType, data);

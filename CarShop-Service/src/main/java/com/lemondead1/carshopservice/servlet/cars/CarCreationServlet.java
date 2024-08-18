@@ -1,8 +1,7 @@
 package com.lemondead1.carshopservice.servlet.cars;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lemondead1.carshopservice.cli.validation.PastYearValidator;
-import com.lemondead1.carshopservice.dto.car.ExistingCarDTO;
+import com.lemondead1.carshopservice.validation.PastYearValidator;
 import com.lemondead1.carshopservice.dto.car.NewCarDTO;
 import com.lemondead1.carshopservice.service.CarService;
 import com.lemondead1.carshopservice.util.MapStruct;
@@ -18,7 +17,7 @@ import org.eclipse.jetty.http.HttpStatus;
 
 import java.io.IOException;
 
-import static com.lemondead1.carshopservice.cli.validation.Validated.validate;
+import static com.lemondead1.carshopservice.validation.Validated.validate;
 
 @WebServlet(value = "/cars", asyncSupported = true)
 @ServletSecurity(@HttpConstraint(rolesAllowed = { "manager", "admin" }))
@@ -30,7 +29,7 @@ public class CarCreationServlet extends HttpServlet {
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-    var newCarDto = objectMapper.readValue(req.getInputStream(), NewCarDTO.class);
+    var newCarDto = objectMapper.readValue(req.getReader(), NewCarDTO.class);
 
     var createdCar = carService.createCar(
         validate(newCarDto.brand()).nonnull("Brand is required."),
@@ -43,6 +42,6 @@ public class CarCreationServlet extends HttpServlet {
     resp.setContentType("application/json");
     resp.setStatus(HttpStatus.CREATED_201);
     var createdCarDto = mapStruct.carToCarDto(createdCar);
-    objectMapper.writeValue(resp.getOutputStream(), createdCarDto);
+    objectMapper.writeValue(resp.getWriter(), createdCarDto);
   }
 }

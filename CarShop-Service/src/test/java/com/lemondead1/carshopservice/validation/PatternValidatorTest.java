@@ -1,4 +1,4 @@
-package com.lemondead1.carshopservice.cli.validation;
+package com.lemondead1.carshopservice.validation;
 
 import com.lemondead1.carshopservice.exceptions.ValidationException;
 import com.lemondead1.carshopservice.util.Util;

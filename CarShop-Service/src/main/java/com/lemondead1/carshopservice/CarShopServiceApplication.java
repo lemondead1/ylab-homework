@@ -36,6 +36,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpFilter;
 import jakarta.servlet.http.HttpServlet;
 import lombok.extern.slf4j.Slf4j;
+import org.aspectj.lang.Aspects;
 import org.eclipse.jetty.ee10.webapp.WebAppContext;
 import org.eclipse.jetty.security.authentication.BasicAuthenticator;
 import org.eclipse.jetty.server.Server;
@@ -68,13 +69,18 @@ public class CarShopServiceApplication {
 
   private final Server jetty;
 
-  public CarShopServiceApplication(Properties configs) {
-    objectMapper = new ObjectMapper();
+  public static ObjectMapper createObjectMapper() {
+    var objectMapper = new ObjectMapper();
     objectMapper.registerModule(new HasIdModule());
     objectMapper.registerModule(new JavaTimeModule());
     objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
     objectMapper.enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
     objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    return objectMapper;
+  }
+
+  public CarShopServiceApplication(Properties configs) {
+    objectMapper = createObjectMapper();
 
     mapStruct = new MapStructImpl();
 
@@ -88,14 +94,15 @@ public class CarShopServiceApplication {
     carRepo = new CarRepo(dbManager);
 
     timeService = new TimeService();
-    eventService = new EventService(objectMapper, eventRepo, timeService);
+    eventService = new EventService(eventRepo, timeService);
     sessionService = new SessionService(userRepo, eventService);
     userService = new UserService(userRepo, orderRepo);
     carService = new CarService(carRepo, orderRepo);
     orderService = new OrderService(orderRepo, carRepo, timeService);
 
-    TransactionalAspect.setDbManager(dbManager);
-    AuditedAspect.setEventService(eventService);
+    Aspects.aspectOf(TransactionalAspect.class).setDbManager(dbManager);
+
+    Aspects.aspectOf(AuditedAspect.class).setEventService(eventService);
 
     context = setupWebAppContext();
     jetty = setupJettyWithConfigs(configs);
@@ -145,7 +152,9 @@ public class CarShopServiceApplication {
     registerServlet(new OrderSearchServlet(orderService, mapStruct, objectMapper));
     registerServlet(new EventSearchServlet(eventService, objectMapper, mapStruct));
 
-    registerFilter(new RequestCaptorFilter(), true);
+    var filter = new RequestCaptorFilter();
+    registerFilter(filter, true);
+    Aspects.aspectOf(AuditedAspect.class).setCurrentUserProvider(filter::getCurrentPrincipal);
   }
 
   private void registerServlet(HttpServlet servlet) {
@@ -182,7 +191,6 @@ public class CarShopServiceApplication {
                          cfg.getProperty("data_schema"),
                          cfg.getProperty("infra_schema"),
                          "db/changelog/changelog.yaml",
-                         false,
                          Integer.parseInt(cfg.getProperty("connection_pool_size")));
   }
 

@@ -3,10 +3,12 @@ package com.lemondead1.carshopservice.dto.car;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.util.Range;
 
-public record CarQueryDTO(String brand,
-                          String model,
-                          Range<Integer> productionYear,
-                          Range<Integer> price,
-                          String condition,
-                          Boolean availability,
-                          CarSorting sorting) { }
+import javax.annotation.Nullable;
+
+public record CarQueryDTO(@Nullable String brand,
+                          @Nullable String model,
+                          @Nullable Range<Integer> productionYear,
+                          @Nullable Range<Integer> price,
+                          @Nullable String condition,
+                          @Nullable Boolean availability,
+                          @Nullable CarSorting sorting) { }

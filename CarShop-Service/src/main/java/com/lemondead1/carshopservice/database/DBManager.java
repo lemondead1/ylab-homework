@@ -1,6 +1,5 @@
 package com.lemondead1.carshopservice.database;
 
-import com.lemondead1.carshopservice.annotations.Transactional;
 import com.lemondead1.carshopservice.exceptions.DBException;
 import liquibase.Liquibase;
 import liquibase.database.DatabaseFactory;
@@ -14,7 +13,13 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
+/**
+ * This class manages JDBC connection pool and ongoing transactions.
+ * It turned out to be pretty complicated.
+ * However, it still does not support nested transactions.
+ */
 @Slf4j
 public class DBManager {
   private final String url;
@@ -23,7 +28,6 @@ public class DBManager {
   private final String schema;
   private final String liquibaseSchema;
   private final String changelogPath;
-  private final boolean autocommit;
   private final int connectionPoolSize;
 
   private final ThreadLocal<ThreadTransaction> currentTransactions = new ThreadLocal<>();
@@ -35,7 +39,6 @@ public class DBManager {
                    String schema,
                    String liquibaseSchema,
                    String changelogPath,
-                   boolean autocommit,
                    int connectionPoolSize) {
     this.url = url;
     this.user = user;
@@ -43,26 +46,33 @@ public class DBManager {
     this.schema = schema;
     this.liquibaseSchema = liquibaseSchema;
     this.changelogPath = changelogPath;
-    this.autocommit = autocommit;
     this.connectionPoolSize = connectionPoolSize;
     freeConnections = new ArrayBlockingQueue<>(connectionPoolSize);
+  }
+
+  private Connection resetConnection(Connection conn) throws SQLException {
+    conn.setSchema(schema);
+    return conn;
+  }
+
+  private Connection createConnection() throws SQLException {
+    return DriverManager.getConnection(url, user, password);
   }
 
   private void returnConnectionToPool(Connection conn) throws SQLException {
     if (conn.isClosed()) {
       log.warn("Tried to return a closed connection to the pool.");
-      conn = DriverManager.getConnection(url, user, password);
+      conn = createConnection();
     }
 
-    conn.setAutoCommit(autocommit);
-    conn.setSchema(schema);
+    resetConnection(conn);
     freeConnections.add(conn);
   }
 
   public void populateConnectionPool() {
     try {
       for (int i = 0; i < connectionPoolSize; i++) {
-        returnConnectionToPool(DriverManager.getConnection(url, user, password));
+        returnConnectionToPool(createConnection());
       }
     } catch (SQLException e) {
       throw new DBException("Failed to initialize connection pool.", e);
@@ -70,7 +80,9 @@ public class DBManager {
   }
 
   public void setupDatabase() {
-    try (var conn = DriverManager.getConnection(url, user, password); var stmt = conn.createStatement()) {
+    startTransaction();
+    var conn = getConnection();
+    try (var stmt = conn.createStatement()) {
       stmt.execute("create schema if not exists " + schema);
       stmt.execute("create schema if not exists " + liquibaseSchema);
 
@@ -80,16 +92,9 @@ public class DBManager {
 
       var liquibase = new Liquibase(changelogPath, new ClassLoaderResourceAccessor(), database);
       liquibase.update();
+      commit();
     } catch (SQLException | LiquibaseException e) {
       throw new DBException("Failed to init the database", e);
-    }
-  }
-
-  public void dropSchemas() {
-    try (var conn = DriverManager.getConnection(url, user, password)) {
-      conn.prepareStatement("drop schema if exists " + schema + ", " + liquibaseSchema + " cascade").execute();
-    } catch (SQLException e) {
-      throw new DBException("Failed to drop all", e);
     }
   }
 
@@ -104,13 +109,23 @@ public class DBManager {
       return transaction.connection;
     }
 
+    Connection taken;
     try {
-      transaction.connection = freeConnections.take();
-    } catch (InterruptedException e) {
+      taken = freeConnections.poll(100, TimeUnit.MILLISECONDS);
+
+      if (taken == null) {
+        log.warn("A connection was leaked.");
+        taken = resetConnection(createConnection());
+      } else if (!taken.isValid(5)) {
+        taken.close();
+        log.warn("A connection has been broken.");
+        taken = resetConnection(createConnection());
+      }
+    } catch (InterruptedException | SQLException e) {
       throw new RuntimeException(e);
     }
-
-    return transaction.connection;
+    transaction.connection = taken;
+    return taken;
   }
 
   public void startTransaction() {

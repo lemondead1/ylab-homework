@@ -41,6 +41,10 @@ public class UserRole extends RolePrincipal implements HasId, Comparable<UserRol
     return found;
   }
 
+  public static UserRole[] values() {
+    return new UserRole[] { CLIENT, MANAGER, ADMIN };
+  }
+
   @Override
   public int compareTo(UserRole o) {
     return Integer.compare(ordinal, o.ordinal);

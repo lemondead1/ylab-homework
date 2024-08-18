@@ -1,9 +1,10 @@
 package com.lemondead1.carshopservice.util;
 
-import com.lemondead1.carshopservice.cli.validation.PatternValidator;
-import com.lemondead1.carshopservice.cli.validation.RangeValidator;
-import com.lemondead1.carshopservice.cli.validation.Validator;
+import com.lemondead1.carshopservice.validation.PatternValidator;
+import com.lemondead1.carshopservice.validation.RangeValidator;
+import com.lemondead1.carshopservice.validation.Validator;
 
+import javax.annotation.Nullable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -16,7 +17,7 @@ public class Util {
   public static final Validator<String> PHONE_NUMBER = new PatternValidator("\\+?\\d{8,13}");
   public static final Validator<String> EMAIL = new PatternValidator(".+@([a-zA-Z0-9-]{1,64}.)+[a-zA-Z]{2,20}");
 
-  public static <T> T coalesce(T object, T defaultValue) {
+  public static <T> T coalesce(@Nullable T object, T defaultValue) {
     if (object != null) {
       return object;
     }

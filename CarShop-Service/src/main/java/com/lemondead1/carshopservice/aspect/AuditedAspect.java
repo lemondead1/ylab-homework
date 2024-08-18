@@ -1,6 +1,5 @@
 package com.lemondead1.carshopservice.aspect;
 
-import com.lemondead1.carshopservice.filter.RequestCaptorFilter;
 import com.lemondead1.carshopservice.annotations.Audited;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.EventType;
@@ -9,6 +8,7 @@ import lombok.Setter;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.DeclarePrecedence;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 
@@ -18,11 +18,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 @Aspect
+@Setter
+@DeclarePrecedence("com.lemondead1.carshopservice.aspect.TimedAspect," +
+                   "com.lemondead1.carshopservice.aspect.TransactionalAspect," +
+                   "com.lemondead1.carshopservice.aspect.AuditedAspect")
 public class AuditedAspect {
-  @Setter
-  private static EventService eventService;
+  private EventService eventService;
+  private Supplier<User> currentUserProvider;
 
   private final Map<Method, AuditedMethod> auditedMethodCache = new ConcurrentHashMap<>();
 
@@ -31,7 +36,7 @@ public class AuditedAspect {
 
   @AfterReturning("annotatedByAudited()")
   public void afterReturning(JoinPoint jp) {
-    User currentUser = RequestCaptorFilter.getCurrentPrincipal();
+    User currentUser = currentUserProvider.get();
     if (currentUser == null) {
       throw new IllegalStateException("No user is currently authenticated.");
     }

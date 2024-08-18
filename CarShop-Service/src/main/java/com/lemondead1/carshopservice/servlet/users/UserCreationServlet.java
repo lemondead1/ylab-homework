@@ -16,7 +16,7 @@ import org.eclipse.jetty.http.HttpStatus;
 
 import java.io.IOException;
 
-import static com.lemondead1.carshopservice.cli.validation.Validated.validate;
+import static com.lemondead1.carshopservice.validation.Validated.validate;
 
 @WebServlet("/users")
 @ServletSecurity(@HttpConstraint(rolesAllowed = { "admin" }))
@@ -28,7 +28,7 @@ public class UserCreationServlet extends HttpServlet {
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-    var newDto = objectMapper.readValue(req.getInputStream(), NewUserDTO.class);
+    var newDto = objectMapper.readValue(req.getReader(), NewUserDTO.class);
 
     var createdUser = userService.createUser(
         validate(newDto.username()).by(Util.USERNAME).nonnull("Username is required."),
@@ -41,6 +41,6 @@ public class UserCreationServlet extends HttpServlet {
     resp.setContentType("application/json");
     resp.setStatus(HttpStatus.CREATED_201);
     var createdDto = mapStruct.userToUserDto(createdUser);
-    objectMapper.writeValue(resp.getOutputStream(), createdDto);
+    objectMapper.writeValue(resp.getWriter(), createdDto);
   }
 }

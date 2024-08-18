@@ -21,10 +21,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.eclipse.jetty.http.HttpStatus;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
+import java.util.Optional;
 
-import static com.lemondead1.carshopservice.cli.validation.Validated.validate;
+import static com.lemondead1.carshopservice.validation.Validated.validate;
 
 @WebServlet(value = "/users/*", asyncSupported = true)
 @ServletSecurity(httpMethodConstraints = {
@@ -56,26 +58,22 @@ public class UsersByIdServlet extends HttpServlet {
     resp.setContentType("application/json");
 
     if (params.orders) {
-      var sortingString = req.getParameter("sorting");
-
-      OrderSorting sorting;
-
-      if (sortingString == null) {
-        sorting = OrderSorting.CREATED_AT_DESC;
-      } else {
-        try {
-          sorting = OrderSorting.parse(sortingString);
-        } catch (IllegalArgumentException e) {
-          throw new BadRequestException(sortingString + " is not recognized.");
-        }
-      }
+      OrderSorting sorting = Optional.ofNullable(req.getParameter("sorting"))
+                                     .map(s -> {
+                                       try {
+                                         return OrderSorting.parse(s);
+                                       } catch (IllegalArgumentException e) {
+                                         throw new BadRequestException(s + " is not recognized.");
+                                       }
+                                     })
+                                     .orElse(OrderSorting.CREATED_AT_DESC);
 
       var orders = orderService.findClientOrders(params.userId(), sorting);
       var ordersDto = mapStruct.orderListToDtoList(orders);
-      objectMapper.writeValue(resp.getOutputStream(), ordersDto);
+      objectMapper.writeValue(resp.getWriter(), ordersDto);
     } else {
       var userDto = mapStruct.userToUserDto(user);
-      objectMapper.writeValue(resp.getOutputStream(), userDto);
+      objectMapper.writeValue(resp.getWriter(), userDto);
     }
   }
 
@@ -84,10 +82,10 @@ public class UsersByIdServlet extends HttpServlet {
     var params = parseQueryParams(req);
 
     if (params.orders()) {
-      throw new MethodNotAllowedException("Method PATCH is not allowed on user order list.");
+      throw new MethodNotAllowedException("Method POST is not allowed on user order list.");
     }
 
-    var userDto = objectMapper.readValue(req.getInputStream(), NewUserDTO.class);
+    var userDto = objectMapper.readValue(req.getReader(), NewUserDTO.class);
 
     var user = userService.editUser(
         params.userId(),
@@ -100,7 +98,7 @@ public class UsersByIdServlet extends HttpServlet {
 
     var returnUserDto = mapStruct.userToUserDto(user);
     resp.setContentType("application/json");
-    objectMapper.writeValue(resp.getOutputStream(), returnUserDto);
+    objectMapper.writeValue(resp.getWriter(), returnUserDto);
   }
 
   @Override
@@ -120,9 +118,10 @@ public class UsersByIdServlet extends HttpServlet {
     resp.setStatus(HttpStatus.NO_CONTENT_204);
   }
 
-  private record QueryPath(int userId, boolean orders) { }
+  record QueryPath(int userId, boolean orders) { }
 
-  private QueryPath parseQueryParams(HttpServletRequest req) {
+  @VisibleForTesting
+  QueryPath parseQueryParams(HttpServletRequest req) {
     var split = req.getPathInfo().split("/");
 
     boolean orders = false;
@@ -133,7 +132,7 @@ public class UsersByIdServlet extends HttpServlet {
         if ("orders".equals(split[2])) {
           orders = true;
         } else {
-          throw new NotFoundException("User has only orders endpoint.");
+          throw new NotFoundException("User has only orders subresource.");
         }
       case 2:
         int userId;
