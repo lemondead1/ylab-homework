@@ -1,6 +1,7 @@
 package com.lemondead1.carshopservice.service;
 
 import com.lemondead1.carshopservice.annotations.Audited;
+import com.lemondead1.carshopservice.annotations.Timed;
 import com.lemondead1.carshopservice.annotations.Transactional;
 import com.lemondead1.carshopservice.entity.Order;
 import com.lemondead1.carshopservice.entity.User;
@@ -8,13 +9,12 @@ import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;
-import com.lemondead1.carshopservice.exceptions.ForbiddenException;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.exceptions.ConflictException;
+import com.lemondead1.carshopservice.exceptions.ForbiddenException;
 import com.lemondead1.carshopservice.repo.CarRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
 import com.lemondead1.carshopservice.util.Range;
-import com.lemondead1.carshopservice.util.Util;
 import lombok.RequiredArgsConstructor;
 
 import javax.annotation.Nullable;
@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 
+@Timed
 @RequiredArgsConstructor
 public class OrderService {
   private final OrderRepo orders;

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.lemondead1.carshopservice.aspect.AuditedAspect;
 import com.lemondead1.carshopservice.aspect.TransactionalAspect;
 import com.lemondead1.carshopservice.database.DBManager;
+import com.lemondead1.carshopservice.filter.ExceptionTranslatorFilter;
 import com.lemondead1.carshopservice.filter.RequestCaptorFilter;
 import com.lemondead1.carshopservice.repo.CarRepo;
 import com.lemondead1.carshopservice.repo.EventRepo;
@@ -119,6 +120,8 @@ public class CarShopServiceApplication {
     var filter = new RequestCaptorFilter();
     jetty.registerFilter(filter, true);
     Aspects.aspectOf(AuditedAspect.class).setCurrentUserProvider(filter::getCurrentPrincipal);
+
+    jetty.registerFilter(new ExceptionTranslatorFilter(), true);
   }
 
   private DBManager createDBManagerWithConfigs(Properties cfg) {

@@ -94,6 +94,13 @@ public class DBManager {
     }
   }
 
+  /**
+   * Returns a connection assigned to current transaction or assigns a new one and checks its validity.
+   *
+   * @return A connection. It should not be closed.
+   *
+   * @throws DBException if a transaction has not been started from this thread.
+   */
   public Connection getConnection() {
     var transaction = currentTransactions.get();
 
@@ -105,9 +112,10 @@ public class DBManager {
       return transaction.connection;
     }
 
+    log.debug("Assigning a connection to current transaction.");
     Connection taken;
     try {
-      taken = freeConnections.poll(100, TimeUnit.MILLISECONDS);
+      taken = freeConnections.poll(20, TimeUnit.MILLISECONDS);
 
       if (taken == null) {
         log.info("Creating a new connection.");
@@ -125,7 +133,7 @@ public class DBManager {
       }
 
     } catch (InterruptedException | SQLException e) {
-      throw new RuntimeException("Failed to prepare a connection.", e);
+      throw new DBException("Failed to prepare a connection.", e);
     }
     transaction.connection = taken;
     return taken;
@@ -146,7 +154,7 @@ public class DBManager {
       try {
         savepoint = transaction.connection.setSavepoint();
       } catch (SQLException e) {
-        throw new RuntimeException("Failed to set a savepoint.", e);
+        throw new DBException("Failed to set a savepoint.", e);
       }
       transaction.savepoints.push(savepoint);
     }
@@ -172,7 +180,7 @@ public class DBManager {
           returnConnectionToPool(transaction.connection);
           currentTransactions.remove();
         } catch (SQLException e) {
-          log.error("An exception was encountered while rolling back a transaction.", e);
+          throw new DBException("Failed to roll back the transaction.", e);
         }
       } else {
         try {
@@ -181,7 +189,7 @@ public class DBManager {
           returnConnectionToPool(transaction.connection);
           currentTransactions.remove();
         } catch (SQLException e) {
-          log.error("An exception was encountered while committing a transaction.", e);
+          throw new DBException("Failed to commit the transaction.", e);
         }
       }
     } else {
@@ -191,14 +199,14 @@ public class DBManager {
           log.debug("Rolling back to a savepoint.");
           transaction.connection.rollback(lastSavepoint);
         } catch (SQLException e) {
-          log.error("An exception was encountered while rolling back to a savepoint.", e);
+          throw new DBException("Failed to rollback to the savepoint.", e);
         }
       } else {
         try {
           log.debug("Releasing a savepoint.");
           transaction.connection.releaseSavepoint(lastSavepoint);
         } catch (SQLException e) {
-          log.error("An exception was encountered while releasing a savepoint.", e);
+          throw new DBException("Failed to release th savepoint.", e);
         }
       }
     }

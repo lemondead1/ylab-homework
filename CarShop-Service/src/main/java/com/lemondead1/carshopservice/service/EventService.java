@@ -9,6 +9,7 @@ import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.repo.EventRepo;
 import com.lemondead1.carshopservice.util.Range;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -21,6 +22,7 @@ import java.util.Map;
  * It provides convenience methods for both submitting and querying events.
  */
 @Timed
+@Slf4j
 @RequiredArgsConstructor
 public class EventService {
   private final EventRepo events;
@@ -28,6 +30,7 @@ public class EventService {
 
   @Transactional
   public void postEvent(int userId, EventType eventType, Map<String, Object> data) {
+    log.info("Posting a new event: userId={}, type={}, data={}.", userId, eventType, data);
     var now = time.now();
     events.create(now, userId, eventType, data);
   }
@@ -43,7 +46,10 @@ public class EventService {
   }
 
   @Transactional
-  public List<Event> findEvents(Collection<EventType> types, Range<Instant> range, String username, EventSorting sorting) {
+  public List<Event> findEvents(Collection<EventType> types,
+                                Range<Instant> range,
+                                String username,
+                                EventSorting sorting) {
     return events.lookup(EnumSet.copyOf(types), range, username, sorting);
   }
 }

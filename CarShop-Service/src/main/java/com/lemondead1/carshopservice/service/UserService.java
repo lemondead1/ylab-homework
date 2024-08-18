@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
+@Timed
 @RequiredArgsConstructor
 public class UserService {
   private final UserRepo users;
@@ -29,7 +30,6 @@ public class UserService {
     return users.findById(userId);
   }
 
-  @Timed
   @Transactional
   public List<User> lookupUsers(String username,
                                 Collection<UserRole> roles,
@@ -53,7 +53,6 @@ public class UserService {
     return users.create(username, phoneNumber, email, password, role);
   }
 
-  @Timed
   @Transactional
   @Audited(EventType.USER_MODIFIED)
   public User editUser(@Audited.Param("edited_user_id") int userId,

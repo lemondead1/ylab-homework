@@ -1,6 +1,7 @@
 package com.lemondead1.carshopservice.service;
 
 import com.lemondead1.carshopservice.annotations.Audited;
+import com.lemondead1.carshopservice.annotations.Timed;
 import com.lemondead1.carshopservice.annotations.Transactional;
 import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.enums.CarSorting;
@@ -16,6 +17,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+@Timed
 @RequiredArgsConstructor
 public class CarService {
   private final CarRepo cars;

@@ -11,9 +11,13 @@ import jakarta.servlet.http.HttpServlet;
 import org.eclipse.jetty.ee10.webapp.WebAppContext;
 import org.eclipse.jetty.security.authentication.BasicAuthenticator;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.util.resource.ResourceFactory;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class JettyInitializer {
@@ -29,6 +33,11 @@ public class JettyInitializer {
     context.setContextPath("/");
     context.setParentLoaderPriority(true);
 
+    var errorHandler = new ErrorHandler();
+    errorHandler.setShowCauses(false);
+    errorHandler.setShowStacks(false);
+    context.setErrorHandler(errorHandler);
+
     context.getSecurityHandler().setAuthenticator(new BasicAuthenticator());
     context.getSecurityHandler().setLoginService(sessionService);
     context.getSecurityHandler().setRealmName("car-shop");
@@ -41,7 +50,7 @@ public class JettyInitializer {
   }
 
   public void registerServlet(HttpServlet servlet) {
-    //Manually loading annotations since I wanted to support servlet DI.
+    //Manually loading annotations because I want to inject dependencies into servlets.
     var dynamic = context.getServletContext().addServlet(servlet.getClass().getName(), servlet);
     var webServlet = servlet.getClass().getAnnotation(WebServlet.class);
     Objects.requireNonNull(webServlet, "WebServlet annotation is required.");
