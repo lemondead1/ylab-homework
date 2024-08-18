@@ -22,11 +22,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class UserRepoTest {
-  private static final UserRepo users = DBConnector.USER_REPO;
+  private static final UserRepo users = new UserRepo(TestDBConnector.DB_MANAGER);
+
+  @BeforeEach
+  void beforeEach() {
+    TestDBConnector.beforeEach();
+  }
 
   @AfterEach
   void afterEach() {
-    DBConnector.DB_MANAGER.rollback();
+    TestDBConnector.afterEach();
   }
 
   @ParameterizedTest

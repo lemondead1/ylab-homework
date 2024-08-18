@@ -19,7 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.*;
 
-import static com.lemondead1.carshopservice.ObjectMapperHolder.jackson;
+import static com.lemondead1.carshopservice.SharedTestObjects.jackson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;

@@ -26,6 +26,7 @@ public class EventService {
   private final EventRepo events;
   private final TimeService time;
 
+  @Transactional
   public void postEvent(int userId, EventType eventType, Map<String, Object> data) {
     var now = time.now();
     events.create(now, userId, eventType, data);

@@ -25,13 +25,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class OrderRepoTest {
-  private static final CarRepo cars = DBConnector.CAR_REPO;
-  private static final UserRepo users = DBConnector.USER_REPO;
-  private static final OrderRepo orders = DBConnector.ORDER_REPO;
+  private static final CarRepo cars = new CarRepo(TestDBConnector.DB_MANAGER);
+  private static final UserRepo users = new UserRepo(TestDBConnector.DB_MANAGER);
+  private static final OrderRepo orders = new OrderRepo(TestDBConnector.DB_MANAGER);
+
+  @BeforeEach
+  void beforeEach() {
+    TestDBConnector.beforeEach();
+  }
 
   @AfterEach
   void afterEach() {
-    DBConnector.DB_MANAGER.rollback();
+    TestDBConnector.afterEach();
   }
 
   @ParameterizedTest

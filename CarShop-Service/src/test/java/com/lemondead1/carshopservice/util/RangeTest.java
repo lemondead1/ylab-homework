@@ -17,18 +17,15 @@ public class RangeTest {
 
   @ParameterizedTest(name = "new Range({1}, {2}).test({0}) returns {3}.")
   @DisplayName("Testing test")
-  @CsvSource(
-      value = {
-          "10,   null, 0,    false",
-          "0,    null, 0,    true",
-          "2,    0,    5,    true",
-          "10,   0,    5,    false",
-          "10,   0,    null, true",
-          "1000, null, null, true",
-          "1000, null, 999,  false"
-      },
-      nullValues = "null"
-  )
+  @CsvSource(nullValues = "null", value = {
+      "10,   null, 0,    false",
+      "0,    null, 0,    true",
+      "2,    0,    5,    true",
+      "10,   0,    5,    false",
+      "10,   0,    null, true",
+      "1000, null, null, true",
+      "1000, null, 999,  false"
+  })
   public void testTest(Integer value, Integer min, Integer max, boolean expected) {
     assertThat(new Range<>(min, max).test(value)).isEqualTo(expected);
   }

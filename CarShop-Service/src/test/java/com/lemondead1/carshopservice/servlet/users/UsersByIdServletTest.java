@@ -25,7 +25,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-import static com.lemondead1.carshopservice.ObjectMapperHolder.jackson;
+import static com.lemondead1.carshopservice.SharedTestObjects.jackson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;

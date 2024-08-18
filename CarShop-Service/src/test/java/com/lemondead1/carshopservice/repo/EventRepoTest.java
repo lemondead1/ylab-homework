@@ -23,13 +23,18 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class EventRepoTest {
-  private static final EventRepo events = DBConnector.EVENT_REPO;
-  private static final UserRepo users = DBConnector.USER_REPO;
-  private static final ObjectMapper jackson = ObjectMapperHolder.jackson;
+  private static final EventRepo events = new EventRepo(TestDBConnector.DB_MANAGER, SharedTestObjects.jackson);
+  private static final UserRepo users = new UserRepo(TestDBConnector.DB_MANAGER);
+  private static final ObjectMapper jackson = SharedTestObjects.jackson;
+
+  @BeforeEach
+  void beforeEach() {
+    TestDBConnector.beforeEach();
+  }
 
   @AfterEach
   void afterEach() {
-    DBConnector.DB_MANAGER.rollback();
+    TestDBConnector.afterEach();
   }
 
   @Test

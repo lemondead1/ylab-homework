@@ -1,18 +1,21 @@
 package com.lemondead1.carshopservice.repo;
 
-import com.lemondead1.carshopservice.BooleanSetConverter;
-import com.lemondead1.carshopservice.DBConnector;
 import com.lemondead1.carshopservice.IntegerArrayConverter;
 import com.lemondead1.carshopservice.RangeConverter;
+import com.lemondead1.carshopservice.TestDBConnector;
 import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.DBException;
 import com.lemondead1.carshopservice.exceptions.NotFoundException;
 import com.lemondead1.carshopservice.util.Range;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.testcontainers.shaded.org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Comparator;
 import java.util.Set;
@@ -21,11 +24,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class CarRepoTest {
-  private static final CarRepo cars = DBConnector.CAR_REPO;
+  private static final CarRepo cars = new CarRepo(TestDBConnector.DB_MANAGER);
+
+  @BeforeEach
+  void beforeEach() {
+    TestDBConnector.beforeEach();
+  }
 
   @AfterEach
   void afterEach() {
-    DBConnector.DB_MANAGER.rollback();
+    TestDBConnector.afterEach();
   }
 
   @ParameterizedTest(name = "findById({0}) returns Car({0}, {1}, {2}, {3}, {4}, {5}, {6}).")
@@ -136,12 +144,12 @@ public class CarRepoTest {
   }
 
   @ParameterizedTest
-  @CsvSource(value = {
-      "'27, 28, 50, 66, 80, 88', chev, '',  ALL,         ALL,               '',   ALL",
-      "'28, 80',                 '',   cor, ALL,         ALL,               '',   ALL",
-      "'19, 22, 31, 39, 62, 93', '',   '',  2000 - 2001, ALL,               '',   ALL",
-      "'19, 23, 39, 71, 73',     '',   '',  ALL,         3000000 - 3500000, '',   ALL",
-      "'11, 40, 80',             '',   '',  ALL,         0 - 2000000,       good, ALL",
+  @CsvSource(nullValues = "null", value = {
+      "'27, 28, 50, 66, 80, 88', chev, '',  ALL,         ALL,               '',   null",
+      "'28, 80',                 '',   cor, ALL,         ALL,               '',   null",
+      "'19, 22, 31, 39, 62, 93', '',   '',  2000 - 2001, ALL,               '',   null",
+      "'19, 23, 39, 71, 73',     '',   '',  ALL,         3000000 - 3500000, '',   null",
+      "'11, 40, 80',             '',   '',  ALL,         0 - 2000000,       good, null",
       "'90, 96, 97, 100',        '',   '',  ALL,         0 - 2000000,       '',   true",
   })
   @DisplayName("lookup returns entries matching arguments.")
@@ -151,8 +159,9 @@ public class CarRepoTest {
                   @ConvertWith(RangeConverter.class) Range<Integer> year,
                   @ConvertWith(RangeConverter.class) Range<Integer> price,
                   String condition,
-                  @ConvertWith(BooleanSetConverter.class) Set<Boolean> available) {
-    assertThat(cars.lookup(brand, model, year, price, condition, available, CarSorting.NAME_ASC))
+                  @Nullable Boolean available) {
+    var availableSet = available == null ? allBool : Set.of(available);
+    assertThat(cars.lookup(brand, model, year, price, condition, availableSet, CarSorting.NAME_ASC))
         .map(Car::id).containsExactlyInAnyOrder(expectedIds);
   }
 }

@@ -2,6 +2,6 @@ package com.lemondead1.carshopservice;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class ObjectMapperHolder {
+public class SharedTestObjects {
   public static final ObjectMapper jackson = CarShopServiceApplication.createObjectMapper();
 }

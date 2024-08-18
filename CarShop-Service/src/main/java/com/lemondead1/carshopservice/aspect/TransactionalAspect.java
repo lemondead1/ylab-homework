@@ -17,13 +17,13 @@ public class TransactionalAspect {
 
   @Around("annotatedByTransactional()")
   public Object around(ProceedingJoinPoint pjp) throws Throwable {
-    dbManager.startTransaction();
+    dbManager.pushTransaction();
     try {
       var result = pjp.proceed();
-      dbManager.commit();
+      dbManager.popTransaction(false);
       return result;
     } catch (Throwable e) {
-      dbManager.rollback();
+      dbManager.popTransaction(true);
       throw e;
     }
   }

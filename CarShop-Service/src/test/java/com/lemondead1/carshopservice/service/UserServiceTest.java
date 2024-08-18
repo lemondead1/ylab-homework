@@ -1,6 +1,6 @@
 package com.lemondead1.carshopservice.service;
 
-import com.lemondead1.carshopservice.DBConnector;
+import com.lemondead1.carshopservice.TestDBConnector;
 import com.lemondead1.carshopservice.aspect.AuditedAspect;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.EventType;
@@ -26,8 +26,8 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
-  private static final UserRepo users = DBConnector.USER_REPO;
-  private static final OrderRepo orders = DBConnector.ORDER_REPO;
+  private static final UserRepo users = new UserRepo(TestDBConnector.DB_MANAGER);
+  private static final OrderRepo orders = new OrderRepo(TestDBConnector.DB_MANAGER);
 
   @Mock
   EventService eventService;
@@ -38,6 +38,7 @@ public class UserServiceTest {
 
   @BeforeEach
   void beforeEach() {
+    TestDBConnector.beforeEach();
     Aspects.aspectOf(AuditedAspect.class).setCurrentUserProvider(() -> dummyUser);
     Aspects.aspectOf(AuditedAspect.class).setEventService(eventService);
     userService = new UserService(users, orders);
@@ -45,7 +46,7 @@ public class UserServiceTest {
 
   @AfterEach
   void afterEach() {
-    DBConnector.DB_MANAGER.rollback();
+    TestDBConnector.afterEach();
   }
 
   @Test

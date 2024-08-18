@@ -85,8 +85,7 @@ public class CarShopServiceApplication {
     mapStruct = new MapStructImpl();
 
     dbManager = createDBManagerWithConfigs(configs);
-    dbManager.populateConnectionPool();
-    dbManager.setupDatabase();
+    dbManager.migrateDatabase();
 
     userRepo = new UserRepo(dbManager);
     eventRepo = new EventRepo(dbManager, objectMapper);

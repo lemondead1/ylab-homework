@@ -11,6 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Savepoint;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -18,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * This class manages JDBC connection pool and ongoing transactions.
  * It turned out to be pretty complicated.
- * However, it still does not support nested transactions.
+ * However, now it supports nested transactions.
  */
 @Slf4j
 public class DBManager {
@@ -28,7 +31,6 @@ public class DBManager {
   private final String schema;
   private final String liquibaseSchema;
   private final String changelogPath;
-  private final int connectionPoolSize;
 
   private final ThreadLocal<ThreadTransaction> currentTransactions = new ThreadLocal<>();
   private final BlockingQueue<Connection> freeConnections;
@@ -46,7 +48,6 @@ public class DBManager {
     this.schema = schema;
     this.liquibaseSchema = liquibaseSchema;
     this.changelogPath = changelogPath;
-    this.connectionPoolSize = connectionPoolSize;
     freeConnections = new ArrayBlockingQueue<>(connectionPoolSize);
   }
 
@@ -66,21 +67,16 @@ public class DBManager {
     }
 
     resetConnection(conn);
-    freeConnections.add(conn);
-  }
-
-  public void populateConnectionPool() {
-    try {
-      for (int i = 0; i < connectionPoolSize; i++) {
-        returnConnectionToPool(createConnection());
-      }
-    } catch (SQLException e) {
-      throw new DBException("Failed to initialize connection pool.", e);
+    if (freeConnections.offer(conn)) {
+      log.debug("Returned a transaction to the pool.");
+    } else {
+      conn.close();
+      log.debug("Closing an excess connection.");
     }
   }
 
-  public void setupDatabase() {
-    startTransaction();
+  public void migrateDatabase() {
+    pushTransaction();
     var conn = getConnection();
     try (var stmt = conn.createStatement()) {
       stmt.execute("create schema if not exists " + schema);
@@ -92,7 +88,7 @@ public class DBManager {
 
       var liquibase = new Liquibase(changelogPath, new ClassLoaderResourceAccessor(), database);
       liquibase.update();
-      commit();
+      popTransaction(false);
     } catch (SQLException | LiquibaseException e) {
       throw new DBException("Failed to init the database", e);
     }
@@ -114,67 +110,103 @@ public class DBManager {
       taken = freeConnections.poll(100, TimeUnit.MILLISECONDS);
 
       if (taken == null) {
-        log.warn("A connection was leaked.");
+        log.info("Creating a new connection.");
         taken = resetConnection(createConnection());
       } else if (!taken.isValid(5)) {
         taken.close();
         log.warn("A connection has been broken.");
         taken = resetConnection(createConnection());
       }
+
+      for (int i = 0; i < transaction.startingSavepointDepth; i++) {
+        log.debug("Setting a late savepoint.");
+        var savepoint = taken.setSavepoint();
+        transaction.savepoints.push(savepoint);
+      }
+
     } catch (InterruptedException | SQLException e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException("Failed to prepare a connection.", e);
     }
     transaction.connection = taken;
     return taken;
   }
 
-  public void startTransaction() {
-    log.debug("Starting a transaction.");
-    if (currentTransactions.get() != null) {
-      log.warn("Previous transaction has not been closed.");
-    }
-    currentTransactions.set(new ThreadTransaction());
-  }
+  public void pushTransaction() {
+    ThreadTransaction transaction = currentTransactions.get();
 
-  public void commit() {
-    log.debug("Committing a transaction.");
-    var transaction = currentTransactions.get();
     if (transaction == null) {
-      log.warn("A commit was called from a thread which has not started any transactions.");
-      return;
-    }
-    if (transaction.connection == null) {
-      return;
-    }
-    try {
-      transaction.connection.commit();
-      returnConnectionToPool(transaction.connection);
-      currentTransactions.remove();
-    } catch (SQLException e) {
-      log.error("An exception was encountered while committing a transaction.", e);
+      log.debug("Creating a new transaction.");
+      currentTransactions.set(new ThreadTransaction());
+    } else if (transaction.connection == null) {
+      log.debug("Scheduling savepoint creation.");
+      transaction.startingSavepointDepth++;
+    } else {
+      log.debug("Setting a savepoint.");
+      Savepoint savepoint;
+      try {
+        savepoint = transaction.connection.setSavepoint();
+      } catch (SQLException e) {
+        throw new RuntimeException("Failed to set a savepoint.", e);
+      }
+      transaction.savepoints.push(savepoint);
     }
   }
 
-  public void rollback() {
-    log.debug("Rolling back a transaction.");
+  public void popTransaction(boolean rollback) {
     var transaction = currentTransactions.get();
     if (transaction == null) {
-      log.warn("A rollback was called from a thread which has not started any connections.");
-      return;
-    }
-    if (transaction.connection == null) {
-      return;
-    }
-    try {
-      transaction.connection.rollback();
-      returnConnectionToPool(transaction.connection);
-      currentTransactions.remove();
-    } catch (SQLException e) {
-      log.error("An exception was encountered while rolling back a transaction.", e);
+      log.warn("A pop was called from a thread which has not started any transactions.");
+    } else if (transaction.connection == null) {
+      if (transaction.startingSavepointDepth > 0) {
+        log.debug("Popping a scheduled savepoint.");
+        transaction.startingSavepointDepth--;
+      } else {
+        log.debug("Removing an unused transaction.");
+        currentTransactions.remove();
+      }
+    } else if (transaction.savepoints.isEmpty()) {
+      if (rollback) {
+        try {
+          log.debug("Rolling back a transaction.");
+          transaction.connection.rollback();
+          returnConnectionToPool(transaction.connection);
+          currentTransactions.remove();
+        } catch (SQLException e) {
+          log.error("An exception was encountered while rolling back a transaction.", e);
+        }
+      } else {
+        try {
+          log.debug("Committing a transaction.");
+          transaction.connection.commit();
+          returnConnectionToPool(transaction.connection);
+          currentTransactions.remove();
+        } catch (SQLException e) {
+          log.error("An exception was encountered while committing a transaction.", e);
+        }
+      }
+    } else {
+      var lastSavepoint = transaction.savepoints.pop();
+      if (rollback) {
+        try {
+          log.debug("Rolling back to a savepoint.");
+          transaction.connection.rollback(lastSavepoint);
+        } catch (SQLException e) {
+          log.error("An exception was encountered while rolling back to a savepoint.", e);
+        }
+      } else {
+        try {
+          log.debug("Releasing a savepoint.");
+          transaction.connection.releaseSavepoint(lastSavepoint);
+        } catch (SQLException e) {
+          log.error("An exception was encountered while releasing a savepoint.", e);
+        }
+      }
     }
   }
 
   private static class ThreadTransaction {
     private Connection connection;
+    private int startingSavepointDepth = 0;
+    private final Deque<Savepoint> savepoints = new ArrayDeque<>();
   }
 }

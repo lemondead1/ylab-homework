@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * Adds transaction creation and commit/rollback logic to the method.
- * Unfortunately, it does not support nested transactions.
+ * Supports nested transactions.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
