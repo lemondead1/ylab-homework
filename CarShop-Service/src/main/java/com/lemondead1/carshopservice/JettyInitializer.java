@@ -12,6 +12,7 @@ import org.eclipse.jetty.ee10.webapp.WebAppContext;
 import org.eclipse.jetty.security.authentication.BasicAuthenticator;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ErrorHandler;
+import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.resource.ResourceFactory;
 
 import java.util.Arrays;
@@ -27,7 +28,7 @@ public class JettyInitializer {
     context = new WebAppContext();
 
     var resourceFactory = ResourceFactory.of(context);
-    var webResource = resourceFactory.newClassLoaderResource("web.xml");
+    Resource webResource = resourceFactory.newClassLoaderResource("web.xml");
 
     context.setBaseResource(webResource);
     context.setContextPath("/");
@@ -52,7 +53,7 @@ public class JettyInitializer {
   public void registerServlet(HttpServlet servlet) {
     //Manually loading annotations because I want to inject dependencies into servlets.
     var dynamic = context.getServletContext().addServlet(servlet.getClass().getName(), servlet);
-    var webServlet = servlet.getClass().getAnnotation(WebServlet.class);
+    WebServlet webServlet = servlet.getClass().getAnnotation(WebServlet.class);
     Objects.requireNonNull(webServlet, "WebServlet annotation is required.");
     dynamic.addMapping(webServlet.value());
     dynamic.setAsyncSupported(webServlet.asyncSupported());
@@ -67,7 +68,7 @@ public class JettyInitializer {
 
   public void registerFilter(HttpFilter filter, boolean matchAfter) {
     var dynamic = context.getServletContext().addFilter(filter.getClass().getName(), filter);
-    var webFilter = filter.getClass().getAnnotation(WebFilter.class);
+    WebFilter webFilter = filter.getClass().getAnnotation(WebFilter.class);
     Objects.requireNonNull(webFilter, "WebFilter annotation is required.");
     dynamic.setInitParameters(Arrays.stream(webFilter.initParams())
                                     .collect(Collectors.toMap(WebInitParam::name, WebInitParam::value)));

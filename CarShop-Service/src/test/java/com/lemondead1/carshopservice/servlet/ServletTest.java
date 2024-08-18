@@ -1,8 +1,6 @@
 package com.lemondead1.carshopservice.servlet;
 
 import com.lemondead1.carshopservice.entity.User;
-import com.lemondead1.carshopservice.util.MapStruct;
-import com.lemondead1.carshopservice.util.MapStructImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,8 +16,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class ServletTest {
-  protected final MapStruct mapStruct = new MapStructImpl();
-
   @Mock
   protected HttpServletRequest request;
 

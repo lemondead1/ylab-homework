@@ -7,8 +7,6 @@ import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.util.MapStruct;
 import com.lemondead1.carshopservice.util.MapStructImpl;
 import com.lemondead1.carshopservice.util.Util;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +15,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.*;
+import java.io.IOException;
+import java.util.Map;
 
 import static com.lemondead1.carshopservice.SharedTestObjects.jackson;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,15 +24,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class SignupServletTest {
+public class SignupServletTest extends ServletTest {
   @Mock
   SessionService session;
-
-  @Mock
-  HttpServletRequest request;
-
-  @Mock
-  HttpServletResponse response;
 
   MapStruct mapStruct = new MapStructImpl();
 
@@ -54,10 +47,7 @@ public class SignupServletTest {
         user.username(), user.phoneNumber(), user.email(), user.password()
     );
 
-    var responseBody = new StringWriter();
-
-    when(request.getReader()).thenReturn(new BufferedReader(new StringReader(requestBody)));
-    when(response.getWriter()).thenReturn(new PrintWriter(responseBody));
+    mockReqResp(null, true, requestBody, null, Map.of());
     when(session.signUserUp(user.username(), user.phoneNumber(), user.email(), user.password())).thenReturn(user);
 
     servlet.doPost(request, response);

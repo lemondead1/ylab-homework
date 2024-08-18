@@ -4,6 +4,7 @@ import com.lemondead1.carshopservice.dto.user.ExistingUserDTO;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.service.UserService;
+import com.lemondead1.carshopservice.servlet.ServletTest;
 import com.lemondead1.carshopservice.util.MapStruct;
 import com.lemondead1.carshopservice.util.MapStructImpl;
 import com.lemondead1.carshopservice.util.Util;
@@ -18,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.*;
+import java.util.Map;
 
 import static com.lemondead1.carshopservice.SharedTestObjects.jackson;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,15 +27,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class UserCreationServletTest {
+public class UserCreationServletTest extends ServletTest {
   @Mock
   UserService userService;
-
-  @Mock
-  HttpServletRequest request;
-
-  @Mock
-  HttpServletResponse response;
 
   MapStruct mapStruct = new MapStructImpl();
 
@@ -54,10 +50,7 @@ public class UserCreationServletTest {
         user.username(), user.phoneNumber(), user.email(), user.password(), user.role().getId()
     );
 
-    var responseBody = new StringWriter();
-
-    when(request.getReader()).thenReturn(new BufferedReader(new StringReader(requestBody)));
-    when(response.getWriter()).thenReturn(new PrintWriter(responseBody));
+    mockReqResp(null, true, requestBody, null, Map.of());
     when(userService.createUser(user.username(), user.phoneNumber(), user.email(), user.password(), user.role()))
         .thenReturn(user);
 

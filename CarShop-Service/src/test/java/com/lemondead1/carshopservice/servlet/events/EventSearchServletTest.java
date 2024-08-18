@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.lemondead1.carshopservice.SharedTestObjects.jackson;
+import static com.lemondead1.carshopservice.SharedTestObjects.mapStruct;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;

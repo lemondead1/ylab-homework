@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.util.Map;
 
 import static com.lemondead1.carshopservice.SharedTestObjects.jackson;
+import static com.lemondead1.carshopservice.SharedTestObjects.mapStruct;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;

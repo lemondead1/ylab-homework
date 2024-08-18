@@ -32,6 +32,7 @@ import com.lemondead1.carshopservice.util.MapStructImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.Aspects;
 import org.eclipse.jetty.server.Server;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -57,23 +58,12 @@ public class CarShopServiceApplication {
 
   private final Server jetty;
 
-  public static ObjectMapper createObjectMapper() {
-    var objectMapper = new ObjectMapper();
-    objectMapper.registerModule(new HasIdModule());
-    objectMapper.registerModule(new JavaTimeModule());
-    objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-    objectMapper.enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
-    objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    return objectMapper;
-  }
-
   public CarShopServiceApplication(Properties configs) {
     objectMapper = createObjectMapper();
 
     mapStruct = new MapStructImpl();
 
     dbManager = createDBManagerWithConfigs(configs);
-    dbManager.migrateDatabase();
 
     userRepo = new UserRepo(dbManager);
     eventRepo = new EventRepo(dbManager, objectMapper);
@@ -100,8 +90,20 @@ public class CarShopServiceApplication {
   }
 
   private void run() throws Exception {
+    dbManager.migrateDatabase();
     jetty.start();
     jetty.join();
+  }
+
+  @VisibleForTesting
+  static ObjectMapper createObjectMapper() {
+    var objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new HasIdModule());
+    objectMapper.registerModule(new JavaTimeModule());
+    objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+    objectMapper.enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
+    objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    return objectMapper;
   }
 
   private void registerWeb(JettyInitializer jetty) {
@@ -135,13 +137,13 @@ public class CarShopServiceApplication {
   }
 
   public static void main(String[] args) throws Exception {
-    var configs = readConfigs();
+    Properties configs = readConfigs();
     var app = new CarShopServiceApplication(configs);
     app.run();
   }
 
   private static Properties readConfigs() throws IOException {
-    var cfg = new Properties();
+    Properties cfg = new Properties();
     try (var reader = ClassLoader.getSystemResourceAsStream("config.properties")) {
       cfg.load(reader);
     }

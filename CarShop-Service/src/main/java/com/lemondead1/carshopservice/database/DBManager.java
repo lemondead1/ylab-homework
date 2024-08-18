@@ -98,7 +98,6 @@ public class DBManager {
    * Returns a connection assigned to current transaction or assigns a new one and checks its validity.
    *
    * @return A connection. It should not be closed.
-   *
    * @throws DBException if a transaction has not been started from this thread.
    */
   public Connection getConnection() {
@@ -126,7 +125,7 @@ public class DBManager {
         taken = resetConnection(createConnection());
       }
 
-      for (int i = 0; i < transaction.startingSavepointDepth; i++) {
+      for (int i = 0; i < transaction.savepointDepth; i++) {
         log.debug("Setting a late savepoint.");
         var savepoint = taken.setSavepoint();
         transaction.savepoints.push(savepoint);
@@ -139,6 +138,9 @@ public class DBManager {
     return taken;
   }
 
+  /**
+   * Creates a new transaction or adds a savepoint lazily.
+   */
   public void pushTransaction() {
     ThreadTransaction transaction = currentTransactions.get();
 
@@ -147,7 +149,7 @@ public class DBManager {
       currentTransactions.set(new ThreadTransaction());
     } else if (transaction.connection == null) {
       log.debug("Scheduling savepoint creation.");
-      transaction.startingSavepointDepth++;
+      transaction.savepointDepth++;
     } else {
       log.debug("Setting a savepoint.");
       Savepoint savepoint;
@@ -160,14 +162,19 @@ public class DBManager {
     }
   }
 
+  /**
+   * Commits/rolls back latest transaction/savepoint.
+   *
+   * @param rollback {@code true} to rollback.
+   */
   public void popTransaction(boolean rollback) {
     var transaction = currentTransactions.get();
     if (transaction == null) {
       log.warn("A pop was called from a thread which has not started any transactions.");
     } else if (transaction.connection == null) {
-      if (transaction.startingSavepointDepth > 0) {
+      if (transaction.savepointDepth > 0) {
         log.debug("Popping a scheduled savepoint.");
-        transaction.startingSavepointDepth--;
+        transaction.savepointDepth--;
       } else {
         log.debug("Removing an unused transaction.");
         currentTransactions.remove();
@@ -214,7 +221,7 @@ public class DBManager {
 
   private static class ThreadTransaction {
     private Connection connection;
-    private int startingSavepointDepth = 0;
+    private int savepointDepth = 0;
     private final Deque<Savepoint> savepoints = new ArrayDeque<>();
   }
 }
