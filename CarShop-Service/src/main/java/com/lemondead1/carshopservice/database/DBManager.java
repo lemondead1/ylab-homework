@@ -19,9 +19,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
- * This class manages JDBC connection pool and ongoing transactions.
- * It turned out to be pretty complicated.
- * However, now it supports nested transactions.
+ * This class manages a JDBC connection pool and ongoing transactions.
+ * The connection pool is populated lazily, up to {@code connectionPoolSize} connections.
+ * Supports nested connections.
  */
 @Slf4j
 public class DBManager {
@@ -75,6 +75,16 @@ public class DBManager {
     }
   }
 
+  public void closeConnectionPool() {
+    while (!freeConnections.isEmpty()) {
+      try {
+        freeConnections.poll().close();
+      } catch (SQLException e) {
+        throw new DBException("Failed to close a connection.", e);
+      }
+    }
+  }
+
   public void migrateDatabase() {
     pushTransaction();
     var conn = getConnection();
@@ -125,10 +135,10 @@ public class DBManager {
         taken = resetConnection(createConnection());
       }
 
-      for (int i = 0; i < transaction.savepointDepth; i++) {
+      //Adding savepoints lazily
+      for (int i = transaction.savepoints.size(); i < transaction.savepointDepth; i++) {
         log.debug("Setting a late savepoint.");
-        var savepoint = taken.setSavepoint();
-        transaction.savepoints.push(savepoint);
+        transaction.savepoints.push(taken.setSavepoint());
       }
 
     } catch (InterruptedException | SQLException e) {
@@ -147,18 +157,9 @@ public class DBManager {
     if (transaction == null) {
       log.debug("Creating a new transaction.");
       currentTransactions.set(new ThreadTransaction());
-    } else if (transaction.connection == null) {
+    } else {
       log.debug("Scheduling savepoint creation.");
       transaction.savepointDepth++;
-    } else {
-      log.debug("Setting a savepoint.");
-      Savepoint savepoint;
-      try {
-        savepoint = transaction.connection.setSavepoint();
-      } catch (SQLException e) {
-        throw new DBException("Failed to set a savepoint.", e);
-      }
-      transaction.savepoints.push(savepoint);
     }
   }
 
@@ -171,50 +172,64 @@ public class DBManager {
     var transaction = currentTransactions.get();
     if (transaction == null) {
       log.warn("A pop was called from a thread which has not started any transactions.");
-    } else if (transaction.connection == null) {
-      if (transaction.savepointDepth > 0) {
+      return;
+    }
+
+    if (transaction.savepointDepth > 0) {
+      transaction.savepointDepth--;
+
+      if (transaction.savepoints.size() > transaction.savepointDepth) {
+        var lastSavepoint = transaction.savepoints.pop();
+        if (rollback) {
+          try {
+            log.debug("Rolling back to a savepoint.");
+            transaction.connection.rollback(lastSavepoint);
+            transaction.connection.releaseSavepoint(lastSavepoint);
+          } catch (SQLException e) {
+            throw new DBException("Failed to rollback to the savepoint.", e);
+          }
+        } else {
+          try {
+            log.debug("Releasing a savepoint.");
+            transaction.connection.releaseSavepoint(lastSavepoint);
+          } catch (SQLException e) {
+            throw new DBException("Failed to release th savepoint.", e);
+          }
+        }
+      } else {
         log.debug("Popping a scheduled savepoint.");
-        transaction.savepointDepth--;
-      } else {
-        log.debug("Removing an unused transaction.");
-        currentTransactions.remove();
       }
-    } else if (transaction.savepoints.isEmpty()) {
-      if (rollback) {
-        try {
-          log.debug("Rolling back a transaction.");
-          transaction.connection.rollback();
-          returnConnectionToPool(transaction.connection);
-          currentTransactions.remove();
-        } catch (SQLException e) {
-          throw new DBException("Failed to roll back the transaction.", e);
-        }
-      } else {
-        try {
-          log.debug("Committing a transaction.");
-          transaction.connection.commit();
-          returnConnectionToPool(transaction.connection);
-          currentTransactions.remove();
-        } catch (SQLException e) {
-          throw new DBException("Failed to commit the transaction.", e);
-        }
+
+      if (transaction.savepoints.size() > transaction.savepointDepth) {
+        throw new DBException("Savepoint stack is broken.");
       }
     } else {
-      var lastSavepoint = transaction.savepoints.pop();
-      if (rollback) {
+      currentTransactions.remove();
+
+      if (transaction.connection != null) {
+        if (rollback) {
+          try {
+            log.debug("Rolling back a transaction.");
+            transaction.connection.rollback();
+          } catch (SQLException e) {
+            throw new DBException("Failed to roll back the transaction.", e);
+          }
+        } else {
+          try {
+            log.debug("Committing a transaction.");
+            transaction.connection.commit();
+          } catch (SQLException e) {
+            throw new DBException("Failed to commit the transaction.", e);
+          }
+        }
+
         try {
-          log.debug("Rolling back to a savepoint.");
-          transaction.connection.rollback(lastSavepoint);
+          returnConnectionToPool(transaction.connection);
         } catch (SQLException e) {
-          throw new DBException("Failed to rollback to the savepoint.", e);
+          log.error("Failed to return the connection to the pool.", e);
         }
       } else {
-        try {
-          log.debug("Releasing a savepoint.");
-          transaction.connection.releaseSavepoint(lastSavepoint);
-        } catch (SQLException e) {
-          throw new DBException("Failed to release th savepoint.", e);
-        }
+        log.debug("Removing an unused a transaction.");
       }
     }
   }

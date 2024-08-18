@@ -93,6 +93,7 @@ public class CarShopServiceApplication {
     dbManager.migrateDatabase();
     jetty.start();
     jetty.join();
+    dbManager.closeConnectionPool();
   }
 
   @VisibleForTesting
