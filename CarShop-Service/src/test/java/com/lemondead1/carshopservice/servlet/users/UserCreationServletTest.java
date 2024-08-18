@@ -8,8 +8,6 @@ import com.lemondead1.carshopservice.servlet.ServletTest;
 import com.lemondead1.carshopservice.util.MapStruct;
 import com.lemondead1.carshopservice.util.MapStructImpl;
 import com.lemondead1.carshopservice.util.Util;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.*;
+import java.io.IOException;
 import java.util.Map;
 
 import static com.lemondead1.carshopservice.SharedTestObjects.jackson;
