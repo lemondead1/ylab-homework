@@ -50,7 +50,11 @@ public class AuditedAspect {
       if (arg == null) {
         continue;
       }
-      arguments.put(audited.argNames[i], arg);
+      if (audited.onlyPresence[i]) {
+        arguments.put(audited.argNames[i], true);
+      } else {
+        arguments.put(audited.argNames[i], arg);
+      }
     }
     eventService.postEvent(currentUser.id(), type, arguments);
   }
@@ -61,6 +65,7 @@ public class AuditedAspect {
 
     List<String> argNames = new ArrayList<>();
     List<Integer> argIndices = new ArrayList<>();
+    List<Boolean> onlyPresence = new ArrayList<>();
     for (int i = 0; i < method.getParameterCount(); i++) {
       var parameter = method.getParameters()[i];
 
@@ -68,13 +73,25 @@ public class AuditedAspect {
         var name = parameter.getAnnotation(Audited.Param.class).value();
         argIndices.add(i);
         argNames.add(name);
+        onlyPresence.add(false);
+      } else if (parameter.isAnnotationPresent(Audited.PresenceCheck.class)) {
+        var name = parameter.getAnnotation(Audited.PresenceCheck.class).value();
+        argIndices.add(i);
+        argNames.add(name);
+        onlyPresence.add(true);
       }
+    }
+
+    boolean[] onlyPresenceArr = new boolean[onlyPresence.size()];
+    for (int i = 0; i < onlyPresenceArr.length; i++) {
+      onlyPresenceArr[i] = onlyPresence.get(i);
     }
     return new AuditedMethod(type,
                              argIndices.size(),
                              argNames.toArray(new String[0]),
-                             argIndices.stream().mapToInt(Integer::intValue).toArray());
+                             argIndices.stream().mapToInt(Integer::intValue).toArray(),
+                             onlyPresenceArr);
   }
 
-  private record AuditedMethod(EventType type, int auditedArgumentCount, String[] argNames, int[] argIndices) { }
+  private record AuditedMethod(EventType type, int auditedArgumentCount, String[] argNames, int[] argIndices, boolean[] onlyPresence) { }
 }
