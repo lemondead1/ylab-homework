@@ -8,6 +8,7 @@ import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.Nonnull;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -58,7 +59,7 @@ public class DBManager {
   }
 
   private Connection createConnection() throws SQLException {
-    return DriverManager.getConnection(url, user, password);
+    return resetConnection(DriverManager.getConnection(url, user, password));
   }
 
   private void returnConnectionToPool(Connection conn) throws SQLException {
@@ -118,35 +119,7 @@ public class DBManager {
       throw new DBException("No transaction has been started.");
     }
 
-    if (transaction.connection != null) {
-      return transaction.connection;
-    }
-
-    log.debug("Assigning a connection to current transaction.");
-    Connection taken;
-    try {
-      taken = freeConnections.poll(20, TimeUnit.MILLISECONDS);
-
-      if (taken == null) {
-        log.info("Establishing a new connection.");
-        taken = resetConnection(createConnection());
-      } else if (!taken.isValid(5)) {
-        taken.close();
-        log.warn("A connection has been broken.");
-        taken = resetConnection(createConnection());
-      }
-
-      //Adding savepoints lazily
-      for (int i = transaction.savepoints.size(); i < transaction.savepointDepth; i++) {
-        log.debug("Setting a late savepoint.");
-        transaction.savepoints.push(taken.setSavepoint());
-      }
-
-    } catch (InterruptedException | SQLException e) {
-      throw new DBException("Failed to prepare a connection.", e);
-    }
-    transaction.connection = taken;
-    return taken;
+    return transaction.getConnection();
   }
 
   /**
@@ -159,8 +132,7 @@ public class DBManager {
       log.debug("Creating a new transaction.");
       currentTransactions.set(new ThreadTransaction());
     } else {
-      log.debug("Scheduling savepoint creation.");
-      transaction.savepointDepth++;
+      transaction.push();
     }
   }
 
@@ -175,57 +147,75 @@ public class DBManager {
       log.warn("A pop was called from a thread which has not started any transactions.");
       return;
     }
+    transaction.pop(rollback);
+  }
 
-    if (transaction.savepointDepth > 0) {
-      transaction.savepointDepth--;
+  private class ThreadTransaction {
+    private Connection connection;
+    private int savepointDepth = 0;
+    private final Deque<Savepoint> savepoints = new ArrayDeque<>();
 
-      if (transaction.savepoints.size() > transaction.savepointDepth) {
-        var lastSavepoint = transaction.savepoints.pop();
+    private void push() {
+      log.debug("Scheduling a savepoint creation.");
+      savepointDepth++;
+    }
+
+    private void pop(boolean rollback) {
+      if (savepointDepth > 0) {
+        popSavepoint(rollback);
+      } else {
+        popTransaction(rollback);
+      }
+    }
+
+    private void popSavepoint(boolean rollback) {
+      savepointDepth--;
+
+      if (savepoints.size() > savepointDepth) {
+        Savepoint lastSavepoint = savepoints.pop();
         if (rollback) {
           try {
-            log.debug("Rolling back to a savepoint.");
-            transaction.connection.rollback(lastSavepoint);
-            transaction.connection.releaseSavepoint(lastSavepoint);
+            log.debug("Rolling back to the savepoint.");
+            connection.rollback(lastSavepoint);
+            connection.releaseSavepoint(lastSavepoint);
           } catch (SQLException e) {
             throw new DBException("Failed to rollback to the savepoint.", e);
           }
         } else {
           try {
-            log.debug("Releasing a savepoint.");
-            transaction.connection.releaseSavepoint(lastSavepoint);
+            log.debug("Releasing the savepoint.");
+            connection.releaseSavepoint(lastSavepoint);
           } catch (SQLException e) {
-            throw new DBException("Failed to release th savepoint.", e);
+            throw new DBException("Failed to release the savepoint.", e);
           }
         }
       } else {
         log.debug("Popping a scheduled savepoint.");
       }
+    }
 
-      if (transaction.savepoints.size() > transaction.savepointDepth) {
-        throw new DBException("Savepoint stack is broken.");
-      }
-    } else {
+    private void popTransaction(boolean rollback) {
       currentTransactions.remove();
 
-      if (transaction.connection != null) {
+      if (connection != null) {
         if (rollback) {
           try {
             log.debug("Rolling back a transaction.");
-            transaction.connection.rollback();
+            connection.rollback();
           } catch (SQLException e) {
             throw new DBException("Failed to roll back the transaction.", e);
           }
         } else {
           try {
             log.debug("Committing a transaction.");
-            transaction.connection.commit();
+            connection.commit();
           } catch (SQLException e) {
             throw new DBException("Failed to commit the transaction.", e);
           }
         }
 
         try {
-          returnConnectionToPool(transaction.connection);
+          returnConnectionToPool(connection);
         } catch (SQLException e) {
           log.error("Failed to return the connection to the pool.", e);
         }
@@ -233,11 +223,37 @@ public class DBManager {
         log.debug("Removing an unused a transaction.");
       }
     }
-  }
 
-  private static class ThreadTransaction {
-    private Connection connection;
-    private int savepointDepth = 0;
-    private final Deque<Savepoint> savepoints = new ArrayDeque<>();
+    @Nonnull
+    private Connection getConnection() {
+      if (connection != null) {
+        return connection;
+      }
+
+      log.debug("Assigning a connection to the current transaction.");
+      try {
+        Connection taken = freeConnections.poll(20, TimeUnit.MILLISECONDS);
+
+        if (taken == null) {
+          log.info("Establishing a new connection.");
+          taken = createConnection();
+        } else if (!taken.isValid(5)) {
+          taken.close();
+          log.warn("A connection has been broken.");
+          taken = createConnection();
+        }
+
+        //Adding scheduled savepoints
+        for (int i = savepoints.size(); i < savepointDepth; i++) {
+          log.debug("Setting a late savepoint.");
+          savepoints.push(taken.setSavepoint());
+        }
+
+        connection = taken;
+        return taken;
+      } catch (InterruptedException | SQLException e) {
+        throw new DBException("Failed to prepare a connection.", e);
+      }
+    }
   }
 }
