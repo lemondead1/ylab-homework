@@ -49,6 +49,7 @@ public class OrderService {
     return orders.create(time.now(), kind, state, clientId, carId, comments);
   }
 
+  @Transactional
   public Order findById(int orderId) {
     return orders.findById(orderId);
   }
