@@ -1,7 +1,9 @@
 package com.lemondead1.carshopservice.servlet.users;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lemondead1.carshopservice.dto.user.ExistingUserDTO;
 import com.lemondead1.carshopservice.dto.user.NewUserDTO;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.service.UserService;
 import com.lemondead1.carshopservice.util.MapStruct;
 import com.lemondead1.carshopservice.util.Util;
@@ -28,9 +30,9 @@ public class UserCreationServlet extends HttpServlet {
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-    var newDto = objectMapper.readValue(req.getReader(), NewUserDTO.class);
+    NewUserDTO newDto = objectMapper.readValue(req.getReader(), NewUserDTO.class);
 
-    var createdUser = userService.createUser(
+    User createdUser = userService.createUser(
         validate(newDto.username()).by(Util.USERNAME).nonnull("Username is required."),
         validate(newDto.phoneNumber()).by(Util.PHONE_NUMBER).nonnull("Phone number is required."),
         validate(newDto.email()).by(Util.EMAIL).nonnull("Email is required."),
@@ -40,7 +42,7 @@ public class UserCreationServlet extends HttpServlet {
 
     resp.setContentType("application/json");
     resp.setStatus(HttpStatus.CREATED_201);
-    var createdDto = mapStruct.userToUserDto(createdUser);
+    ExistingUserDTO createdDto = mapStruct.userToUserDto(createdUser);
     objectMapper.writeValue(resp.getWriter(), createdDto);
   }
 }

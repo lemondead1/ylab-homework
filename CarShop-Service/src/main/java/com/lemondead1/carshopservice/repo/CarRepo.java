@@ -47,7 +47,7 @@ public class CarRepo {
       var generatedKeys = stmt.getGeneratedKeys();
       generatedKeys.next();
 
-      var generatedId = generatedKeys.getInt(1);
+      int generatedId = generatedKeys.getInt(1);
 
       return new Car(generatedId, brand, model, productionYear, price, condition, true);
     } catch (SQLException e) {

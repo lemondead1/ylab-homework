@@ -1,7 +1,9 @@
 package com.lemondead1.carshopservice.servlet.cars;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lemondead1.carshopservice.dto.car.ExistingCarDTO;
 import com.lemondead1.carshopservice.dto.car.NewCarDTO;
+import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.exceptions.BadRequestException;
 import com.lemondead1.carshopservice.service.CarService;
 import com.lemondead1.carshopservice.util.MapStruct;
@@ -36,8 +38,8 @@ public class CarsByIdServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     int id = parseCarId(req);
-    var car = carService.findById(id);
-    var carDto = mapStruct.carToCarDto(car);
+    Car car = carService.findById(id);
+    ExistingCarDTO carDto = mapStruct.carToCarDto(car);
     resp.setContentType("application/json");
     objectMapper.writeValue(resp.getWriter(), carDto);
   }
@@ -45,8 +47,8 @@ public class CarsByIdServlet extends HttpServlet {
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     int id = parseCarId(req);
-    var receivedCarDto = objectMapper.readValue(req.getReader(), NewCarDTO.class);
-    var newCar = carService.editCar(
+    NewCarDTO receivedCarDto = objectMapper.readValue(req.getReader(), NewCarDTO.class);
+    Car newCar = carService.editCar(
         id,
         receivedCarDto.brand(),
         receivedCarDto.model(),
@@ -55,7 +57,7 @@ public class CarsByIdServlet extends HttpServlet {
         receivedCarDto.condition()
     );
 
-    var newCarDto = mapStruct.carToCarDto(newCar);
+    ExistingCarDTO newCarDto = mapStruct.carToCarDto(newCar);
     resp.setContentType("application/json");
     objectMapper.writeValue(resp.getWriter(), newCarDto);
   }
@@ -63,7 +65,7 @@ public class CarsByIdServlet extends HttpServlet {
   @Override
   protected void doDelete(HttpServletRequest req, HttpServletResponse resp) {
     int id = parseCarId(req);
-    var cascade = "true".equals(req.getParameter("cascade"));
+    boolean cascade = "true".equals(req.getParameter("cascade"));
     if (cascade) {
       carService.deleteCarCascading(id);
     } else {
@@ -74,7 +76,7 @@ public class CarsByIdServlet extends HttpServlet {
 
   @VisibleForTesting
   int parseCarId(HttpServletRequest req) {
-    var split = req.getPathInfo().split("/");
+    String[] split = req.getPathInfo().split("/");
     if (split.length < 2) {
       throw new BadRequestException("Car id must be specified.");
     }

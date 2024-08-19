@@ -2,6 +2,8 @@ package com.lemondead1.carshopservice.servlet.cars;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lemondead1.carshopservice.dto.car.CarQueryDTO;
+import com.lemondead1.carshopservice.dto.car.ExistingCarDTO;
+import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.service.CarService;
 import com.lemondead1.carshopservice.util.MapStruct;
@@ -13,6 +15,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -27,9 +30,9 @@ public class CarSearchServlet extends HttpServlet {
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-    var query = objectMapper.readValue(req.getReader(), CarQueryDTO.class);
+    CarQueryDTO query = objectMapper.readValue(req.getReader(), CarQueryDTO.class);
 
-    var result = carService.lookupCars(
+    List<Car> result = carService.lookupCars(
         coalesce(query.brand(), ""),
         coalesce(query.model(), ""),
         coalesce(query.productionYear(), Range.all()),
@@ -39,7 +42,7 @@ public class CarSearchServlet extends HttpServlet {
         coalesce(query.sorting(), CarSorting.NAME_ASC)
     );
 
-    var resultDto = mapStruct.carListToDtoList(result);
+    List<ExistingCarDTO> resultDto = mapStruct.carListToDtoList(result);
     resp.setContentType("application/json");
     objectMapper.writeValue(resp.getWriter(), resultDto);
   }

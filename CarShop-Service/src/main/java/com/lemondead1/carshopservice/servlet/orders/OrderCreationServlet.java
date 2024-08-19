@@ -1,7 +1,9 @@
 package com.lemondead1.carshopservice.servlet.orders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lemondead1.carshopservice.dto.order.ExistingOrderDTO;
 import com.lemondead1.carshopservice.dto.order.NewOrderDTO;
+import com.lemondead1.carshopservice.entity.Order;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderState;
@@ -32,9 +34,9 @@ public class OrderCreationServlet extends HttpServlet {
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-    var currentUser = (User) req.getUserPrincipal();
+    User currentUser = (User) req.getUserPrincipal();
 
-    var newOrderDto = objectMapper.readValue(req.getReader(), NewOrderDTO.class);
+    NewOrderDTO newOrderDto = objectMapper.readValue(req.getReader(), NewOrderDTO.class);
 
     if (currentUser.role() == UserRole.CLIENT) {
       if (newOrderDto.clientId() != null && newOrderDto.clientId() != currentUser.id()) {
@@ -45,7 +47,7 @@ public class OrderCreationServlet extends HttpServlet {
       }
     }
 
-    var createdOrder = orderService.createOrder(
+    Order createdOrder = orderService.createOrder(
         validate(newOrderDto.clientId()).orElse(currentUser.id()),
         validate(newOrderDto.carId()).nonnull("Car id is required."),
         validate(newOrderDto.kind()).orElse(OrderKind.PURCHASE),
@@ -55,7 +57,7 @@ public class OrderCreationServlet extends HttpServlet {
 
     resp.setStatus(HttpStatus.CREATED_201);
     resp.setContentType("application/json");
-    var createdOrderDto = mapStruct.orderToOrderDto(createdOrder);
+    ExistingOrderDTO createdOrderDto = mapStruct.orderToOrderDto(createdOrder);
     objectMapper.writeValue(resp.getWriter(), createdOrderDto);
   }
 }

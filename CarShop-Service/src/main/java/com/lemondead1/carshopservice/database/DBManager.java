@@ -115,7 +115,7 @@ public class DBManager {
     ThreadTransaction transaction = currentTransactions.get();
 
     if (transaction == null) {
-      throw new DBException("A transaction has not been started.");
+      throw new DBException("No transaction has been started.");
     }
 
     if (transaction.connection != null) {

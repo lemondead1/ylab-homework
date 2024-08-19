@@ -2,6 +2,7 @@ package com.lemondead1.carshopservice.servlet.orders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lemondead1.carshopservice.dto.order.EditOrderDTO;
+import com.lemondead1.carshopservice.dto.order.ExistingOrderDTO;
 import com.lemondead1.carshopservice.entity.Order;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.OrderState;
@@ -40,23 +41,23 @@ public class OrdersByIdServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     int id = parseOrderId(req);
-    var currentUser = (User) req.getUserPrincipal();
+    User currentUser = (User) req.getUserPrincipal();
 
-    var order = orderService.findById(id);
+    Order order = orderService.findById(id);
     if (currentUser.role() == UserRole.CLIENT && order.client().id() != currentUser.id()) {
       throw new ForbiddenException("Clients cannot view other users' orders.");
     }
 
     resp.setContentType("application/json");
-    var orderDto = mapStruct.orderToOrderDto(order);
+    ExistingOrderDTO orderDto = mapStruct.orderToOrderDto(order);
     objectMapper.writeValue(resp.getWriter(), orderDto);
   }
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     int id = parseOrderId(req);
-    var currentUser = (User) req.getUserPrincipal();
-    var editDto = objectMapper.readValue(req.getReader(), EditOrderDTO.class);
+    User currentUser = (User) req.getUserPrincipal();
+    EditOrderDTO editDto = objectMapper.readValue(req.getReader(), EditOrderDTO.class);
 
     Order editedOrder;
 
@@ -76,7 +77,7 @@ public class OrdersByIdServlet extends HttpServlet {
     }
 
     resp.setContentType("application/json");
-    var editedDto = mapStruct.orderToOrderDto(editedOrder);
+    ExistingOrderDTO editedDto = mapStruct.orderToOrderDto(editedOrder);
     objectMapper.writeValue(resp.getWriter(), editedDto);
   }
 
@@ -89,7 +90,7 @@ public class OrdersByIdServlet extends HttpServlet {
 
   @VisibleForTesting
   int parseOrderId(HttpServletRequest req) {
-    var split = req.getPathInfo().split("/");
+    String[] split = req.getPathInfo().split("/");
     if (split.length < 2) {
       throw new BadRequestException("Order id must be specified.");
     }

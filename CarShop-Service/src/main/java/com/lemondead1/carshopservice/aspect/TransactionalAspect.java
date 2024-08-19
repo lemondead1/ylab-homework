@@ -19,7 +19,7 @@ public class TransactionalAspect {
   public Object around(ProceedingJoinPoint pjp) throws Throwable {
     dbManager.pushTransaction();
     try {
-      var result = pjp.proceed();
+      Object result = pjp.proceed();
       dbManager.popTransaction(false);
       return result;
     } catch (Throwable e) {

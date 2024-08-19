@@ -85,7 +85,7 @@ public class CarShopServiceApplication {
 
     registerWeb(jettyInitializer);
 
-    var port = Integer.parseInt(configs.getProperty("port"));
+    int port = Integer.parseInt(configs.getProperty("port"));
     jetty = jettyInitializer.createJetty(port);
   }
 

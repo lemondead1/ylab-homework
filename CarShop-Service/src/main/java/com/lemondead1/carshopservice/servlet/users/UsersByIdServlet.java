@@ -1,7 +1,10 @@
 package com.lemondead1.carshopservice.servlet.users;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lemondead1.carshopservice.dto.order.ExistingOrderDTO;
+import com.lemondead1.carshopservice.dto.user.ExistingUserDTO;
 import com.lemondead1.carshopservice.dto.user.NewUserDTO;
+import com.lemondead1.carshopservice.entity.Order;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.UserRole;
@@ -24,6 +27,7 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 import static com.lemondead1.carshopservice.validation.Validated.validate;
@@ -43,21 +47,21 @@ public class UsersByIdServlet extends HttpServlet {
 
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-    var params = parseQueryParams(req);
-    var currentUser = (User) req.getUserPrincipal();
+    QueryPath path = parseQueryParams(req);
+    User currentUser = (User) req.getUserPrincipal();
 
     User user;
-    if (params.userId() == currentUser.id()) {
+    if (path.userId() == currentUser.id()) {
       user = currentUser;
     } else if (currentUser.role() == UserRole.CLIENT) {
       throw new ForbiddenException("Clients can only query their own profiles.");
     } else {
-      user = userService.findById(params.userId());
+      user = userService.findById(path.userId());
     }
 
     resp.setContentType("application/json");
 
-    if (params.orders) {
+    if (path.orders) {
       OrderSorting sorting = Optional.ofNullable(req.getParameter("sorting"))
                                      .map(s -> {
                                        try {
@@ -68,27 +72,27 @@ public class UsersByIdServlet extends HttpServlet {
                                      })
                                      .orElse(OrderSorting.CREATED_AT_DESC);
 
-      var orders = orderService.findClientOrders(params.userId(), sorting);
-      var ordersDto = mapStruct.orderListToDtoList(orders);
+      List<Order> orders = orderService.findClientOrders(path.userId(), sorting);
+      List<ExistingOrderDTO> ordersDto = mapStruct.orderListToDtoList(orders);
       objectMapper.writeValue(resp.getWriter(), ordersDto);
     } else {
-      var userDto = mapStruct.userToUserDto(user);
+      ExistingUserDTO userDto = mapStruct.userToUserDto(user);
       objectMapper.writeValue(resp.getWriter(), userDto);
     }
   }
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-    var params = parseQueryParams(req);
+    QueryPath path = parseQueryParams(req);
 
-    if (params.orders()) {
+    if (path.orders()) {
       throw new MethodNotAllowedException("Method POST is not allowed on user order list.");
     }
 
-    var userDto = objectMapper.readValue(req.getReader(), NewUserDTO.class);
+    NewUserDTO userDto = objectMapper.readValue(req.getReader(), NewUserDTO.class);
 
-    var user = userService.editUser(
-        params.userId(),
+    User user = userService.editUser(
+        path.userId(),
         validate(userDto.username()).by(Util.USERNAME).orNull(),
         validate(userDto.phoneNumber()).by(Util.PHONE_NUMBER).orNull(),
         validate(userDto.email()).by(Util.EMAIL).orNull(),
@@ -96,14 +100,14 @@ public class UsersByIdServlet extends HttpServlet {
         userDto.role()
     );
 
-    var returnUserDto = mapStruct.userToUserDto(user);
+    ExistingUserDTO returnUserDto = mapStruct.userToUserDto(user);
     resp.setContentType("application/json");
     objectMapper.writeValue(resp.getWriter(), returnUserDto);
   }
 
   @Override
   protected void doDelete(HttpServletRequest req, HttpServletResponse resp) {
-    var params = parseQueryParams(req);
+    QueryPath params = parseQueryParams(req);
 
     if (params.orders()) {
       throw new MethodNotAllowedException("Method DELETE is not allowed on user order list.");
@@ -122,7 +126,7 @@ public class UsersByIdServlet extends HttpServlet {
 
   @VisibleForTesting
   QueryPath parseQueryParams(HttpServletRequest req) {
-    var split = req.getPathInfo().split("/");
+    String[] split = req.getPathInfo().split("/");
 
     boolean orders = false;
     switch (split.length) {

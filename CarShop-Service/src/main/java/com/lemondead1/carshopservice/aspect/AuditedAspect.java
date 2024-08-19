@@ -42,11 +42,11 @@ public class AuditedAspect {
     }
 
     var method = ((MethodSignature) jp.getSignature()).getMethod();
-    var audited = auditedMethodCache.computeIfAbsent(method, this::preprocessMethod);
-    var type = audited.type;
+    AuditedMethod audited = auditedMethodCache.computeIfAbsent(method, this::preprocessMethod);
+    EventType type = audited.type;
     Map<String, Object> arguments = new LinkedHashMap<>();
     for (int i = 0; i < audited.auditedArgumentCount; i++) {
-      var arg = jp.getArgs()[audited.argIndices[i]];
+      Object arg = jp.getArgs()[audited.argIndices[i]];
       if (arg == null) {
         continue;
       }
@@ -61,7 +61,7 @@ public class AuditedAspect {
 
   private AuditedMethod preprocessMethod(Method method) {
     var annotation = method.getAnnotation(Audited.class);
-    var type = annotation.value();
+    EventType type = annotation.value();
 
     List<String> argNames = new ArrayList<>();
     List<Integer> argIndices = new ArrayList<>();
@@ -93,5 +93,9 @@ public class AuditedAspect {
                              onlyPresenceArr);
   }
 
-  private record AuditedMethod(EventType type, int auditedArgumentCount, String[] argNames, int[] argIndices, boolean[] onlyPresence) { }
+  private record AuditedMethod(EventType type,
+                               int auditedArgumentCount,
+                               String[] argNames,
+                               int[] argIndices,
+                               boolean[] onlyPresence) { }
 }

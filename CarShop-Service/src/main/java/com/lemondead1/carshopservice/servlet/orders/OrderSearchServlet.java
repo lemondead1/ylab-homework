@@ -1,7 +1,9 @@
 package com.lemondead1.carshopservice.servlet.orders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lemondead1.carshopservice.dto.order.ExistingOrderDTO;
 import com.lemondead1.carshopservice.dto.order.OrderQueryDTO;
+import com.lemondead1.carshopservice.entity.Order;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;
@@ -32,9 +34,9 @@ public class OrderSearchServlet extends HttpServlet {
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-    var queryDto = objectMapper.readValue(req.getReader(), OrderQueryDTO.class);
+    OrderQueryDTO queryDto = objectMapper.readValue(req.getReader(), OrderQueryDTO.class);
 
-    var result = orderService.lookupOrders(
+    List<Order> result = orderService.lookupOrders(
         coalesce(queryDto.dates(), Range.all()),
         coalesce(queryDto.username(), ""),
         coalesce(queryDto.carBrand(), ""),
@@ -45,7 +47,7 @@ public class OrderSearchServlet extends HttpServlet {
     );
 
     resp.setContentType("application/json");
-    var resultDto = mapStruct.orderListToDtoList(result);
+    List<ExistingOrderDTO> resultDto = mapStruct.orderListToDtoList(result);
     objectMapper.writeValue(resp.getWriter(), resultDto);
   }
 }

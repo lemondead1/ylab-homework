@@ -31,8 +31,7 @@ public class EventService {
   @Transactional
   public void postEvent(int userId, EventType eventType, Map<String, Object> data) {
     log.info("Posting a new event: userId={}, type={}, data={}.", userId, eventType, data);
-    var now = time.now();
-    events.create(now, userId, eventType, data);
+    events.create(time.now(), userId, eventType, data);
   }
 
   public void onUserLoggedIn(int userId) {

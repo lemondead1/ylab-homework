@@ -18,7 +18,7 @@ public class RequestCaptorFilter extends HttpFilter {
 
   @Nullable
   public User getCurrentPrincipal() {
-    var request = requests.get();
+    HttpServletRequest request = requests.get();
     if (request == null) {
       throw new IllegalStateException("No request is available.");
     }

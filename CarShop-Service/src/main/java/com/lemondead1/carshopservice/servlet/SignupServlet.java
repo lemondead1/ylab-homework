@@ -2,6 +2,8 @@ package com.lemondead1.carshopservice.servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lemondead1.carshopservice.dto.SignupDTO;
+import com.lemondead1.carshopservice.dto.user.ExistingUserDTO;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.service.SessionService;
 import com.lemondead1.carshopservice.util.MapStruct;
 import com.lemondead1.carshopservice.util.Util;
@@ -25,16 +27,16 @@ public class SignupServlet extends HttpServlet {
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-    var signup = objectMapper.readValue(req.getReader(), SignupDTO.class);
+    SignupDTO signup = objectMapper.readValue(req.getReader(), SignupDTO.class);
 
-    var user = sessionService.signUserUp(
+    User user = sessionService.signUserUp(
         validate(signup.username()).by(Util.USERNAME).nonnull("Username is required"),
         validate(signup.phoneNumber()).by(Util.PHONE_NUMBER).nonnull("Phone number is required"),
         validate(signup.email()).by(Util.EMAIL).nonnull("Email is required"),
         validate(signup.password()).by(Util.PASSWORD).nonnull("Password is required")
     );
 
-    var userDto = mapStruct.userToUserDto(user);
+    ExistingUserDTO userDto = mapStruct.userToUserDto(user);
 
     resp.setStatus(HttpStatus.CREATED_201);
     resp.setContentType("application/json");

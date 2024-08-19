@@ -1,7 +1,9 @@
 package com.lemondead1.carshopservice.servlet.cars;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lemondead1.carshopservice.dto.car.ExistingCarDTO;
 import com.lemondead1.carshopservice.dto.car.NewCarDTO;
+import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.service.CarService;
 import com.lemondead1.carshopservice.util.MapStruct;
 import com.lemondead1.carshopservice.util.Util;
@@ -29,9 +31,9 @@ public class CarCreationServlet extends HttpServlet {
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-    var newCarDto = objectMapper.readValue(req.getReader(), NewCarDTO.class);
+    NewCarDTO newCarDto = objectMapper.readValue(req.getReader(), NewCarDTO.class);
 
-    var createdCar = carService.createCar(
+    Car createdCar = carService.createCar(
         validate(newCarDto.brand()).nonnull("Brand is required."),
         validate(newCarDto.model()).nonnull("Model is required."),
         validate(newCarDto.productionYear()).by(PastYearValidator.INSTANCE).nonnull("Production year is required."),
@@ -41,7 +43,7 @@ public class CarCreationServlet extends HttpServlet {
 
     resp.setContentType("application/json");
     resp.setStatus(HttpStatus.CREATED_201);
-    var createdCarDto = mapStruct.carToCarDto(createdCar);
+    ExistingCarDTO createdCarDto = mapStruct.carToCarDto(createdCar);
     objectMapper.writeValue(resp.getWriter(), createdCarDto);
   }
 }

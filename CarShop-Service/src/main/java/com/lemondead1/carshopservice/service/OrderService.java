@@ -74,7 +74,7 @@ public class OrderService {
   @Transactional
   @Audited(EventType.ORDER_DELETED)
   public void deleteOrder(@Audited.Param("order_id") int orderId) {
-    var old = orders.findById(orderId);
+    Order old = orders.findById(orderId);
     if (old.type() == OrderKind.PURCHASE) {
       checkNoServiceOrdersExist(old.client().id(), old.car().id());
     }
@@ -94,7 +94,7 @@ public class OrderService {
   public Order updateState(@Audited.Param("order_id") int orderId,
                            @Audited.Param("new_state") @Nullable OrderState newState,
                            @Audited.Param("appended_comment") String appendComment) {
-    var oldOrder = orders.findById(orderId);
+    Order oldOrder = orders.findById(orderId);
 
     if (oldOrder.state() == OrderState.DONE && oldOrder.type() == OrderKind.PURCHASE &&
         newState != null && newState != OrderState.DONE) {
@@ -108,7 +108,7 @@ public class OrderService {
   @Audited(EventType.ORDER_MODIFIED)
   public Order cancel(@Audited.Param("order_id") int orderId,
                       @Audited.Param("appended_comment") String appendComment) {
-    var oldOrder = orders.findById(orderId);
+    Order oldOrder = orders.findById(orderId);
     return switch (oldOrder.state()) {
       case CANCELLED -> throw new ConflictException("This order has already been cancelled.");
       case DONE -> throw new ConflictException("You cannot cancel finished orders.");

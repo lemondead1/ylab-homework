@@ -32,7 +32,7 @@ public class Util {
 
     int index = 0;
 
-    var startedPlaceholder = false;
+    boolean startedPlaceholder = false;
 
     for (int i = 0; i < template.length(); i++) {
       var ch = template.charAt(i);

@@ -17,7 +17,7 @@ public class TimedAspect {
 
   @Around("methodsWithTimed() || methodsInClassesWithTimed()")
   public Object around(ProceedingJoinPoint pjp) throws Throwable {
-    log.debug("Entering {}", pjp.getSignature().getName());
+    log.debug("Entering {}.{}", pjp.getSignature().getDeclaringTypeName(), pjp.getSignature().getName());
     long startNanoTime = System.nanoTime();
     try {
       return pjp.proceed();

@@ -1,7 +1,9 @@
 package com.lemondead1.carshopservice.servlet.users;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lemondead1.carshopservice.dto.user.ExistingUserDTO;
 import com.lemondead1.carshopservice.dto.user.UserQueryDTO;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.enums.UserSorting;
 import com.lemondead1.carshopservice.service.UserService;
@@ -16,6 +18,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
+import java.util.List;
 
 import static com.lemondead1.carshopservice.util.Util.coalesce;
 
@@ -29,9 +32,9 @@ public class UserSearchServlet extends HttpServlet {
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-    var query = objectMapper.readValue(req.getReader(), UserQueryDTO.class);
+    UserQueryDTO query = objectMapper.readValue(req.getReader(), UserQueryDTO.class);
 
-    var searchResult = users.lookupUsers(
+    List<User> searchResult = users.lookupUsers(
         coalesce(query.username(), ""),
         coalesce(query.roles(), UserRole.ALL),
         coalesce(query.phoneNumber(), ""),
@@ -40,7 +43,7 @@ public class UserSearchServlet extends HttpServlet {
         coalesce(query.sorting(), UserSorting.USERNAME_ASC)
     );
 
-    var searchResultDto = mapStruct.userToUserDtoList(searchResult);
+    List<ExistingUserDTO> searchResultDto = mapStruct.userToUserDtoList(searchResult);
 
     resp.setContentType("application/json");
     objectMapper.writeValue(resp.getWriter(), searchResultDto);

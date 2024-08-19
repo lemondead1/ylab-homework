@@ -42,7 +42,7 @@ public class SessionService extends AbstractLoginService {
                             Object credentials,
                             Request request,
                             Function<Boolean, Session> getOrCreateSession) {
-    var login = super.login(username, credentials, request, getOrCreateSession);
+    UserIdentity login = super.login(username, credentials, request, getOrCreateSession);
     if (login == null) {
       return null;
     }

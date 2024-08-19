@@ -54,7 +54,7 @@ public class EventRepo {
       var results = stmt.getGeneratedKeys();
       results.next();
 
-      var id = results.getInt(1);
+      int id = results.getInt(1);
 
       return new Event(id, timestamp, userId, type, json);
     } catch (SQLException e) {

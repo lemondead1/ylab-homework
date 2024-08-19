@@ -46,7 +46,7 @@ public class UserRepo {
       var results = stmt.getGeneratedKeys();
       results.next();
 
-      var id = results.getInt(1);
+      int id = results.getInt(1);
 
       return new User(id, username, phoneNumber, email, password, role, 0);
     } catch (SQLException e) {

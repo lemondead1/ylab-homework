@@ -52,7 +52,7 @@ public class HasIdModule extends SimpleModule {
     @SuppressWarnings("unchecked")
     public T deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
       var id = p.getValueAsString();
-      var found = idMap.get(id);
+      T found = idMap.get(id);
       if (found == null) {
         return (T) ctxt.handleWeirdStringValue(clazz, id, "Wrong value: '%s'.", id);
       }
