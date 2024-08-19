@@ -5,6 +5,9 @@ import com.lemondead1.carshopservice.exceptions.ValidationException;
 import javax.annotation.RegEx;
 import java.util.regex.Pattern;
 
+/**
+ * Validates a string against a regex pattern.
+ */
 public class PatternValidator implements Validator<String> {
   private final Pattern pattern;
 

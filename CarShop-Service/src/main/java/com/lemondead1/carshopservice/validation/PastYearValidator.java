@@ -8,6 +8,9 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.function.Supplier;
 
+/**
+ * Checks if the values is a past year.
+ */
 @RequiredArgsConstructor
 public class PastYearValidator implements Validator<Integer> {
   public static PastYearValidator INSTANCE = new PastYearValidator(Instant::now);

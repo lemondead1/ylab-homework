@@ -24,6 +24,7 @@ public class JettyInitializer {
 
   public JettyInitializer(SessionService sessionService) {
     context = new WebAppContext();
+    //Removing unused configurations
     context.setConfigurationClasses(new String[] {});
 
     context.setContextPath("/");
@@ -45,8 +46,12 @@ public class JettyInitializer {
     return server;
   }
 
+  /**
+   * Registers the servlet, processing the WebServlet and ServletSecurity annotations.
+   *
+   * @param servlet The servlet to be registered
+   */
   public void registerServlet(HttpServlet servlet) {
-    //Manually loading annotations because I want to inject dependencies into servlets.
     var dynamic = context.getServletContext().addServlet(servlet.getClass().getName(), servlet);
     WebServlet webServlet = servlet.getClass().getAnnotation(WebServlet.class);
     Objects.requireNonNull(webServlet, "WebServlet annotation is required.");
@@ -61,6 +66,12 @@ public class JettyInitializer {
     }
   }
 
+  /**
+   * Registers the filter, processing the WebFilter annotation.
+   *
+   * @param filter     The filter to be registered
+   * @param matchAfter If true the filter is matched after the registered filters
+   */
   public void registerFilter(HttpFilter filter, boolean matchAfter) {
     var dynamic = context.getServletContext().addFilter(filter.getClass().getName(), filter);
     WebFilter webFilter = filter.getClass().getAnnotation(WebFilter.class);

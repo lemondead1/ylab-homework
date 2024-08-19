@@ -3,6 +3,9 @@ package com.lemondead1.carshopservice.util;
 import javax.annotation.Nullable;
 import java.util.function.Predicate;
 
+/**
+ * An inclusive range. Nulls are assumed to be infinite values.
+ */
 public record Range<T extends Comparable<T>>(@Nullable T min, @Nullable T max) implements Predicate<T> {
   private static final Range<?> all = new Range<>(null, null);
 

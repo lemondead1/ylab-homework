@@ -64,6 +64,11 @@ public class UserService {
     return users.edit(userId, username, phoneNumber, email, password, role);
   }
 
+  /**
+   * Deletes the user by id.
+   *
+   * @throws CascadingException if there exists an order referencing this user
+   */
   @Transactional
   @Audited(EventType.USER_DELETED)
   public void deleteUser(@Audited.Param("deleted_user_id") int userId) {
@@ -74,6 +79,9 @@ public class UserService {
     users.delete(userId);
   }
 
+  /**
+   * Deletes the user and related orders.
+   */
   @Transactional
   @Audited(EventType.USER_DELETED)
   public void deleteUserCascading(@Audited.Param("deleted_user_id") int userId) {

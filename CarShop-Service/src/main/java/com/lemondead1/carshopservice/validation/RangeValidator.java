@@ -4,6 +4,9 @@ import com.lemondead1.carshopservice.exceptions.ValidationException;
 
 import javax.annotation.Nullable;
 
+/**
+ * Validates if the values is in an inclusive range.
+ */
 public record RangeValidator<T extends Comparable<T>>(@Nullable T min, @Nullable T max) implements Validator<T> {
   public RangeValidator {
     if (min != null && max != null && min.compareTo(max) > 0) {

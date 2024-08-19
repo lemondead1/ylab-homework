@@ -45,6 +45,9 @@ public class UsersByIdServlet extends HttpServlet {
   private final MapStruct mapStruct;
   private final ObjectMapper objectMapper;
 
+  /**
+   * Responds with the user's orders if /orders is appended.
+   */
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     QueryPath path = parseQueryParams(req);

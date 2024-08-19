@@ -44,6 +44,9 @@ public class CarsByIdServlet extends HttpServlet {
     objectMapper.writeValue(resp.getWriter(), carDto);
   }
 
+  /**
+   * Modifies the car according to the received dto.
+   */
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     int id = parseCarId(req);

@@ -53,6 +53,10 @@ public class OrdersByIdServlet extends HttpServlet {
     objectMapper.writeValue(resp.getWriter(), orderDto);
   }
 
+  /**
+   * Edits an orders' state and comment by id.
+   * Changing the car and client fields would be quite problematic.
+   */
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     int id = parseOrderId(req);

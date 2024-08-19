@@ -44,6 +44,11 @@ public class CarService {
     return cars.edit(carId, brand, model, productionYear, price, condition);
   }
 
+  /**
+   * Deletes the car by id.
+   *
+   * @throws CascadingException if there exists an order referencing this car
+   */
   @Transactional
   @Audited(EventType.CAR_DELETED)
   public void deleteCar(@Audited.Param("car_id") int carId) {
@@ -54,6 +59,9 @@ public class CarService {
     cars.delete(carId);
   }
 
+  /**
+   * Deletes the car and related orders.
+   */
   @Transactional
   @Audited(EventType.CAR_DELETED)
   public void deleteCarCascading(@Audited.Param("car_id") int carId) {
