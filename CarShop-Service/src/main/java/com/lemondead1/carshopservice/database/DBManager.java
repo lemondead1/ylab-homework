@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * This class manages a JDBC connection pool and ongoing transactions.
  * The connection pool is populated lazily, up to {@code connectionPoolSize} connections.
- * Supports nested connections.
+ * Supports nested transactions.
  */
 @Slf4j
 public class DBManager {
@@ -53,6 +53,7 @@ public class DBManager {
 
   private Connection resetConnection(Connection conn) throws SQLException {
     conn.setSchema(schema);
+    conn.setAutoCommit(false);
     return conn;
   }
 
@@ -68,7 +69,7 @@ public class DBManager {
 
     resetConnection(conn);
     if (freeConnections.offer(conn)) {
-      log.debug("Returned a connection to the pool.");
+      log.debug("Returned the connection to the pool.");
     } else {
       conn.close();
       log.debug("Closing an excess connection.");
@@ -111,7 +112,7 @@ public class DBManager {
    * @throws DBException if a transaction has not been started from this thread.
    */
   public Connection getConnection() {
-    var transaction = currentTransactions.get();
+    ThreadTransaction transaction = currentTransactions.get();
 
     if (transaction == null) {
       throw new DBException("A transaction has not been started.");
@@ -127,7 +128,7 @@ public class DBManager {
       taken = freeConnections.poll(20, TimeUnit.MILLISECONDS);
 
       if (taken == null) {
-        log.info("Creating a new connection.");
+        log.info("Establishing a new connection.");
         taken = resetConnection(createConnection());
       } else if (!taken.isValid(5)) {
         taken.close();
