@@ -12,8 +12,6 @@ import org.eclipse.jetty.ee10.webapp.WebAppContext;
 import org.eclipse.jetty.security.authentication.BasicAuthenticator;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ErrorHandler;
-import org.eclipse.jetty.util.resource.Resource;
-import org.eclipse.jetty.util.resource.ResourceFactory;
 
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -26,11 +24,8 @@ public class JettyInitializer {
 
   public JettyInitializer(SessionService sessionService) {
     context = new WebAppContext();
+    context.setConfigurationClasses(new String[] {});
 
-    var resourceFactory = ResourceFactory.of(context);
-    Resource webResource = resourceFactory.newClassLoaderResource("web.xml");
-
-    context.setBaseResource(webResource);
     context.setContextPath("/");
     context.setParentLoaderPriority(true);
 

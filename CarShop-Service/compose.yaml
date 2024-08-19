@@ -15,5 +15,3 @@ services:
       - POSTGRES_PASSWORD=some_password
       - POSTGRES_DB=car_shop
     restart: unless-stopped
-    ports:
-      - "5432:5432"
