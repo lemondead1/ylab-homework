@@ -52,7 +52,7 @@ public class SessionService extends AbstractLoginService {
 
   @Override
   protected List<RolePrincipal> loadRoleInfo(UserPrincipal user) {
-    return List.of(((User) user).role());
+    return List.of(((User) user).role().toPrincipal());
   }
 
   @Override

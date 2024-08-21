@@ -171,56 +171,58 @@ public class DBManager {
     private void popSavepoint(boolean rollback) {
       savepointDepth--;
 
-      if (savepoints.size() > savepointDepth) {
-        Savepoint lastSavepoint = savepoints.pop();
-        if (rollback) {
-          try {
-            log.debug("Rolling back to the savepoint.");
-            connection.rollback(lastSavepoint);
-            connection.releaseSavepoint(lastSavepoint);
-          } catch (SQLException e) {
-            throw new DBException("Failed to rollback to the savepoint.", e);
-          }
-        } else {
-          try {
-            log.debug("Releasing the savepoint.");
-            connection.releaseSavepoint(lastSavepoint);
-          } catch (SQLException e) {
-            throw new DBException("Failed to release the savepoint.", e);
-          }
+      if (savepoints.size() <= savepointDepth) {
+        log.debug("Popping a scheduled savepoint.");
+        return;
+      }
+
+      Savepoint lastSavepoint = savepoints.pop();
+      if (rollback) {
+        try {
+          log.debug("Rolling back to the savepoint.");
+          connection.rollback(lastSavepoint);
+          connection.releaseSavepoint(lastSavepoint);
+        } catch (SQLException e) {
+          throw new DBException("Failed to rollback to the savepoint.", e);
         }
       } else {
-        log.debug("Popping a scheduled savepoint.");
+        try {
+          log.debug("Releasing the savepoint.");
+          connection.releaseSavepoint(lastSavepoint);
+        } catch (SQLException e) {
+          throw new DBException("Failed to release the savepoint.", e);
+        }
       }
     }
 
     private void popTransaction(boolean rollback) {
       currentTransactions.remove();
 
-      if (connection != null) {
-        if (rollback) {
-          try {
-            log.debug("Rolling back a transaction.");
-            connection.rollback();
-          } catch (SQLException e) {
-            throw new DBException("Failed to roll back the transaction.", e);
-          }
-        } else {
-          try {
-            log.debug("Committing a transaction.");
-            connection.commit();
-          } catch (SQLException e) {
-            throw new DBException("Failed to commit the transaction.", e);
-          }
-        }
+      if (connection == null) {
+        log.debug("Removing an unused a transaction.");
+        return;
+      }
 
+      if (rollback) {
         try {
-          returnConnectionToPool(connection);
+          log.debug("Rolling back a transaction.");
+          connection.rollback();
         } catch (SQLException e) {
-          log.error("Failed to return the connection to the pool.", e);
+          throw new DBException("Failed to roll back the transaction.", e);
         }
       } else {
-        log.debug("Removing an unused a transaction.");
+        try {
+          log.debug("Committing a transaction.");
+          connection.commit();
+        } catch (SQLException e) {
+          throw new DBException("Failed to commit the transaction.", e);
+        }
+      }
+
+      try {
+        returnConnectionToPool(connection);
+      } catch (SQLException e) {
+        log.error("Failed to return the connection to the pool.", e);
       }
     }
 

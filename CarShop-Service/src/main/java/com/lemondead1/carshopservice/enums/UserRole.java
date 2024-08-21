@@ -8,29 +8,28 @@ import org.eclipse.jetty.security.RolePrincipal;
 import java.util.List;
 import java.util.Map;
 
-/**
- * It's a shame they decided to make RolePrincipal a class.
- * However, I'll leave UserRole in the enums package anyway.
- */
 @Getter
-public class UserRole extends RolePrincipal implements HasId, Comparable<UserRole> {
-  public static final UserRole CLIENT = new UserRole(0, "client", "Client");
-  public static final UserRole MANAGER = new UserRole(1, "manager", "Manager");
-  public static final UserRole ADMIN = new UserRole(2, "admin", "Admin");
+public enum UserRole implements HasId, Comparable<UserRole> {
+  CLIENT("client", "Client"),
+  MANAGER("manager", "Manager"),
+  ADMIN("admin", "Admin");
 
   public static final List<UserRole> ALL = List.of(CLIENT, MANAGER, ADMIN);
 
   private static final Map<String, UserRole> idToEnum = Util.createIdToValueMap(CLIENT, MANAGER, ADMIN);
 
-  private final int ordinal;
   private final String id;
   private final String prettyName;
+  private final RolePrincipal principal;
 
-  private UserRole(int ordinal, String name, String prettyName) {
-    super(name);
-    this.ordinal = ordinal;
+  UserRole(String name, String prettyName) {
     this.id = name;
     this.prettyName = prettyName;
+    this.principal = new RolePrincipal(name);
+  }
+
+  public RolePrincipal toPrincipal() {
+    return principal;
   }
 
   public static UserRole parse(String id) {
@@ -39,14 +38,5 @@ public class UserRole extends RolePrincipal implements HasId, Comparable<UserRol
       throw new IllegalArgumentException();
     }
     return found;
-  }
-
-  public static UserRole[] values() {
-    return new UserRole[] { CLIENT, MANAGER, ADMIN };
-  }
-
-  @Override
-  public int compareTo(UserRole o) {
-    return Integer.compare(ordinal, o.ordinal);
   }
 }
