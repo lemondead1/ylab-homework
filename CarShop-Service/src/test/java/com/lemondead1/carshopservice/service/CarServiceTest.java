@@ -56,8 +56,8 @@ public class CarServiceTest {
     var createdCar = carService.createCar("Tesla", "Model 3", 2020, 5000000, "mint");
 
     assertThat(createdCar)
-        .isEqualTo(cars.findById(createdCar.id()))
-        .isEqualTo(new Car(createdCar.id(), "Tesla", "Model 3", 2020, 5000000, "mint", true));
+        .isEqualTo(cars.findById(createdCar.getId()))
+        .isEqualTo(new Car(createdCar.getId(), "Tesla", "Model 3", 2020, 5000000, "mint", true));
 
     verify(eventService).postEvent(eq(5), eq(EventType.CAR_CREATED), any());
   }
@@ -69,7 +69,7 @@ public class CarServiceTest {
 
     assertThat(editedCar)
         .isEqualTo(cars.findById(35))
-        .matches(c -> c.productionYear() == 2021 && c.price() == 454636 && "good".equals(c.condition()));
+        .matches(c -> c.getProductionYear() == 2021 && c.getPrice() == 454636 && "good".equals(c.getCondition()));
 
     verify(eventService).postEvent(eq(5), eq(EventType.CAR_MODIFIED), any());
   }

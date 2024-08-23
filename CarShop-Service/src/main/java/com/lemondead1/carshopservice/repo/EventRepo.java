@@ -11,6 +11,7 @@ import com.lemondead1.carshopservice.exceptions.DBException;
 import com.lemondead1.carshopservice.util.Range;
 import com.lemondead1.carshopservice.util.Util;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Repository
 @RequiredArgsConstructor
 public class EventRepo {
   private final DBManager db;

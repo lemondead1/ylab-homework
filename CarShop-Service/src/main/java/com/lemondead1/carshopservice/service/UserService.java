@@ -13,6 +13,7 @@ import com.lemondead1.carshopservice.repo.OrderRepo;
 import com.lemondead1.carshopservice.repo.UserRepo;
 import com.lemondead1.carshopservice.util.Range;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
@@ -20,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 
 @Timed
+@Service
 @RequiredArgsConstructor
 public class UserService {
   private final UserRepo users;

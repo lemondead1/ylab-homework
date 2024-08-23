@@ -8,9 +8,9 @@ import lombok.Setter;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.DeclarePrecedence;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -20,11 +20,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
+@Component
 @Aspect
 @Setter
-@DeclarePrecedence("com.lemondead1.carshopservice.aspect.TimedAspect," +
-                   "com.lemondead1.carshopservice.aspect.TransactionalAspect," +
-                   "com.lemondead1.carshopservice.aspect.AuditedAspect")
 public class AuditedAspect {
   private EventService eventService;
   private Supplier<User> currentUserProvider;

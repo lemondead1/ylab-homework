@@ -14,7 +14,7 @@ import org.mapstruct.Mapping;
 
 import java.util.List;
 
-@Mapper(injectionStrategy = InjectionStrategy.CONSTRUCTOR)
+@Mapper(injectionStrategy = InjectionStrategy.CONSTRUCTOR, componentModel = "spring")
 public interface MapStruct {
   //Uhh
   @Mapping(expression = "java(user.id())", target = "id")

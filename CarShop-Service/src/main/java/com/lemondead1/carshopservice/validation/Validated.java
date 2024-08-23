@@ -3,6 +3,7 @@ package com.lemondead1.carshopservice.validation;
 import com.lemondead1.carshopservice.exceptions.ValidationException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.Contract;
 
 import javax.annotation.Nullable;
 

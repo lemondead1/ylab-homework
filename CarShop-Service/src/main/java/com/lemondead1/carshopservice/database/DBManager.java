@@ -1,12 +1,10 @@
 package com.lemondead1.carshopservice.database;
 
 import com.lemondead1.carshopservice.exceptions.DBException;
-import liquibase.Liquibase;
-import liquibase.database.DatabaseFactory;
-import liquibase.database.jvm.JdbcConnection;
-import liquibase.exception.LiquibaseException;
-import liquibase.resource.ClassLoaderResourceAccessor;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
 import java.sql.Connection;
@@ -24,31 +22,26 @@ import java.util.concurrent.TimeUnit;
  * The connection pool is populated lazily, up to {@code connectionPoolSize} connections.
  * Supports nested transactions.
  */
+@Component
 @Slf4j
 public class DBManager {
   private final String url;
   private final String user;
   private final String password;
   private final String schema;
-  private final String liquibaseSchema;
-  private final String changelogPath;
 
   private final ThreadLocal<ThreadTransaction> currentTransactions = new ThreadLocal<>();
   private final BlockingQueue<Connection> freeConnections;
 
-  public DBManager(String url,
-                   String user,
-                   String password,
-                   String schema,
-                   String liquibaseSchema,
-                   String changelogPath,
-                   int connectionPoolSize) {
+  public DBManager(@Value("${database.url}") String url,
+                   @Value("${database.username}") String user,
+                   @Value("${database.password}") String password,
+                   @Value("${database.schema}") String schema,
+                   @Value("${database.connectionPoolSize}") int connectionPoolSize) {
     this.url = url;
     this.user = user;
     this.password = password;
     this.schema = schema;
-    this.liquibaseSchema = liquibaseSchema;
-    this.changelogPath = changelogPath;
     freeConnections = new ArrayBlockingQueue<>(connectionPoolSize);
   }
 
@@ -77,6 +70,7 @@ public class DBManager {
     }
   }
 
+  @PreDestroy
   public void closeConnectionPool() {
     while (!freeConnections.isEmpty()) {
       try {
@@ -84,25 +78,6 @@ public class DBManager {
       } catch (SQLException e) {
         throw new DBException("Failed to close a connection.", e);
       }
-    }
-  }
-
-  public void migrateDatabase() {
-    pushTransaction();
-    var conn = getConnection();
-    try (var stmt = conn.createStatement()) {
-      stmt.execute("create schema if not exists " + schema);
-      stmt.execute("create schema if not exists " + liquibaseSchema);
-
-      var database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(conn));
-      database.setDefaultSchemaName(schema);
-      database.setLiquibaseSchemaName(liquibaseSchema);
-
-      var liquibase = new Liquibase(changelogPath, new ClassLoaderResourceAccessor(), database);
-      liquibase.update();
-      popTransaction(false);
-    } catch (SQLException | LiquibaseException e) {
-      throw new DBException("Failed to init the database", e);
     }
   }
 

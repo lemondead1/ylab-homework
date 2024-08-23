@@ -59,18 +59,18 @@ public class CarRepoTest {
   void createdCarMatchesSpec() {
     var created = cars.create("BMW", "X5", 2015, 3000000, "good");
     assertThat(created)
-        .isEqualTo(cars.findById(created.id()))
-        .isEqualTo(new Car(created.id(), "BMW", "X5", 2015, 3000000, "good", true));
+        .isEqualTo(cars.findById(created.getId()))
+        .isEqualTo(new Car(created.getId(), "BMW", "X5", 2015, 3000000, "good", true));
   }
 
   @Test
   @DisplayName("edit changes the car's fields according to non-null arguments.")
   void editedCarMatchesSpec() {
     var created = cars.create("BMW", "X5", 2015, 3000000, "good");
-    var edited = cars.edit(created.id(), null, null, null, 4000000, "mint");
+    var edited = cars.edit(created.getId(), null, null, null, 4000000, "mint");
     assertThat(edited)
-        .isEqualTo(cars.findById(created.id()))
-        .isEqualTo(new Car(created.id(), "BMW", "X5", 2015, 4000000, "mint", true));
+        .isEqualTo(cars.findById(created.getId()))
+        .isEqualTo(new Car(created.getId(), "BMW", "X5", 2015, 4000000, "mint", true));
   }
 
   @Test
@@ -83,8 +83,8 @@ public class CarRepoTest {
   @DisplayName("delete deletes the car.")
   void deleteTest() {
     var created = cars.create("BMW", "X5", 2015, 3000000, "good");
-    assertThat(cars.delete(created.id())).isEqualTo(created);
-    assertThatThrownBy(() -> cars.findById(created.id())).isInstanceOf(NotFoundException.class);
+    assertThat(cars.delete(created.getId())).isEqualTo(created);
+    assertThatThrownBy(() -> cars.findById(created.getId())).isInstanceOf(NotFoundException.class);
   }
 
   @Test
@@ -118,28 +118,28 @@ public class CarRepoTest {
   @Test
   void sortingTestProductionYearAsc() {
     assertThat(cars.lookup("", "", Range.all(), Range.all(), "", allBool, CarSorting.PRODUCTION_YEAR_ASC))
-        .isSortedAccordingTo(Comparator.comparing(Car::productionYear))
+        .isSortedAccordingTo(Comparator.comparing(Car::getProductionYear))
         .hasSize(100);
   }
 
   @Test
   void sortingTestProductionYearDesc() {
     assertThat(cars.lookup("", "", Range.all(), Range.all(), "", allBool, CarSorting.PRODUCTION_YEAR_DESC))
-        .isSortedAccordingTo(Comparator.comparing(Car::productionYear).reversed())
+        .isSortedAccordingTo(Comparator.comparing(Car::getProductionYear).reversed())
         .hasSize(100);
   }
 
   @Test
   void sortingTestPriceAsc() {
     assertThat(cars.lookup("", "", Range.all(), Range.all(), "", allBool, CarSorting.PRICE_ASC))
-        .isSortedAccordingTo(Comparator.comparing(Car::price))
+        .isSortedAccordingTo(Comparator.comparing(Car::getPrice))
         .hasSize(100);
   }
 
   @Test
   void sortingTestPriceDesc() {
     assertThat(cars.lookup("", "", Range.all(), Range.all(), "", allBool, CarSorting.PRICE_DESC))
-        .isSortedAccordingTo(Comparator.comparing(Car::price).reversed())
+        .isSortedAccordingTo(Comparator.comparing(Car::getPrice).reversed())
         .hasSize(100);
   }
 
@@ -162,6 +162,6 @@ public class CarRepoTest {
                   @Nullable Boolean available) {
     var availableSet = available == null ? allBool : Set.of(available);
     assertThat(cars.lookup(brand, model, year, price, condition, availableSet, CarSorting.NAME_ASC))
-        .map(Car::id).containsExactlyInAnyOrder(expectedIds);
+        .map(Car::getId).containsExactlyInAnyOrder(expectedIds);
   }
 }

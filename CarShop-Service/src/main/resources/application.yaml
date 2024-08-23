@@ -1,0 +1,13 @@
+server:
+  port: 8080
+
+database:
+  url: jdbc:postgresql://localhost:5432/car_shop
+  username: car_shop_user
+  password: some_password
+  schema: data
+  connectionPoolSize: 10
+
+  liquibase:
+    schema: infra
+    changelog: db/changelog/changelog.yaml

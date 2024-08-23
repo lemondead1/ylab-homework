@@ -49,7 +49,7 @@ public class EventRepoTest {
     var created = events.create(now, 1, EventType.USER_CREATED, json);
     assertThat(created)
         .isEqualTo(events.lookup(EventType.ALL_SET, Range.all(), "", EventSorting.TIMESTAMP_DESC).get(0))
-        .isEqualTo(new Event(created.id(), now, 1, EventType.USER_CREATED, json));
+        .isEqualTo(new Event(created.getId(), now, 1, EventType.USER_CREATED, json));
   }
 
   @ParameterizedTest
@@ -63,26 +63,26 @@ public class EventRepoTest {
                   @ConvertWith(RangeConverter.class) Range<Instant> dates,
                   String username) {
     assertThat(events.lookup(types, dates, username, EventSorting.USERNAME_DESC))
-        .map(Event::id).containsExactlyInAnyOrder(expectedIds);
+        .map(Event::getId).containsExactlyInAnyOrder(expectedIds);
   }
 
   @Test
   void testSortingTimestampDesc() {
     assertThat(events.lookup(EventType.ALL_SET, Range.all(), "", EventSorting.TIMESTAMP_DESC))
-        .isSortedAccordingTo(Comparator.comparing(Event::timestamp).reversed())
+        .isSortedAccordingTo(Comparator.comparing(Event::getTimestamp).reversed())
         .hasSize(970);
   }
 
   @Test
   void testSortingTimestampAsc() {
     assertThat(events.lookup(EventType.ALL_SET, Range.all(), "", EventSorting.TIMESTAMP_ASC))
-        .isSortedAccordingTo(Comparator.comparing(Event::timestamp))
+        .isSortedAccordingTo(Comparator.comparing(Event::getTimestamp))
         .hasSize(970);
   }
 
   String getUsername(Event event) {
     try {
-      return users.findById(event.userId()).username();
+      return users.findById(event.getUserId()).username();
     } catch (NotFoundException e) {
       return "removed";
     }
@@ -105,14 +105,14 @@ public class EventRepoTest {
   @Test
   void testSortingTypeDesc() {
     assertThat(events.lookup(EventType.ALL_SET, Range.all(), "", EventSorting.TYPE_DESC))
-        .isSortedAccordingTo(Comparator.comparing(Event::type).reversed())
+        .isSortedAccordingTo(Comparator.comparing(Event::getType).reversed())
         .hasSize(970);
   }
 
   @Test
   void testSortingTypeAsc() {
     assertThat(events.lookup(EventType.ALL_SET, Range.all(), "", EventSorting.TYPE_ASC))
-        .isSortedAccordingTo(Comparator.comparing(Event::type))
+        .isSortedAccordingTo(Comparator.comparing(Event::getType))
         .hasSize(970);
   }
 }

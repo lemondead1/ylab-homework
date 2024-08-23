@@ -6,10 +6,11 @@ import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.exceptions.DBException;
-import com.lemondead1.carshopservice.exceptions.NotFoundException;
+import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.util.Range;
 import com.lemondead1.carshopservice.util.Util;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
 
 import javax.annotation.Nullable;
 import java.sql.ResultSet;
@@ -21,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+@Repository
 @RequiredArgsConstructor
 public class OrderRepo {
   private final DBManager db;
@@ -80,7 +82,7 @@ public class OrderRepo {
    * @param carId     new car id
    * @param comments  new comments
    * @return The new order
-   * @throws NotFoundException if an order with given id has not been found.
+   * @throws RowNotFoundException if an order with given id has not been found.
    */
   public Order edit(int orderId, @Nullable Instant createdAt, @Nullable OrderKind kind, @Nullable OrderState state,
                     @Nullable Integer clientId, @Nullable Integer carId, @Nullable String comments) {
@@ -122,7 +124,7 @@ public class OrderRepo {
 
       var results = stmt.getResultSet();
       if (!results.next()) {
-        throw new NotFoundException("Order #" + orderId + " not found.");
+        throw new RowNotFoundException("Order #" + orderId + " not found.");
       }
 
       return readOrder(results);
@@ -136,7 +138,7 @@ public class OrderRepo {
    *
    * @param orderId id of an order
    * @return the old order
-   * @throws NotFoundException if order with the given id could not be found
+   * @throws RowNotFoundException if order with the given id could not be found
    */
   public Order delete(int orderId) {
     var sql = """
@@ -177,7 +179,7 @@ public class OrderRepo {
    *
    * @param orderId order id
    * @return an order with the given order id
-   * @throws NotFoundException if an order with the given id could not be found
+   * @throws RowNotFoundException if an order with the given id could not be found
    */
   public Order findById(int orderId) {
     var sql = """
@@ -202,7 +204,7 @@ public class OrderRepo {
       var results = stmt.getResultSet();
 
       if (!results.next()) {
-        throw new NotFoundException("Order #" + orderId + " not found.");
+        throw new RowNotFoundException("Order #" + orderId + " not found.");
       }
 
       return readOrder(results);

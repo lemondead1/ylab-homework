@@ -1,13 +1,12 @@
 package com.lemondead1.carshopservice.exceptions;
 
-import org.eclipse.jetty.http.HttpStatus;
+import lombok.experimental.StandardException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
-public class NotFoundException extends RequestException {
-  public NotFoundException(String message) {
-    super(HttpStatus.NOT_FOUND_404, message);
-  }
-
-  public NotFoundException(String message, Throwable cause) {
-    super(HttpStatus.NOT_FOUND_404, message, cause);
+@StandardException
+public class NotFoundException extends ResponseStatusException {
+  public NotFoundException(String reason, Throwable cause) {
+    super(HttpStatus.NOT_FOUND, reason, cause);
   }
 }

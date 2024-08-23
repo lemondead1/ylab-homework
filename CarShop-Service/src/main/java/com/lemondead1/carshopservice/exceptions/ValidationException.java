@@ -1,9 +1,6 @@
 package com.lemondead1.carshopservice.exceptions;
 
-import org.eclipse.jetty.http.HttpStatus;
+import lombok.experimental.StandardException;
 
-public class ValidationException extends RequestException {
-  public ValidationException(String message) {
-    super(HttpStatus.BAD_REQUEST_400, message);
-  }
-}
+@StandardException
+public class ValidationException extends BadRequestException { }

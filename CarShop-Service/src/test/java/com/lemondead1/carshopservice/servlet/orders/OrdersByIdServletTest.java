@@ -7,7 +7,6 @@ import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.exceptions.BadRequestException;
 import com.lemondead1.carshopservice.exceptions.ForbiddenException;
 import com.lemondead1.carshopservice.service.OrderService;
 import com.lemondead1.carshopservice.servlet.ServletTest;

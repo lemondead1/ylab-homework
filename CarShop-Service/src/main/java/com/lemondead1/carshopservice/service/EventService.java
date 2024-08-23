@@ -10,6 +10,7 @@ import com.lemondead1.carshopservice.repo.EventRepo;
 import com.lemondead1.carshopservice.util.Range;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -22,6 +23,7 @@ import java.util.Map;
  * It provides convenience methods for both submitting and querying events.
  */
 @Timed
+@Service
 @Slf4j
 @RequiredArgsConstructor
 public class EventService {

@@ -1,5 +1,6 @@
 package com.lemondead1.carshopservice.service;
 
+import ch.qos.logback.core.util.StringUtil;
 import com.lemondead1.carshopservice.annotations.Audited;
 import com.lemondead1.carshopservice.annotations.Timed;
 import com.lemondead1.carshopservice.annotations.Transactional;
@@ -16,6 +17,8 @@ import com.lemondead1.carshopservice.repo.CarRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
 import com.lemondead1.carshopservice.util.Range;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.Nullable;
 import java.time.Instant;
@@ -23,6 +26,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 
+@Service
 @Timed
 @RequiredArgsConstructor
 public class OrderService {
@@ -101,20 +105,22 @@ public class OrderService {
       checkNoServiceOrdersExist(oldOrder.client().id(), oldOrder.car().id());
     }
 
-    return orders.edit(orderId, null, null, newState, null, null, oldOrder.comments() + appendComment);
+    return orders.edit(orderId, null, null,
+                       newState, null, null,
+                       oldOrder.comments() + (StringUtils.isEmpty(appendComment) ? "" : "\n" + appendComment));
   }
 
   @Transactional
   @Audited(EventType.ORDER_MODIFIED)
   public Order cancel(@Audited.Param("order_id") int orderId,
-                      @Audited.Param("appended_comment") String appendComment) {
+                      @Audited.Param("appended_comment") @Nullable String appendComment) {
     Order oldOrder = orders.findById(orderId);
     return switch (oldOrder.state()) {
       case CANCELLED -> throw new ConflictException("This order has already been cancelled.");
       case DONE -> throw new ConflictException("You cannot cancel finished orders.");
       default -> orders.edit(orderId, null, null,
                              OrderState.CANCELLED, null, null,
-                             oldOrder.comments() + appendComment);
+                             oldOrder.comments() + (StringUtils.isEmpty(appendComment) ? "" : "\n" + appendComment));
     };
   }
 

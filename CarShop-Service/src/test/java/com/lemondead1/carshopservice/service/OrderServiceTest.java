@@ -68,7 +68,7 @@ public class OrderServiceTest {
 
     var created = orderService.createOrder(53, 97, OrderKind.PURCHASE, OrderState.NEW, "None");
 
-    assertThat(created).isEqualTo(orders.findById(created.id()));
+    assertThat(created).isEqualTo(orders.findById(created.getId()));
     verify(eventService).postEvent(eq(5), eq(EventType.ORDER_CREATED), any());
   }
 
@@ -87,7 +87,7 @@ public class OrderServiceTest {
 
     var created = orderService.createOrder(11, 7, OrderKind.SERVICE, OrderState.NEW, "None");
 
-    assertThat(created).isEqualTo(orders.findById(created.id()));
+    assertThat(created).isEqualTo(orders.findById(created.getId()));
     verify(eventService).postEvent(eq(5), eq(EventType.ORDER_CREATED), any());
   }
 
@@ -126,8 +126,8 @@ public class OrderServiceTest {
     orderService.cancel(218, "\nAppend");
 
     var found = orders.findById(218);
-    assertThat(found).matches(o -> o.state() == OrderState.CANCELLED)
-                     .matches(o -> o.comments().equals("QXArKUVHMEXsDupqDxgQ\nAppend"));
+    assertThat(found).matches(o -> o.getState() == OrderState.CANCELLED)
+                     .matches(o -> o.getComments().equals("QXArKUVHMEXsDupqDxgQ\nAppend"));
     verify(eventService).postEvent(eq(5), eq(EventType.ORDER_MODIFIED), any());
   }
 
@@ -142,7 +142,7 @@ public class OrderServiceTest {
   @DisplayName("cancel throws when order is in 'cancelled' state.")
   void cancelOrderThrowsWhenCancelled() {
     var created = orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.CANCELLED, 1, 1, "");
-    assertThatThrownBy(() -> orderService.cancel(created.id(), "")).isInstanceOf(ConflictException.class);
+    assertThatThrownBy(() -> orderService.cancel(created.getId(), "")).isInstanceOf(ConflictException.class);
   }
 
   @Test
@@ -154,8 +154,8 @@ public class OrderServiceTest {
     orderService.updateState(153, OrderState.PERFORMING, "New comment");
 
     var found = orders.findById(153);
-    assertThat(found).matches(o -> o.state() == OrderState.PERFORMING)
-                     .matches(o -> "fuCupMgTVufDxoGErKGONew comment".equals(o.comments()));
+    assertThat(found).matches(o -> o.getState() == OrderState.PERFORMING)
+                     .matches(o -> "fuCupMgTVufDxoGErKGONew comment".equals(o.getComments()));
     verify(eventService).postEvent(eq(5), eq(EventType.ORDER_MODIFIED), any());
   }
 }
