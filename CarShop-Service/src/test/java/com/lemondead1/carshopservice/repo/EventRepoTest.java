@@ -3,7 +3,11 @@ package com.lemondead1.carshopservice.repo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lemondead1.carshopservice.*;
+import com.lemondead1.carshopservice.HasIdEnumSetConverter;
+import com.lemondead1.carshopservice.IntegerArrayConverter;
+import com.lemondead1.carshopservice.RangeConverter;
+import com.lemondead1.carshopservice.TestDBConnector;
+import com.lemondead1.carshopservice.config.EnvironmentConfig;
 import com.lemondead1.carshopservice.entity.Event;
 import com.lemondead1.carshopservice.enums.EventSorting;
 import com.lemondead1.carshopservice.enums.EventType;
@@ -26,9 +30,9 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class EventRepoTest {
-  private static final EventRepo events = new EventRepo(TestDBConnector.DB_MANAGER, SharedTestObjects.jackson);
+  private static final ObjectMapper jackson = EnvironmentConfig.objectMapper();
+  private static final EventRepo events = new EventRepo(TestDBConnector.DB_MANAGER, jackson);
   private static final UserRepo users = new UserRepo(TestDBConnector.DB_MANAGER);
-  private static final ObjectMapper jackson = SharedTestObjects.jackson;
 
   @BeforeEach
   void beforeEach() {
@@ -49,7 +53,7 @@ public class EventRepoTest {
     var created = events.create(now, 1, EventType.USER_CREATED, json);
     assertThat(created)
         .isEqualTo(events.lookup(EventType.ALL_SET, Range.all(), "", EventSorting.TIMESTAMP_DESC).get(0))
-        .isEqualTo(new Event(created.getId(), now, 1, EventType.USER_CREATED, json));
+        .isEqualTo(new Event(created.id(), now, 1, EventType.USER_CREATED, json));
   }
 
   @ParameterizedTest
@@ -63,26 +67,26 @@ public class EventRepoTest {
                   @ConvertWith(RangeConverter.class) Range<Instant> dates,
                   String username) {
     assertThat(events.lookup(types, dates, username, EventSorting.USERNAME_DESC))
-        .map(Event::getId).containsExactlyInAnyOrder(expectedIds);
+        .map(Event::id).containsExactlyInAnyOrder(expectedIds);
   }
 
   @Test
   void testSortingTimestampDesc() {
     assertThat(events.lookup(EventType.ALL_SET, Range.all(), "", EventSorting.TIMESTAMP_DESC))
-        .isSortedAccordingTo(Comparator.comparing(Event::getTimestamp).reversed())
+        .isSortedAccordingTo(Comparator.comparing(Event::timestamp).reversed())
         .hasSize(970);
   }
 
   @Test
   void testSortingTimestampAsc() {
     assertThat(events.lookup(EventType.ALL_SET, Range.all(), "", EventSorting.TIMESTAMP_ASC))
-        .isSortedAccordingTo(Comparator.comparing(Event::getTimestamp))
+        .isSortedAccordingTo(Comparator.comparing(Event::timestamp))
         .hasSize(970);
   }
 
   String getUsername(Event event) {
     try {
-      return users.findById(event.getUserId()).username();
+      return users.findById(event.userId()).username();
     } catch (NotFoundException e) {
       return "removed";
     }
@@ -105,14 +109,14 @@ public class EventRepoTest {
   @Test
   void testSortingTypeDesc() {
     assertThat(events.lookup(EventType.ALL_SET, Range.all(), "", EventSorting.TYPE_DESC))
-        .isSortedAccordingTo(Comparator.comparing(Event::getType).reversed())
+        .isSortedAccordingTo(Comparator.comparing(Event::type).reversed())
         .hasSize(970);
   }
 
   @Test
   void testSortingTypeAsc() {
     assertThat(events.lookup(EventType.ALL_SET, Range.all(), "", EventSorting.TYPE_ASC))
-        .isSortedAccordingTo(Comparator.comparing(Event::getType))
+        .isSortedAccordingTo(Comparator.comparing(Event::type))
         .hasSize(970);
   }
 }

@@ -47,6 +47,7 @@ dependencies {
     testImplementation 'org.assertj:assertj-core:3.26.3'
     testImplementation 'org.testcontainers:testcontainers:1.20.1'
     testImplementation 'org.testcontainers:postgresql:1.20.1'
+    testImplementation "org.springframework:spring-test:${spring_version}"
 }
 
 compileJava {

@@ -58,7 +58,7 @@ public class CarController {
     return mapStruct.carToCarDto(carService.findById(carId));
   }
 
-  @PatchMapping("/cars/{carId}")
+  @PatchMapping("/{carId}")
   ExistingCarDTO editCarById(@PathVariable int carId, @RequestBody NewCarDTO carDTO) {
     Car editedCar = carService.editCar(
         carId,

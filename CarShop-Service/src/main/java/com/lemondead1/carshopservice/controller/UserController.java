@@ -92,6 +92,9 @@ public class UserController {
     if (currentUser.role() != UserRole.ADMIN && userDTO.role() != null) {
       throw new ForbiddenException("You cannot change roles.");
     }
+    if (currentUser.role() != UserRole.ADMIN && userId != currentUser.id()) {
+      throw new ForbiddenException("You cannot edit other users' profiles.");
+    }
     User editedUser = editUser(userId, userDTO);
     return mapStruct.userToUserDto(editedUser);
   }

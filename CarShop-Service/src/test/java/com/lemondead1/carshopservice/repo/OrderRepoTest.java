@@ -72,8 +72,8 @@ public class OrderRepoTest {
     var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
     var created = orders.create(now, kind, state, clientId, carId, comment);
     assertThat(created)
-        .isEqualTo(orders.findById(created.getId()))
-        .isEqualTo(new Order(created.getId(), now, kind, state, users.findById(clientId), cars.findById(carId), comment));
+        .isEqualTo(orders.findById(created.id()))
+        .isEqualTo(new Order(created.id(), now, kind, state, users.findById(clientId), cars.findById(carId), comment));
   }
 
   //TODO maybe add more testcases
@@ -85,8 +85,8 @@ public class OrderRepoTest {
   @DisplayName("findCarOrders returns orders that reference the given car.")
   void findCarOrdersTest(@ConvertWith(IntegerArrayConverter.class) Integer[] expectedIds, int carId) {
     assertThat(orders.findCarOrders(carId))
-        .allMatch(o -> orders.findById(o.getId()).equals(o))
-        .map(Order::getId).containsExactlyInAnyOrder(expectedIds);
+        .allMatch(o -> orders.findById(o.id()).equals(o))
+        .map(Order::id).containsExactlyInAnyOrder(expectedIds);
   }
 
   @ParameterizedTest
@@ -97,8 +97,8 @@ public class OrderRepoTest {
   @DisplayName("findUserOrders returns orders that reference the given user.")
   void findUserOrdersContainsOrder(@ConvertWith(IntegerArrayConverter.class) Integer[] expectedIds, int clientId) {
     assertThat(orders.findClientOrders(clientId, OrderSorting.CREATED_AT_DESC))
-        .allMatch(o -> orders.findById(o.getId()).equals(o))
-        .map(Order::getId).containsExactlyInAnyOrder(expectedIds);
+        .allMatch(o -> orders.findById(o.id()).equals(o))
+        .map(Order::id).containsExactlyInAnyOrder(expectedIds);
   }
 
   @Test
@@ -106,9 +106,9 @@ public class OrderRepoTest {
   void editedOrderMatchesSpec() {
     Instant now = Instant.now().truncatedTo(ChronoUnit.MICROS);
     var created = orders.create(now, OrderKind.PURCHASE, OrderState.NEW, 88, 99, "");
-    var edited = orders.edit(created.getId(), null, null, OrderState.PERFORMING, null, null, "newComment");
-    assertThat(edited).isEqualTo(orders.findById(created.getId()))
-                      .matches(o -> o.getState() == OrderState.PERFORMING && "newComment".equals(o.getComments()));
+    var edited = orders.edit(created.id(), null, null, OrderState.PERFORMING, null, null, "newComment");
+    assertThat(edited).isEqualTo(orders.findById(created.id()))
+                      .matches(o -> o.state() == OrderState.PERFORMING && "newComment".equals(o.comments()));
   }
 
   @Test
@@ -124,11 +124,11 @@ public class OrderRepoTest {
     Instant now = Instant.now().truncatedTo(ChronoUnit.MICROS);
     var created = orders.create(now, OrderKind.PURCHASE, OrderState.NEW, 101, 98, "");
     // Note to self: returns of delete and create must not match.
-    assertThat(orders.delete(created.getId()))
-        .isEqualTo(new Order(created.getId(), now, OrderKind.PURCHASE,
+    assertThat(orders.delete(created.id()))
+        .isEqualTo(new Order(created.id(), now, OrderKind.PURCHASE,
                              OrderState.NEW, users.findById(101), cars.findById(98), ""));
 
-    assertThatThrownBy(() -> orders.findById(created.getId())).isInstanceOf(NotFoundException.class);
+    assertThatThrownBy(() -> orders.findById(created.id())).isInstanceOf(NotFoundException.class);
     assertThat(orders.findCarOrders(98)).isEmpty();
     assertThat(orders.findClientOrders(101, OrderSorting.CREATED_AT_DESC)).isEmpty();
   }
@@ -165,32 +165,32 @@ public class OrderRepoTest {
                   @ConvertWith(HasIdEnumSetConverter.class) Set<OrderKind> kinds,
                   @ConvertWith(HasIdEnumSetConverter.class) Set<OrderState> states) {
     assertThat(orders.lookup(dateRange, customerName, brand, model, kinds, states, OrderSorting.CREATED_AT_DESC))
-        .map(Order::getId).containsExactlyInAnyOrder(expectedIds);
+        .map(Order::id).containsExactlyInAnyOrder(expectedIds);
   }
 
   @Test
   void sortingTestDateDesc() {
     assertThat(orders.lookup(Range.all(), "", "", "", OrderKind.ALL_SET, OrderState.ALL_SET, OrderSorting.CREATED_AT_DESC))
-        .isSortedAccordingTo(Comparator.comparing(Order::getCreatedAt).reversed()).hasSize(290);
+        .isSortedAccordingTo(Comparator.comparing(Order::createdAt).reversed()).hasSize(290);
   }
 
   @Test
   void sortingTestDateAsc() {
     assertThat(orders.lookup(Range.all(), "", "", "", OrderKind.ALL_SET, OrderState.ALL_SET, OrderSorting.CREATED_AT_ASC))
-        .isSortedAccordingTo(Comparator.comparing(Order::getCreatedAt)).hasSize(290);
+        .isSortedAccordingTo(Comparator.comparing(Order::createdAt)).hasSize(290);
   }
 
   @Test
   void sortingTestCarNameDesc() {
     assertThat(orders.lookup(Range.all(), "", "", "", OrderKind.ALL_SET, OrderState.ALL_SET, OrderSorting.CAR_NAME_DESC))
-        .isSortedAccordingTo(Comparator.comparing((Order o) -> o.getCar().getBrandModel(), String::compareToIgnoreCase).reversed())
+        .isSortedAccordingTo(Comparator.comparing((Order o) -> o.car().getBrandModel(), String::compareToIgnoreCase).reversed())
         .hasSize(290);
   }
 
   @Test
   void sortingTestCarNameAsc() {
     assertThat(orders.lookup(Range.all(), "", "", "", OrderKind.ALL_SET, OrderState.ALL_SET, OrderSorting.CAR_NAME_ASC))
-        .isSortedAccordingTo(Comparator.comparing(o -> o.getCar().getBrandModel(), String::compareToIgnoreCase))
+        .isSortedAccordingTo(Comparator.comparing(o -> o.car().getBrandModel(), String::compareToIgnoreCase))
         .hasSize(290);
   }
 }

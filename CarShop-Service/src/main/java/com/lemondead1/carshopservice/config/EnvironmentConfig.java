@@ -22,7 +22,7 @@ import java.util.Properties;
 @Configuration
 public class EnvironmentConfig {
   @Bean
-  ObjectMapper objectMapper() {
+  public static ObjectMapper objectMapper() {
     var objectMapper = new ObjectMapper();
     objectMapper.registerModule(new JavaTimeModule());
     objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);

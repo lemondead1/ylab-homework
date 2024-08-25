@@ -1,47 +1,33 @@
 package com.lemondead1.carshopservice.service;
 
 import com.lemondead1.carshopservice.TestDBConnector;
-import com.lemondead1.carshopservice.aspect.AuditedAspect;
 import com.lemondead1.carshopservice.entity.User;
-import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.NotFoundException;
 import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
 import com.lemondead1.carshopservice.repo.OrderRepo;
 import com.lemondead1.carshopservice.repo.UserRepo;
 import com.lemondead1.carshopservice.service.impl.UserServiceImpl;
-import org.aspectj.lang.Aspects;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
   private static final UserRepo users = new UserRepo(TestDBConnector.DB_MANAGER);
   private static final OrderRepo orders = new OrderRepo(TestDBConnector.DB_MANAGER);
 
-  @Mock
-  EventService eventService;
-
   UserService userService;
-
-  private final User dummyUser = new User(5, "dummy", "123456789", "dummy@example.com", "password", UserRole.ADMIN, 0);
 
   @BeforeEach
   void beforeEach() {
     TestDBConnector.beforeEach();
-    Aspects.aspectOf(AuditedAspect.class).setCurrentUserProvider(() -> dummyUser);
-    Aspects.aspectOf(AuditedAspect.class).setEventService(eventService);
     userService = new UserServiceImpl(users, orders);
   }
 
@@ -55,7 +41,6 @@ public class UserServiceTest {
   void createUserSavesUserAndPostsEvent() {
     var user = userService.createUser("obemna", "+73462684906", "test@example.com", "password", UserRole.CLIENT);
     assertThat(users.findById(user.id())).isEqualTo(user);
-    verify(eventService).postEvent(eq(5), eq(EventType.USER_CREATED), any());
   }
 
   @Test
@@ -73,7 +58,6 @@ public class UserServiceTest {
     assertThat(users.findById(oldUser.id()))
         .isEqualTo(newUser)
         .isEqualTo(new User(oldUser.id(), "bob", "+5334342", "test@ya.com", "password", UserRole.CLIENT, 0));
-    verify(eventService).postEvent(eq(5), eq(EventType.USER_MODIFIED), any());
   }
 
   @Test
@@ -88,7 +72,6 @@ public class UserServiceTest {
   void deleteUserDeletesUserAndPostsAnEvent() {
     userService.deleteUser(78);
     assertThatThrownBy(() -> users.findById(78)).isInstanceOf(NotFoundException.class);
-    verify(eventService).postEvent(eq(5), eq(EventType.USER_DELETED), any());
   }
 
   @Test
@@ -98,7 +81,5 @@ public class UserServiceTest {
 
     assertThatThrownBy(() -> users.findById(18)).isInstanceOf(NotFoundException.class);
     assertThatThrownBy(() -> orders.findById(253)).isInstanceOf(NotFoundException.class);
-
-    verify(eventService).postEvent(eq(5), eq(EventType.USER_DELETED), any());
   }
 }

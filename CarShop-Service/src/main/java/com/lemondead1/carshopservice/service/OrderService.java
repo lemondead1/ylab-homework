@@ -1,9 +1,6 @@
 package com.lemondead1.carshopservice.service;
 
-import com.lemondead1.carshopservice.annotations.Audited;
-import com.lemondead1.carshopservice.annotations.Transactional;
 import com.lemondead1.carshopservice.entity.Order;
-import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;

@@ -22,7 +22,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static com.lemondead1.carshopservice.util.Util.coalesce;
 import static com.lemondead1.carshopservice.validation.Validated.validate;
@@ -36,13 +39,16 @@ public class OrderController {
 
   @PostMapping("/orders")
   @ResponseStatus(HttpStatus.CREATED)
-  @Operation(summary = "Places a new order.", description = "Places a new order.")
+  @Operation(summary = "Places a new order.", description = "Places a new order. Clients can only place orders for themselves.")
   @ApiResponse(responseCode = "201", description = "The order was created successfully.")
   @ApiResponse(responseCode = "409",
                description = "Either the car is not available for purchase or the client does not own the car (for service orders).",
                content = @Content)
   ExistingOrderDTO createOrder(@RequestBody NewOrderDTO orderDTO, HttpServletRequest request) {
     User currentUser = (User) request.getUserPrincipal();
+    if (currentUser.role() == UserRole.CLIENT && orderDTO.clientId() != null && orderDTO.clientId() != currentUser.id()) {
+      throw new ForbiddenException("You cannot create orders for other users.");
+    }
     var createdOrder = orderService.createOrder(
         coalesce(orderDTO.clientId(), currentUser.id()),
         validate(orderDTO.carId()).nonnull("Car id is required."),
