@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,7 +22,11 @@ import java.util.Properties;
 
 @Configuration
 public class EnvironmentConfig {
+  /**
+   * Configuring an ObjectMapper, since Spring by default does not expose it as a bean.
+   */
   @Bean
+  @VisibleForTesting
   public static ObjectMapper objectMapper() {
     var objectMapper = new ObjectMapper();
     objectMapper.registerModule(new JavaTimeModule());
@@ -31,6 +36,9 @@ public class EnvironmentConfig {
     return objectMapper;
   }
 
+  /**
+   * Manually loads YAML configuration, since, apparently, it is not supported out of the box.
+   */
   @Bean
   PropertySource<?> applicationPropertySource() {
     YamlPropertiesFactoryBean yamlProperties = new YamlPropertiesFactoryBean();
@@ -40,6 +48,9 @@ public class EnvironmentConfig {
     return new PropertiesPropertySource("config_file", properties);
   }
 
+  /**
+   * Configuring PropertySources. Quite possibly some class in Spring already does it, but it fails to happen at the right time.
+   */
   @Bean
   PropertySources propertySources(List<PropertySource<?>> propertySourceList) {
     var propertySources = new MutablePropertySources();
@@ -49,6 +60,9 @@ public class EnvironmentConfig {
     return propertySources;
   }
 
+  /**
+   * Adding support for placeholder values.
+   */
   @Bean
   PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer(PropertySources propertySources) {
     var configurer = new PropertySourcesPlaceholderConfigurer();

@@ -25,6 +25,9 @@ import static com.lemondead1.carshopservice.enums.UserRole.*;
 @Configuration
 @EnableAspectJAutoProxy
 public class MainConfig {
+  /**
+   * Configuring security for the servlet context.
+   */
   @Bean
   SecurityHandler securityHandler(LoginService loginService) {
     //@formatter:off
@@ -51,10 +54,14 @@ public class MainConfig {
     //@formatter:on
   }
 
+  /**
+   * Doing some hacking to make Spring and Jetty work together.
+   * Adding security, filters and a DispatcherServlet to the ServletContext.
+   */
   @Bean
-  ServletContextAware servletContextAware(WebApplicationContext spring,
-                                          SecurityHandler securityHandler,
-                                          List<Filter> filters) {
+  ServletContextAware servletContextConfigurator(WebApplicationContext spring,
+                                                 SecurityHandler securityHandler,
+                                                 List<Filter> filters) {
     return context -> {
       var jetty = (ServletContextHandler) ((ServletContextHandler.ServletContextApi) context).getContextHandler();
       jetty.addEventListener(new ContextLoaderListener(spring));
@@ -67,6 +74,10 @@ public class MainConfig {
     };
   }
 
+  /**
+   * Sets up a Jetty server instance with a servlet context.
+   * I didn't expect it to work without a separate context, but it works.
+   */
   @Bean
   Server server(ServletContext contextHandler, @Value("${server.port}") int port) {
     var server = new Server(port);

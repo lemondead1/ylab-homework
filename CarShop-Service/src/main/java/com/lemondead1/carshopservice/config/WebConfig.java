@@ -22,28 +22,46 @@ import java.util.List;
 
 @Configuration
 @EnableWebMvc
+// Enabling swagger docs.
 @ComponentScan({ "org.springdoc", "io.swagger" })
 @RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
   private final ObjectMapper objectMapper;
 
+  /**
+   * Configuring converters.
+   *
+   * @param converters initially an empty list of converters
+   */
   @Override
   public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+    // Needed for Swagger to work correctly.
     converters.add(new ByteArrayHttpMessageConverter());
+
+    // Spring should configure it by default, but it doesn't for some reason.
     converters.add(new MappingJackson2HttpMessageConverter(objectMapper));
   }
 
+  /**
+   * Exposes swagger resources.
+   */
   @Override
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
     registry.addResourceHandler("swagger-ui.html").addResourceLocations("classpath:/META-INF/resources/");
     registry.addResourceHandler("/webjars/**").addResourceLocations("classpath:/META-INF/resources/webjars/");
   }
 
+  /**
+   * Customizing Swagger model resolver with a custom objectMapper.
+   */
   @Bean
-  ModelResolver modelResolver(ObjectMapper objectMapper) {
+  ModelResolver modelResolver() {
     return new ModelResolver(objectMapper);
   }
 
+  /**
+   * Configures swagger api description.
+   */
   @Bean
   OpenAPI openAPI() {
     return new OpenAPI().addSecurityItem(new SecurityRequirement().addList("basicAuth"))
