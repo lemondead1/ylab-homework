@@ -4,14 +4,18 @@ import com.lemondead1.carshopservice.dto.car.CarQueryDTO;
 import com.lemondead1.carshopservice.dto.car.ExistingCarDTO;
 import com.lemondead1.carshopservice.dto.car.NewCarDTO;
 import com.lemondead1.carshopservice.entity.Car;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.CarSorting;
+import com.lemondead1.carshopservice.enums.UserRole;
+import com.lemondead1.carshopservice.exceptions.ForbiddenException;
 import com.lemondead1.carshopservice.service.CarService;
 import com.lemondead1.carshopservice.util.MapStruct;
 import com.lemondead1.carshopservice.util.Range;
 import com.lemondead1.carshopservice.util.Util;
 import com.lemondead1.carshopservice.validation.PastYearValidator;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,43 +31,45 @@ public class CarController {
   private final CarService carService;
   private final MapStruct mapStruct;
 
+  @ResponseStatus(HttpStatus.CREATED)
   @PostMapping("/cars")
-  @PreAuthorize("hasAnyAuthority('manager', 'admin')")
   ExistingCarDTO createCar(@RequestBody NewCarDTO carDTO) {
     Car createdCar = carService.createCar(
-        validate(carDTO.brand()).nonnull("Brand is required."),
-        validate(carDTO.model()).nonnull("Model is required."),
+        validate(carDTO.brand()).by(Util.NOT_BLANK).nonnull("Brand is required."),
+        validate(carDTO.model()).by(Util.NOT_BLANK).nonnull("Model is required."),
         validate(carDTO.productionYear()).by(PastYearValidator.INSTANCE).nonnull("Production year is required."),
         validate(carDTO.price()).by(Util.POSITIVE_INT).nonnull("Price is required."),
-        validate(carDTO.condition()).nonnull("Condition is required.")
+        validate(carDTO.condition()).by(Util.NOT_BLANK).nonnull("Condition is required.")
     );
     return mapStruct.carToCarDto(createdCar);
   }
 
-  @PostMapping("/cars/{carId}")
-  @PreAuthorize("isAuthenticated()")
-  ExistingCarDTO findById(@PathVariable int carId) {
+  @GetMapping("/cars/{carId}")
+  ExistingCarDTO findCarById(@PathVariable int carId) {
     return mapStruct.carToCarDto(carService.findById(carId));
   }
 
-  @PostMapping("/cars/{carId}")
-  @PreAuthorize("hasAnyAuthority('manager', 'admin')")
-  ExistingCarDTO editById(@PathVariable int carId, @RequestBody NewCarDTO carDTO) {
+  @PatchMapping("/cars/{carId}")
+  ExistingCarDTO editCarById(@PathVariable int carId, @RequestBody NewCarDTO carDTO) {
     Car editedCar = carService.editCar(
         carId,
-        carDTO.brand(),
-        carDTO.model(),
+        validate(carDTO.brand()).by(Util.NOT_BLANK).orNull(),
+        validate(carDTO.model()).by(Util.NOT_BLANK).orNull(),
         validate(carDTO.productionYear()).by(PastYearValidator.INSTANCE).orNull(),
         validate(carDTO.price()).by(Util.POSITIVE_INT).orNull(),
-        carDTO.condition()
+        validate(carDTO.condition()).by(Util.NOT_BLANK).orNull()
     );
     return mapStruct.carToCarDto(editedCar);
   }
 
-  @PostMapping("/cars/{carId}")
-  @PreAuthorize("hasAuthority('manager') and !#cascade or hasAuthority('admin')")
-  void deleteById(@PathVariable int carId, @RequestParam(defaultValue = "false") boolean cascade) {
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @DeleteMapping("/cars/{carId}")
+  void deleteCarById(@PathVariable int carId, @RequestParam(defaultValue = "false") boolean cascade, HttpServletRequest request) {
+    User currentUser = (User) request.getUserPrincipal();
     if (cascade) {
+      if (currentUser.role() != UserRole.ADMIN) {
+        throw new ForbiddenException("Cascade is forbidden.");
+      }
       carService.deleteCarCascading(carId);
     } else {
       carService.deleteCar(carId);
@@ -71,8 +77,7 @@ public class CarController {
   }
 
   @PostMapping("/cars/search")
-  @PreAuthorize("isAuthenticated()")
-  List<ExistingCarDTO> search(@RequestBody CarQueryDTO queryDTO) {
+  List<ExistingCarDTO> searchCars(@RequestBody CarQueryDTO queryDTO) {
     List<Car> foundCars = carService.lookupCars(
         coalesce(queryDTO.brand(), ""),
         coalesce(queryDTO.model(), ""),

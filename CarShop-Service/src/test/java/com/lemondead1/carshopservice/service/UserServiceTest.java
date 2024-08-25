@@ -9,6 +9,7 @@ import com.lemondead1.carshopservice.exceptions.NotFoundException;
 import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
 import com.lemondead1.carshopservice.repo.OrderRepo;
 import com.lemondead1.carshopservice.repo.UserRepo;
+import com.lemondead1.carshopservice.service.impl.UserServiceImpl;
 import org.aspectj.lang.Aspects;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +42,7 @@ public class UserServiceTest {
     TestDBConnector.beforeEach();
     Aspects.aspectOf(AuditedAspect.class).setCurrentUserProvider(() -> dummyUser);
     Aspects.aspectOf(AuditedAspect.class).setEventService(eventService);
-    userService = new UserService(users, orders);
+    userService = new UserServiceImpl(users, orders);
   }
 
   @AfterEach

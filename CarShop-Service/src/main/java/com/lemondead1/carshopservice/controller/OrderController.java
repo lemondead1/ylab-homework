@@ -14,15 +14,12 @@ import com.lemondead1.carshopservice.exceptions.ForbiddenException;
 import com.lemondead1.carshopservice.service.OrderService;
 import com.lemondead1.carshopservice.util.MapStruct;
 import com.lemondead1.carshopservice.util.Range;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static com.lemondead1.carshopservice.util.Util.coalesce;
 import static com.lemondead1.carshopservice.validation.Validated.validate;
@@ -33,9 +30,10 @@ public class OrderController {
   private final OrderService orderService;
   private final MapStruct mapStruct;
 
+  @ResponseStatus(HttpStatus.CREATED)
   @PostMapping("/orders")
-  @PreAuthorize("isAuthenticated()")
-  ExistingOrderDTO createOrder(@RequestBody NewOrderDTO orderDTO, @AuthenticationPrincipal User currentUser) {
+  ExistingOrderDTO createOrder(@RequestBody NewOrderDTO orderDTO, HttpServletRequest request) {
+    User currentUser = (User) request.getUserPrincipal();
     var createdOrder = orderService.createOrder(
         coalesce(orderDTO.clientId(), currentUser.id()),
         validate(orderDTO.carId()).nonnull("Car id is required."),
@@ -46,30 +44,27 @@ public class OrderController {
     return mapStruct.orderToOrderDto(createdOrder);
   }
 
-  @PostMapping("/orders/{orderId}")
-  @PreAuthorize("isAuthenticated()")
-  ExistingOrderDTO editOrder(@PathVariable int orderId,
-                             @RequestBody EditOrderDTO orderDTO,
-                             @AuthenticationPrincipal User currentUser) {
-    Order result = switch (currentUser.role()) {
-      case CLIENT -> {
-        var oldOrder = orderService.findById(orderId);
-        if (oldOrder.client().id() != currentUser.id()) {
-          throw new ForbiddenException("Clients cannot edit other users' orders.");
-        }
-        if (orderDTO.state() != null && orderDTO.state() != OrderState.CANCELLED) {
-          throw new ForbiddenException("Clients can only cancel their orders.");
-        }
-        yield orderService.cancel(orderId, orderDTO.appendComment());
+  @PatchMapping("/orders/{orderId}")
+  ExistingOrderDTO editOrderById(@PathVariable int orderId,
+                                 @RequestBody EditOrderDTO orderDTO,
+                                 HttpServletRequest request) {
+    User currentUser = (User) request.getUserPrincipal();
+    if (currentUser.role() == UserRole.CLIENT) {
+      var oldOrder = orderService.findById(orderId);
+      if (oldOrder.client().id() != currentUser.id()) {
+        throw new ForbiddenException("Clients cannot edit other users' orders.");
       }
-      case MANAGER, ADMIN -> orderService.updateState(orderId, orderDTO.state(), orderDTO.appendComment());
-    };
+      if (orderDTO.state() != null && orderDTO.state() != OrderState.CANCELLED) {
+        throw new ForbiddenException("Clients can only cancel their orders.");
+      }
+    }
+    Order result = orderService.updateState(orderId, orderDTO.state(), orderDTO.appendComment());
     return mapStruct.orderToOrderDto(result);
   }
 
   @GetMapping("/orders/{orderId}")
-  @PreAuthorize("isAuthenticated()")
-  ExistingOrderDTO findById(@PathVariable int orderId, @AuthenticationPrincipal User currentUser) {
+  ExistingOrderDTO findOrderById(@PathVariable int orderId, HttpServletRequest request) {
+    User currentUser = (User) request.getUserPrincipal();
     Order result = orderService.findById(orderId);
     if (currentUser.role() == UserRole.CLIENT && result.client().id() != currentUser.id()) {
       throw new ForbiddenException("Users cannot peek on other users' orders.");
@@ -77,28 +72,31 @@ public class OrderController {
     return mapStruct.orderToOrderDto(result);
   }
 
+  @ResponseStatus(HttpStatus.NO_CONTENT)
   @DeleteMapping("/orders/{orderId}")
-  @PreAuthorize("hasAuthority('admin')")
-  void deleteOrder(@PathVariable int orderId) {
+  void deleteOrderById(@PathVariable int orderId) {
     orderService.deleteOrder(orderId);
   }
 
   @GetMapping("/users/me/orders")
-  @PreAuthorize("isAuthenticated()")
-  List<ExistingOrderDTO> findMyOrders(@RequestParam(defaultValue = "latest_first") OrderSorting sorting,
-                                      @AuthenticationPrincipal(expression = "id") int userId) {
-    return mapStruct.orderListToDtoList(orderService.findClientOrders(userId, sorting));
+  List<ExistingOrderDTO> findOrdersByCurrentUser(@RequestParam(defaultValue = "latest_first") OrderSorting sorting,
+                                                 HttpServletRequest request) {
+    User currentUser = (User) request.getUserPrincipal();
+    return mapStruct.orderListToDtoList(orderService.findClientOrders(currentUser.id(), sorting));
   }
 
   @GetMapping("/users/{userId}/orders")
-  @PreAuthorize("hasAuthority('client') and #userId == principal.id or hasAnyAuthority('manager', 'admin')")
-  List<ExistingOrderDTO> findUserOrders(@PathVariable int userId,
-                                        @RequestParam(defaultValue = "latest_first") OrderSorting sorting) {
+  List<ExistingOrderDTO> findOrdersByClientId(@PathVariable int userId,
+                                              @RequestParam(defaultValue = "latest_first") OrderSorting sorting,
+                                              HttpServletRequest request) {
+    User currentUser = (User) request.getUserPrincipal();
+    if (currentUser.role() == UserRole.CLIENT && userId != currentUser.id()) {
+      throw new ForbiddenException("Clients cannot view other users' orders.");
+    }
     return mapStruct.orderListToDtoList(orderService.findClientOrders(userId, sorting));
   }
 
   @PostMapping("/orders/search")
-  @PreAuthorize("hasAnyAuthority('manager', 'admin')")
   List<ExistingOrderDTO> searchOrders(@RequestBody OrderQueryDTO queryDTO) {
     List<Order> found = orderService.lookupOrders(
         coalesce(queryDTO.dates(), Range.all()),

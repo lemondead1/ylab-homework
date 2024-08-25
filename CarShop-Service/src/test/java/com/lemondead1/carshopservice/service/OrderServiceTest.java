@@ -13,6 +13,7 @@ import com.lemondead1.carshopservice.exceptions.ForbiddenException;
 import com.lemondead1.carshopservice.exceptions.NotFoundException;
 import com.lemondead1.carshopservice.repo.CarRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
+import com.lemondead1.carshopservice.service.impl.OrderServiceImpl;
 import org.aspectj.lang.Aspects;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,9 +41,6 @@ public class OrderServiceTest {
   @Mock
   EventService eventService;
 
-  @Mock
-  TimeService time;
-
   OrderService orderService;
 
   private final User dummyUser = new User(5, "dummy", "123456789", "dummy@example.com", "password", UserRole.ADMIN, 0);
@@ -52,7 +50,7 @@ public class OrderServiceTest {
     TestDBConnector.beforeEach();
     Aspects.aspectOf(AuditedAspect.class).setCurrentUserProvider(() -> dummyUser);
     Aspects.aspectOf(AuditedAspect.class).setEventService(eventService);
-    orderService = new OrderService(orders, cars, time);
+    orderService = new OrderServiceImpl(orders, cars, time);
   }
 
   @AfterEach
@@ -64,7 +62,7 @@ public class OrderServiceTest {
   @DisplayName("purchase creates a purchase order in the repo and submits an event.")
   void createPurchaseOrderCreatesOrderAndSubmitsEvent() {
     var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
-    when(time.now()).thenReturn(now);
+    when(Instant.now()).thenReturn(now);
 
     var created = orderService.createOrder(53, 97, OrderKind.PURCHASE, OrderState.NEW, "None");
 
@@ -83,7 +81,7 @@ public class OrderServiceTest {
   @DisplayName("orderService creates a service order in the repo and submits an event.")
   void createServiceOrderCreatesSavesAnOrderAndSubmitsEvent() {
     var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
-    when(time.now()).thenReturn(now);
+    when(Instant.now()).thenReturn(now);
 
     var created = orderService.createOrder(11, 7, OrderKind.SERVICE, OrderState.NEW, "None");
 

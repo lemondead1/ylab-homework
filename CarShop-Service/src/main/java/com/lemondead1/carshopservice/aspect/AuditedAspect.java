@@ -3,8 +3,9 @@ package com.lemondead1.carshopservice.aspect;
 import com.lemondead1.carshopservice.annotations.Audited;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.EventType;
+import com.lemondead1.carshopservice.filter.RequestCaptorFilter;
 import com.lemondead1.carshopservice.service.EventService;
-import lombok.Setter;
+import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
@@ -18,14 +19,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 
 @Component
 @Aspect
-@Setter
+@RequiredArgsConstructor
 public class AuditedAspect {
-  private EventService eventService;
-  private Supplier<User> currentUserProvider;
+  private final EventService eventService;
+  private final RequestCaptorFilter requestCaptor;
 
   private final Map<Method, AuditedMethod> auditedMethodCache = new ConcurrentHashMap<>();
 
@@ -33,14 +33,17 @@ public class AuditedAspect {
   public void annotatedByAudited() { }
 
   @AfterReturning("annotatedByAudited()")
-  public void afterReturning(JoinPoint jp) {
-    User currentUser = currentUserProvider.get();
+  public void afterReturning(JoinPoint jp) throws NoSuchMethodException {
+    User currentUser = requestCaptor.getCurrentPrincipal();
+
     if (currentUser == null) {
-      throw new IllegalStateException("No user is currently authenticated.");
+      throw new IllegalStateException("Not authenticated.");
     }
 
-    var method = ((MethodSignature) jp.getSignature()).getMethod();
-    AuditedMethod audited = auditedMethodCache.computeIfAbsent(method, this::preprocessMethod);
+    Method iFaceMethod = ((MethodSignature) jp.getSignature()).getMethod();
+    Method implMethod = jp.getTarget().getClass().getMethod(iFaceMethod.getName(), iFaceMethod.getParameterTypes());
+
+    AuditedMethod audited = auditedMethodCache.computeIfAbsent(implMethod, this::preprocessMethod);
     EventType type = audited.type;
     Map<String, Object> arguments = new LinkedHashMap<>();
     for (int i = 0; i < audited.auditedArgumentCount; i++) {

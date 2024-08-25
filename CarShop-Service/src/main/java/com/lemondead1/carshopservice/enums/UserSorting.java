@@ -1,10 +1,10 @@
 package com.lemondead1.carshopservice.enums;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.lemondead1.carshopservice.util.HasId;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-@Getter
 @RequiredArgsConstructor
 public enum UserSorting implements HasId {
   USERNAME_DESC("username_reversed"),
@@ -17,4 +17,10 @@ public enum UserSorting implements HasId {
   PURCHASES_ASC("less_purchases_first");
 
   private final String id;
+
+  @JsonValue
+  @Override
+  public String getId() {
+    return this.id;
+  }
 }

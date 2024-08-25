@@ -8,8 +8,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Map;
 
@@ -18,7 +20,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class EventServiceTest {
   @Mock
-  TimeService time;
+  MockedStatic<Instant> time;
 
   @Mock
   EventRepo events;
@@ -28,24 +30,24 @@ public class EventServiceTest {
 
   @Test
   void postEvent() {
-    var now = Instant.now();
-    when(time.now()).thenReturn(now);
+    var now = Clock.systemUTC().instant();
+    time.when(Instant::now).thenReturn(now);
     service.postEvent(5, EventType.USER_CREATED, Map.of("test", "string"));
     verify(events).create(now, 5, EventType.USER_CREATED, Map.of("test", "string"));
   }
 
   @Test
   void userSignedUpTest() {
-    var now = Instant.now();
-    when(time.now()).thenReturn(now);
+    var now = Clock.systemUTC().instant();
+    time.when(Instant::now).thenReturn(now);
     service.onUserSignedUp(new User(71, "usr", "880055535", "test@example.com", "oldPassword", UserRole.CLIENT, 0));
     verify(events).create(eq(now), eq(71), eq(EventType.USER_SIGNED_UP), any());
   }
 
   @Test
   void userLoggedInTest() {
-    var now = Instant.now();
-    when(time.now()).thenReturn(now);
+    var now = Clock.systemUTC().instant();
+    time.when(Instant::now).thenReturn(now);
     service.onUserLoggedIn(22);
     verify(events).create(eq(now), eq(22), eq(EventType.USER_LOGGED_IN), any());
   }

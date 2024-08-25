@@ -7,6 +7,8 @@ import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
 import com.lemondead1.carshopservice.repo.UserRepo;
+import com.lemondead1.carshopservice.service.impl.EventServiceImpl;
+import com.lemondead1.carshopservice.service.impl.LoginServiceImpl;
 import org.aspectj.lang.Aspects;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,13 +23,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-public class SessionServiceTest {
+public class LoginServiceTest {
   private static final UserRepo users = new UserRepo(TestDBConnector.DB_MANAGER);
 
   @Mock
-  EventService eventService;
+  EventServiceImpl eventService;
 
-  SessionService session;
+  SignupLoginService session;
 
   private final User dummyUser = new User(5, "dummy", "123456789", "dummy@example.com", "password", UserRole.ADMIN, 0);
 
@@ -36,7 +38,7 @@ public class SessionServiceTest {
     TestDBConnector.beforeEach();
     Aspects.aspectOf(AuditedAspect.class).setCurrentUserProvider(() -> dummyUser);
     Aspects.aspectOf(AuditedAspect.class).setEventService(eventService);
-    session = new SessionService(users, eventService);
+    session = new LoginServiceImpl(users, eventService);
   }
 
   @AfterEach

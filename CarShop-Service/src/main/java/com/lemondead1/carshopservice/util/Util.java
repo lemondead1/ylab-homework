@@ -1,8 +1,10 @@
 package com.lemondead1.carshopservice.util;
 
+import com.lemondead1.carshopservice.exceptions.ValidationException;
 import com.lemondead1.carshopservice.validation.PatternValidator;
 import com.lemondead1.carshopservice.validation.RangeValidator;
 import com.lemondead1.carshopservice.validation.Validator;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
 import java.util.LinkedHashMap;
@@ -12,10 +14,24 @@ import java.util.stream.Collectors;
 
 public class Util {
   public static final Validator<Integer> POSITIVE_INT = new RangeValidator<>(1, null);
-  public static final Validator<String> USERNAME = new PatternValidator("[A-Za-z0-9_\\-.]{3,20}");
-  public static final Validator<String> PASSWORD = new PatternValidator("[ -~]{8,}");
-  public static final Validator<String> PHONE_NUMBER = new PatternValidator("\\+?\\d{8,13}");
-  public static final Validator<String> EMAIL = new PatternValidator(".+@([a-zA-Z0-9-]{1,64}.)+[a-zA-Z]{2,20}");
+
+  public static final String USERNAME_REGEX = "[A-Za-z0-9_\\-.]{3,20}";
+  public static final Validator<String> USERNAME = new PatternValidator(USERNAME_REGEX);
+
+  public static final String PASSWORD_REGEX = "[ -~]{8,}";
+  public static final Validator<String> PASSWORD = new PatternValidator(PASSWORD_REGEX);
+
+  public static final String PHONE_NUMBER_REGEX = "\\+?\\d{8,13}";
+  public static final Validator<String> PHONE_NUMBER = new PatternValidator(PHONE_NUMBER_REGEX);
+
+  public static final String EMAIL_REGEX = ".+@([a-zA-Z0-9-]{1,64}.)+[a-zA-Z]{2,20}";
+  public static final Validator<String> EMAIL = new PatternValidator(EMAIL_REGEX);
+
+  public static final Validator<String> NOT_BLANK = value -> {
+    if (StringUtils.isBlank(value)) {
+      throw new ValidationException("Value cannot be blank.");
+    }
+  };
 
   public static <T> T coalesce(@Nullable T object, T defaultValue) {
     if (object != null) {

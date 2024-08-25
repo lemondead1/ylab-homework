@@ -1,7 +1,7 @@
 package com.lemondead1.carshopservice;
 
 import com.lemondead1.carshopservice.aspect.TransactionalAspect;
-import com.lemondead1.carshopservice.database.DBManager;
+import com.lemondead1.carshopservice.database.impl.DBManagerImpl;
 import org.aspectj.lang.Aspects;
 import org.testcontainers.containers.PostgreSQLContainer;
 
@@ -12,13 +12,13 @@ public class TestDBConnector {
     postgres.start();
   }
 
-  public static final DBManager DB_MANAGER = new DBManager(postgres.getJdbcUrl(),
-                                                           postgres.getUsername(),
-                                                           postgres.getPassword(),
-                                                           "data",
-                                                           "infra",
-                                                           "db/changelog/test-changelog.yaml",
-                                                           1);
+  public static final DBManagerImpl DB_MANAGER = new DBManagerImpl(postgres.getJdbcUrl(),
+                                                                   postgres.getUsername(),
+                                                                   postgres.getPassword(),
+                                                                   "data",
+                                                                   "infra",
+                                                                   "db/changelog/test-changelog.yaml",
+                                                                   1);
 
   static {
     DB_MANAGER.migrateDatabase();

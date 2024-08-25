@@ -1,64 +1,76 @@
 package com.lemondead1.carshopservice.config;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.lemondead1.carshopservice.util.HasIdModule;
-import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
+import com.lemondead1.carshopservice.util.ConstraintSecurityHandlerBuilder;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.Filter;
+import jakarta.servlet.ServletContext;
+import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
+import org.eclipse.jetty.security.LoginService;
+import org.eclipse.jetty.security.SecurityHandler;
+import org.eclipse.jetty.server.Server;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
-import org.springframework.core.env.MutablePropertySources;
-import org.springframework.core.env.PropertiesPropertySource;
-import org.springframework.core.env.PropertySource;
-import org.springframework.core.env.PropertySources;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.data.web.config.EnableSpringDataWebSupport;
+import org.springframework.web.context.ContextLoaderListener;
+import org.springframework.web.context.ServletContextAware;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.servlet.DispatcherServlet;
 
+import java.util.EnumSet;
 import java.util.List;
-import java.util.Objects;
-import java.util.Properties;
 
-@ComponentScan("com.lemondead1.carshopservice")
-@EnableAspectJAutoProxy(proxyTargetClass = true)
-@EnableSpringDataWebSupport
+import static com.lemondead1.carshopservice.enums.UserRole.*;
+
+@Configuration
+@EnableAspectJAutoProxy
 public class MainConfig {
   @Bean
-  ObjectMapper objectMapper() {
-    var objectMapper = new ObjectMapper();
-    objectMapper.registerModule(new HasIdModule());
-    objectMapper.registerModule(new JavaTimeModule());
-    objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-    objectMapper.enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
-    objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    return objectMapper;
+  SecurityHandler securityHandler(LoginService loginService) {
+    //@formatter:off
+    return new ConstraintSecurityHandlerBuilder(loginService, "BASIC_AUTH")
+        .at("/users").with("POST").permit(ADMIN)
+        .at("/users/search").with("POST").permit(MANAGER, ADMIN)
+        .at("/users/me").with("GET", "PATCH").permit(CLIENT, MANAGER, ADMIN)
+        .at("/users/*").with("GET").permit(CLIENT, MANAGER, ADMIN)
+                       .with("PATCH", "DELETE").permit(ADMIN)
+
+        .at("/cars").with("POST").permit(ADMIN)
+        .at("/cars/search").with("POST").permit(CLIENT, MANAGER, ADMIN)
+        .at("/cars/*").with("GET").permit(CLIENT, MANAGER, ADMIN)
+                      .with("POST", "DELETE").permit(MANAGER, ADMIN)
+
+        .at("/orders").with("POST").permit(CLIENT, MANAGER, ADMIN)
+        .at("/orders/search").with("POST").permit(MANAGER, ADMIN)
+        .at("/orders/*").with("GET", "POST").permit(CLIENT, MANAGER, ADMIN)
+                        .with("DELETE").permit(ADMIN)
+
+        .at("/signup").with("POST").permitAll()
+
+        .build();
+    //@formatter:on
   }
 
   @Bean
-  PropertySource<?> applicationPropertySource() {
-    YamlPropertiesFactoryBean yamlProperties = new YamlPropertiesFactoryBean();
-    yamlProperties.setResources(new ClassPathResource("application.yaml"));
-    Properties properties = yamlProperties.getObject();
-    Objects.requireNonNull(properties, "Properties cannot be null.");
-    return new PropertiesPropertySource("config_file", properties);
+  ServletContextAware servletContextAware(WebApplicationContext spring,
+                                          SecurityHandler securityHandler,
+                                          List<Filter> filters) {
+    return context -> {
+      var jetty = (ServletContextHandler) ((ServletContextHandler.ServletContextApi) context).getContextHandler();
+      jetty.addEventListener(new ContextLoaderListener(spring));
+      jetty.setContextPath("/");
+      jetty.setSecurityHandler(securityHandler);
+      for (var filter : filters) {
+        jetty.addFilter(filter, "/*", EnumSet.allOf(DispatcherType.class));
+      }
+      jetty.addServlet(new DispatcherServlet(spring), "/*");
+    };
   }
 
   @Bean
-  PropertySources propertySources(List<PropertySource<?>> propertySourceList) {
-    var propertySources = new MutablePropertySources();
-    for (var propertySource : propertySourceList) {
-      propertySources.addLast(propertySource);
-    }
-    return propertySources;
-  }
-
-  @Bean
-  PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer(PropertySources propertySources) {
-    var configurer = new PropertySourcesPlaceholderConfigurer();
-    configurer.setPropertySources(propertySources);
-    return configurer;
+  Server server(ServletContext contextHandler, @Value("${server.port}") int port) {
+    var server = new Server(port);
+    server.setHandler(((ServletContextHandler.ServletContextApi) contextHandler).getContextHandler());
+    return server;
   }
 }

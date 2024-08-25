@@ -11,3 +11,15 @@ database:
   liquibase:
     schema: infra
     changelog: db/changelog/changelog.yaml
+
+springdoc:
+  version: 1.0.0
+  swagger-ui:
+    path: /swagger-ui
+  group-configs:
+    - group: car-shop
+      paths-to-match: /**
+  packagesToScan:
+    - com.lemondead1.carshopservice
+  pathsToMatch:
+    - /**

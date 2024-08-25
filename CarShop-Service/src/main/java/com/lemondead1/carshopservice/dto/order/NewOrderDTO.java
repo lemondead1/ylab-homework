@@ -8,5 +8,5 @@ import javax.annotation.Nullable;
 public record NewOrderDTO(@Nullable OrderKind kind,
                           @Nullable OrderState state,
                           @Nullable Integer clientId,
-                          @Nullable Integer carId,
+                          Integer carId,
                           @Nullable String comment) { }

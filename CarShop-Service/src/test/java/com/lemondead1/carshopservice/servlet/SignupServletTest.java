@@ -3,7 +3,7 @@ package com.lemondead1.carshopservice.servlet;
 import com.lemondead1.carshopservice.dto.user.ExistingUserDTO;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.service.SessionService;
+import com.lemondead1.carshopservice.service.SignupLoginService;
 import com.lemondead1.carshopservice.util.MapStruct;
 import com.lemondead1.carshopservice.util.MapStructImpl;
 import com.lemondead1.carshopservice.util.Util;
@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class SignupServletTest extends ServletTest {
   @Mock
-  SessionService session;
+  SignupLoginService session;
 
   MapStruct mapStruct = new MapStructImpl();
 
