@@ -13,6 +13,9 @@ import com.lemondead1.carshopservice.util.MapStruct;
 import com.lemondead1.carshopservice.util.Range;
 import com.lemondead1.carshopservice.util.Util;
 import com.lemondead1.carshopservice.validation.PastYearValidator;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,13 +29,16 @@ import static com.lemondead1.carshopservice.util.Util.coalesce;
 import static com.lemondead1.carshopservice.validation.Validated.validate;
 
 @RestController
+@RequestMapping(value = "/cars", consumes = "application/json", produces = "application/json")
 @RequiredArgsConstructor
 public class CarController {
   private final CarService carService;
   private final MapStruct mapStruct;
 
+  @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  @PostMapping("/cars")
+  @Operation(summary = "Creates a car.", description = "Creates a car. Not allowed for clients.")
+  @ApiResponse(responseCode = "201", description = "Created a new car successfully.")
   ExistingCarDTO createCar(@RequestBody NewCarDTO carDTO) {
     Car createdCar = carService.createCar(
         validate(carDTO.brand()).by(Util.NOT_BLANK).nonnull("Brand is required."),
@@ -44,7 +50,10 @@ public class CarController {
     return mapStruct.carToCarDto(createdCar);
   }
 
-  @GetMapping("/cars/{carId}")
+  @GetMapping("/{carId}")
+  @Operation(summary = "Fonds a car by id.", description = "Finds a car by id.")
+  @ApiResponse(responseCode = "200", description = "Found a car successfully.")
+  @ApiResponse(responseCode = "404", description = "Could not find a car with the given id.", content = @Content)
   ExistingCarDTO findCarById(@PathVariable int carId) {
     return mapStruct.carToCarDto(carService.findById(carId));
   }
@@ -62,8 +71,11 @@ public class CarController {
     return mapStruct.carToCarDto(editedCar);
   }
 
+  @DeleteMapping("/{carId}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  @DeleteMapping("/cars/{carId}")
+  @Operation(summary = "Deletes a car by id.", description = "Deletes a car by id. Not allowed for clients.")
+  @ApiResponse(responseCode = "204", description = "Deleted a car successfully.")
+  @ApiResponse(responseCode = "404", description = "Could not find a car with the given id.", content = @Content)
   void deleteCarById(@PathVariable int carId, @RequestParam(defaultValue = "false") boolean cascade, HttpServletRequest request) {
     User currentUser = (User) request.getUserPrincipal();
     if (cascade) {
@@ -76,7 +88,9 @@ public class CarController {
     }
   }
 
-  @PostMapping("/cars/search")
+  @PostMapping("/search")
+  @Operation(summary = "Searches for cars matching query.", description = "Searches for cars matching query.")
+  @ApiResponse(responseCode = "200", description = "Search completed successfully.")
   List<ExistingCarDTO> searchCars(@RequestBody CarQueryDTO queryDTO) {
     List<Car> foundCars = carService.lookupCars(
         coalesce(queryDTO.brand(), ""),

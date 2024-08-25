@@ -8,6 +8,8 @@ import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.service.EventService;
 import com.lemondead1.carshopservice.util.MapStruct;
 import com.lemondead1.carshopservice.util.Range;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,6 +28,9 @@ public class EventController {
   private final MapStruct mapStruct;
 
   @PostMapping("/search")
+  @Operation(summary = "Searches for events matching query.",
+             description = "Searches for events matching query. Only available to admins.")
+  @ApiResponse(responseCode = "200", description = "Search completed successfully.")
   public List<EventDTO> search(@RequestBody EventQueryDTO queryDTO) {
     List<Event> result = eventService.findEvents(
         coalesce(queryDTO.types(), EventType.ALL),

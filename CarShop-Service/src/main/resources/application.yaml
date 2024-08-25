@@ -13,7 +13,6 @@ database:
     changelog: db/changelog/changelog.yaml
 
 springdoc:
-  version: 1.0.0
   swagger-ui:
     path: /swagger-ui
   group-configs:

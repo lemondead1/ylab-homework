@@ -12,7 +12,6 @@ import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.exceptions.ConflictException;
-import com.lemondead1.carshopservice.exceptions.ForbiddenException;
 import com.lemondead1.carshopservice.repo.CarRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
 import com.lemondead1.carshopservice.repo.UserRepo;

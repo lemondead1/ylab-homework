@@ -28,7 +28,7 @@ public class MainConfig {
   @Bean
   SecurityHandler securityHandler(LoginService loginService) {
     //@formatter:off
-    return new ConstraintSecurityHandlerBuilder(loginService, "BASIC_AUTH")
+    return new ConstraintSecurityHandlerBuilder(loginService)
         .at("/users").with("POST").permit(ADMIN)
         .at("/users/search").with("POST").permit(MANAGER, ADMIN)
         .at("/users/me").with("GET", "PATCH").permit(CLIENT, MANAGER, ADMIN)
