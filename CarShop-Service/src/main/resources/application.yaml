@@ -2,7 +2,7 @@ server:
   port: 8080
 
 database:
-  url: jdbc:postgresql://localhost:5432/car_shop
+  url: jdbc:postgresql://postgres:5432/car_shop
   username: car_shop_user
   password: some_password
   schema: data
