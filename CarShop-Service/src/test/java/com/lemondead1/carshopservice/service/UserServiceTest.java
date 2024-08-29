@@ -37,7 +37,7 @@ public class UserServiceTest {
   }
 
   @Test
-  @DisplayName("createUser saves user into the repo and calls EventService.onUserCreated.")
+  @DisplayName("createUser saves user into the repo.")
   void createUserSavesUserAndPostsEvent() {
     var user = userService.createUser("obemna", "+73462684906", "test@example.com", "password", UserRole.CLIENT);
     assertThat(users.findById(user.id())).isEqualTo(user);
@@ -51,8 +51,8 @@ public class UserServiceTest {
   }
 
   @Test
-  @DisplayName("editUser edits the user in the repo and calls EventService.onUserEdited.")
-  void editSavesNewUserAndPostsAnEvent() {
+  @DisplayName("editUser edits the user in the repo.")
+  void editSavesNewUser() {
     var oldUser = userService.createUser("steve", "+73462684906", "test@example.com", "password", UserRole.CLIENT);
     var newUser = userService.editUser(oldUser.id(), "bob", "+5334342", "test@ya.com", "password", UserRole.CLIENT);
     assertThat(users.findById(oldUser.id()))
@@ -68,14 +68,14 @@ public class UserServiceTest {
   }
 
   @Test
-  @DisplayName("deleteUser deletes user from the repo and calls EventService.onUserDeleted.")
-  void deleteUserDeletesUserAndPostsAnEvent() {
+  @DisplayName("deleteUser deletes user from the repo.")
+  void deleteUserDeletesUser() {
     userService.deleteUser(78);
     assertThatThrownBy(() -> users.findById(78)).isInstanceOf(NotFoundException.class);
   }
 
   @Test
-  @DisplayName("deleteUserCascade deletes the user and associated orders and submits events.")
+  @DisplayName("deleteUserCascade deletes the user and associated orders.")
   void deleteUserCascadeTest() {
     userService.deleteUserCascading(18);
 

@@ -39,8 +39,8 @@ public class CarServiceTest {
   }
 
   @Test
-  @DisplayName("createCar creates a car in the repo and submits an event.")
-  void createCarCreatesCarAndPostsEvent() {
+  @DisplayName("createCar creates a car in the repo.")
+  void createCarCreatesCar() {
     var createdCar = carService.createCar("Tesla", "Model 3", 2020, 5000000, "mint");
 
     assertThat(createdCar)
@@ -49,8 +49,8 @@ public class CarServiceTest {
   }
 
   @Test
-  @DisplayName("editCar edits the car in the repo and submits an event.")
-  void editCarEditsCarAndPostsEvent() {
+  @DisplayName("editCar edits the car in the repo.")
+  void editCarEditsCar() {
     var editedCar = carService.editCar(35, null, null, 2021, 454636, "good");
 
     assertThat(editedCar)
@@ -59,8 +59,8 @@ public class CarServiceTest {
   }
 
   @Test
-  @DisplayName("deleteCar deletes the car from the repo and submits an event.")
-  void deleteCarDeletesCarAndPostsEvent() {
+  @DisplayName("deleteCar deletes the car from the repo.")
+  void deleteCarDeletesCar() {
     carService.deleteCar(99);
 
     assertThatThrownBy(() -> cars.findById(99)).isInstanceOf(NotFoundException.class);
@@ -73,7 +73,7 @@ public class CarServiceTest {
   }
 
   @Test
-  @DisplayName("deleteCarCascading deletes the car and related orders from the repos and submits events.")
+  @DisplayName("deleteCarCascading deletes the car and related orders from the repos.")
   void deleteCarCascadingDeletesCar() {
     carService.deleteCarCascading(42);
 

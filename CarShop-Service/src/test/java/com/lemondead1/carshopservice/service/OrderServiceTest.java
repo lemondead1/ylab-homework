@@ -42,8 +42,8 @@ public class OrderServiceTest {
   }
 
   @Test
-  @DisplayName("purchase creates a purchase order in the repo and submits an event.")
-  void createPurchaseOrderCreatesOrderAndSubmitsEvent() {
+  @DisplayName("purchase creates a purchase order in the repo.")
+  void createPurchaseOrderCreatesOrder() {
     var created = orderService.createOrder(53, 97, OrderKind.PURCHASE, OrderState.NEW, "None");
 
     assertThat(created).isEqualTo(orders.findById(created.id()));
@@ -57,8 +57,8 @@ public class OrderServiceTest {
   }
 
   @Test
-  @DisplayName("orderService creates a service order in the repo and submits an event.")
-  void createServiceOrderCreatesSavesAnOrderAndSubmitsEvent() {
+  @DisplayName("orderService creates a service order in the repo.")
+  void createServiceOrderCreatesSavesAnOrder() {
     var created = orderService.createOrder(11, 7, OrderKind.SERVICE, OrderState.NEW, "None");
 
     assertThat(created).isEqualTo(orders.findById(created.id()));
@@ -72,8 +72,8 @@ public class OrderServiceTest {
   }
 
   @Test
-  @DisplayName("deleteOrder deletes order from the repo and submits an event.")
-  void deleteOrderDeletesOrderAndPostsEvent() {
+  @DisplayName("deleteOrder deletes order from the repo.")
+  void deleteOrderDeletesOrder() {
     orderService.deleteOrder(232);
 
     assertThatThrownBy(() -> orders.findById(232)).isInstanceOf(NotFoundException.class);
@@ -93,8 +93,8 @@ public class OrderServiceTest {
   }
 
   @Test
-  @DisplayName("updateState edits the order in the repo and submits an event.")
-  void updateStateEditsOrderAndPostsEvent() {
+  @DisplayName("updateState edits the order in the repo.")
+  void updateStateEditsOrder() {
     orders.create(Instant.now(), OrderKind.PURCHASE, OrderState.NEW, 1, 1, "");
     orderService.updateState(153, OrderState.PERFORMING, "New comment");
 
