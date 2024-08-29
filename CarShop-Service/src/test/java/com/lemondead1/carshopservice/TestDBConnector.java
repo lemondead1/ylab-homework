@@ -18,7 +18,7 @@ public class TestDBConnector {
                                                                    1);
 
   static {
-    var migrator = new LiquibaseDBMigrator("data", "infra", "db/changelog/test-changelog.yaml", DB_MANAGER);
+    var migrator = new LiquibaseDBMigrator("data", "infra", "db/changelog/changelog.yaml", "test", DB_MANAGER);
     migrator.migrateDatabase();
   }
 

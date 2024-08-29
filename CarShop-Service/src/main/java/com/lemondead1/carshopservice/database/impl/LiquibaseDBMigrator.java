@@ -3,12 +3,14 @@ package com.lemondead1.carshopservice.database.impl;
 import com.lemondead1.carshopservice.database.DBManager;
 import com.lemondead1.carshopservice.database.DBMigrator;
 import com.lemondead1.carshopservice.exceptions.DBException;
-import liquibase.Liquibase;
+import liquibase.command.CommandScope;
+import liquibase.command.core.UpdateCommandStep;
+import liquibase.command.core.helpers.DbUrlConnectionCommandStep;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
-import liquibase.resource.ClassLoaderResourceAccessor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.SQLException;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class LiquibaseDBMigrator implements DBMigrator {
@@ -27,6 +30,9 @@ public class LiquibaseDBMigrator implements DBMigrator {
 
   @Value("${database.liquibase.changelog}")
   private final String changelogPath;
+
+  @Value("${database.liquibase.context:default}")
+  private final String context;
 
   private final DBManager dbManager;
 
@@ -47,8 +53,10 @@ public class LiquibaseDBMigrator implements DBMigrator {
       database.setDefaultSchemaName(schema);
       database.setLiquibaseSchemaName(liquibaseSchema);
 
-      var liquibase = new Liquibase(changelogPath, new ClassLoaderResourceAccessor(), database);
-      liquibase.update();
+      new CommandScope("update").addArgumentValue(UpdateCommandStep.CHANGELOG_FILE_ARG, changelogPath)
+                                .addArgumentValue(UpdateCommandStep.CONTEXTS_ARG, context)
+                                .addArgumentValue(DbUrlConnectionCommandStep.DATABASE_ARG, database)
+                                .execute();
       dbManager.popTransaction(false);
     } catch (SQLException | LiquibaseException e) {
       dbManager.popTransaction(true);

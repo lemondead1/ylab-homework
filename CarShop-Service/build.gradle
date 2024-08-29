@@ -17,37 +17,22 @@ dependencies {
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     implementation "org.mapstruct:mapstruct:${mapstruct_version}"
 
-    implementation "jakarta.servlet:jakarta.servlet-api:${servlet_api_version}"
-    implementation "org.springframework:spring-context:${spring_version}"
-    implementation "org.springframework:spring-web:${spring_version}"
-    implementation "org.springframework:spring-webmvc:${spring_version}"
-    implementation "org.springframework:spring-aop:${spring_version}"
-    implementation "jakarta.annotation:jakarta.annotation-api:${jakarta_annotations_version}"
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdoc_version}"
-    implementation "org.aspectj:aspectjrt:${aspectj_version}"
-    implementation "org.aspectj:aspectjweaver:${aspectj_version}"
-
-    implementation "org.liquibase:liquibase-core:${liquibase_version}"
-    implementation "com.fasterxml.jackson.core:jackson-databind:${jackson_version}"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jackson_version}"
-    implementation "org.slf4j:slf4j-api:${slf4j_api_version}"
+    implementation ("org.springframework.boot:spring-boot-starter-web") {
+        exclude group: "org.springframework.boot", module: "spring-boot-starter-tomcat"
+    }
+    implementation "org.springframework.boot:spring-boot-starter-jetty"
+    implementation "org.springframework.boot:spring-boot-starter-aop"
+    implementation "org.liquibase:liquibase-core"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
+    implementation "org.eclipse.jetty.ee10:jetty-ee10-webapp:${jetty_version}"
     implementation "ch.qos.logback:logback-classic:${logback_version}"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdoc_version}"
 
-    implementation "org.eclipse.jetty.ee10:jetty-ee10-servlet:${jetty_version}"
+    runtimeOnly "org.postgresql:postgresql"
 
-    runtimeOnly "org.postgresql:postgresql:${postgres_driver_version}"
-
-    compileOnly "org.jetbrains:annotations:${jetbrains_annotations_version}"
-    compileOnly "com.github.spotbugs:spotbugs-annotations:${spotbugs_version}"
-
-    testImplementation platform("org.junit:junit-bom:${junit_version}")
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation "org.mockito:mockito-core:${mockito_version}"
-    testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
-    testImplementation "org.assertj:assertj-core:${assertj_version}"
-    testImplementation "org.testcontainers:testcontainers:${testcontainers_version}"
-    testImplementation "org.testcontainers:postgresql:${testcontainers_version}"
-    testImplementation "org.springframework:spring-test:${spring_version}"
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
+    testImplementation "org.testcontainers:testcontainers"
+    testImplementation "org.testcontainers:postgresql"
 }
 
 compileJava {

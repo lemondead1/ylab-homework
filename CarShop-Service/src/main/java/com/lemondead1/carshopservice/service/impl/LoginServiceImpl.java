@@ -29,8 +29,8 @@ public class LoginServiceImpl extends AbstractLoginService implements SignupLogi
   private final UserRepo users;
   private final EventService events;
 
-  @Transactional
   @Override
+  @Transactional
   public User signUserUp(String username, String phoneNumber, String email, String password) {
     if (users.existsUsername(username)) {
       throw new UserAlreadyExistsException("Username '" + username + "' is already taken.");

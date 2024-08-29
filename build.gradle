@@ -1,2 +1,19 @@
+plugins {
+    id 'org.springframework.boot' version '3.2.0' apply false
+}
+
 group = 'com.lemondead1'
 version = '1.0-SNAPSHOT'
+
+subprojects {
+    plugins.withType(JavaPlugin).tap {
+        configureEach {
+            dependencies {
+                implementation platform("org.springframework.boot:spring-boot-dependencies:${spring_boot_version}")
+
+                compileOnly "org.jetbrains:annotations:${jetbrains_annotations_version}"
+                compileOnly "com.github.spotbugs:spotbugs-annotations:${spotbugs_version}"
+            }
+        }
+    }
+}
