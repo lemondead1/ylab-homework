@@ -3,7 +3,6 @@ package com.lemondead1.carshopservice.aspect;
 import com.lemondead1.carshopservice.annotations.Audited;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.EventType;
-import com.lemondead1.carshopservice.filter.RequestCaptorFilter;
 import com.lemondead1.carshopservice.service.EventService;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.JoinPoint;
@@ -12,6 +11,8 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.WebRequest;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -25,7 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class AuditedAspect {
   private final EventService eventService;
-  private final RequestCaptorFilter requestCaptor;
 
   private final Map<Method, AuditedMethod> auditedMethodCache = new ConcurrentHashMap<>();
 
@@ -34,7 +34,13 @@ public class AuditedAspect {
 
   @AfterReturning("annotatedByAudited()")
   public void afterReturning(JoinPoint jp) throws NoSuchMethodException {
-    User currentUser = requestCaptor.getCurrentPrincipal();
+    var currentRequest = (WebRequest) RequestContextHolder.getRequestAttributes();
+
+    if (currentRequest == null) {
+      throw new IllegalStateException("No request context is available.");
+    }
+
+    User currentUser = (User) currentRequest.getUserPrincipal();
 
     if (currentUser == null) {
       throw new IllegalStateException("Not authenticated.");

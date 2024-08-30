@@ -8,13 +8,14 @@ import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.exceptions.DBException;
 import com.lemondead1.carshopservice.exceptions.NotFoundException;
 import com.lemondead1.carshopservice.util.Range;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -24,20 +25,17 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@SpringBootTest
+@ContextConfiguration(initializers = DBInitializer.class)
 public class OrderRepoTest {
-  private static final CarRepo cars = new CarRepo(TestDBConnector.DB_MANAGER);
-  private static final UserRepo users = new UserRepo(TestDBConnector.DB_MANAGER);
-  private static final OrderRepo orders = new OrderRepo(TestDBConnector.DB_MANAGER);
+  @Autowired
+  CarRepo cars;
 
-  @BeforeEach
-  void beforeEach() {
-    TestDBConnector.beforeEach();
-  }
+  @Autowired
+  UserRepo users;
 
-  @AfterEach
-  void afterEach() {
-    TestDBConnector.afterEach();
-  }
+  @Autowired
+  OrderRepo orders;
 
   @ParameterizedTest
   @CsvSource({

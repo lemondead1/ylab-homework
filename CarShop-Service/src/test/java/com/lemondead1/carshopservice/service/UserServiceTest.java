@@ -1,39 +1,42 @@
 package com.lemondead1.carshopservice.service;
 
-import com.lemondead1.carshopservice.TestDBConnector;
+import com.lemondead1.carshopservice.DBInitializer;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.NotFoundException;
 import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
 import com.lemondead1.carshopservice.repo.OrderRepo;
 import com.lemondead1.carshopservice.repo.UserRepo;
-import com.lemondead1.carshopservice.service.impl.UserServiceImpl;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletWebRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@ContextConfiguration(initializers = DBInitializer.class)
 public class UserServiceTest {
-  private static final UserRepo users = new UserRepo(TestDBConnector.DB_MANAGER);
-  private static final OrderRepo orders = new OrderRepo(TestDBConnector.DB_MANAGER);
+  @Autowired
+  UserRepo users;
 
+  @Autowired
+  OrderRepo orders;
+
+  @Autowired
   UserService userService;
-
+  
   @BeforeEach
   void beforeEach() {
-    TestDBConnector.beforeEach();
-    userService = new UserServiceImpl(users, orders);
-  }
-
-  @AfterEach
-  void afterEach() {
-    TestDBConnector.afterEach();
+    var currentRequest = new MockHttpServletRequest();
+    currentRequest.setUserPrincipal(new User(1, "admin", "88005553535", "admin@ya.com", "password", UserRole.ADMIN, 0));
+    RequestContextHolder.setRequestAttributes(new ServletWebRequest(currentRequest));
   }
 
   @Test

@@ -1,9 +1,6 @@
 package com.lemondead1.carshopservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lemondead1.carshopservice.config.EnvironmentConfig;
-import com.lemondead1.carshopservice.conversion.HasIdToStringConverter;
-import com.lemondead1.carshopservice.conversion.StringToHasIdEnumConverterFactory;
 import com.lemondead1.carshopservice.dto.order.OrderQueryDTO;
 import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.entity.Order;
@@ -14,16 +11,13 @@ import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.service.OrderService;
 import com.lemondead1.carshopservice.util.MapStruct;
-import com.lemondead1.carshopservice.util.MapStructImpl;
 import com.lemondead1.carshopservice.util.Range;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.format.support.DefaultFormattingConversionService;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
@@ -35,31 +29,21 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.log;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@AutoConfigureMockMvc
 public class OrderControllerTest {
-  @Mock
+  @MockBean
   OrderService orderService;
 
-  ObjectMapper objectMapper = EnvironmentConfig.objectMapper();
+  @Autowired
+  ObjectMapper objectMapper;
 
-  MapStruct mapStruct = new MapStructImpl();
+  @Autowired
+  MapStruct mapStruct;
 
-  OrderController controller;
-
+  @Autowired
   MockMvc mockMvc;
-
-  @BeforeEach
-  void beforeEach() {
-    controller = new OrderController(orderService, mapStruct);
-    var conversionService = new DefaultFormattingConversionService();
-    conversionService.addConverter(new HasIdToStringConverter());
-    conversionService.addConverterFactory(new StringToHasIdEnumConverterFactory());
-    mockMvc = standaloneSetup(controller).setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
-                                         .setConversionService(conversionService)
-                                         .build();
-  }
 
   @Test
   @DisplayName("POST /orders calls OrderService.createOrder and responds with the result.")
@@ -123,7 +107,7 @@ public class OrderControllerTest {
            .andDo(log())
            .andExpect(status().isForbidden());
 
-    verifyNoMoreInteractions(orderService);
+    verify(orderService).findById(8);
   }
 
   @Test
@@ -143,7 +127,7 @@ public class OrderControllerTest {
            .andDo(log())
            .andExpect(status().isForbidden());
 
-    verifyNoMoreInteractions(orderService);
+    verify(orderService).findById(8);
   }
 
   @Test

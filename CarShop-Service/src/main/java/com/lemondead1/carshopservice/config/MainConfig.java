@@ -1,7 +1,6 @@
 package com.lemondead1.carshopservice.config;
 
 import com.lemondead1.carshopservice.util.ConstraintSecurityHandlerBuilder;
-import jakarta.servlet.DispatcherType;
 import jakarta.servlet.Filter;
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.security.LoginService;
@@ -11,7 +10,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
-import java.util.EnumSet;
 import java.util.List;
 
 import static com.lemondead1.carshopservice.enums.UserRole.*;

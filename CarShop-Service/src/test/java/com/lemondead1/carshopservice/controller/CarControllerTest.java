@@ -1,7 +1,6 @@
 package com.lemondead1.carshopservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lemondead1.carshopservice.config.EnvironmentConfig;
 import com.lemondead1.carshopservice.dto.car.CarQueryDTO;
 import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.entity.User;
@@ -9,17 +8,15 @@ import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.service.CarService;
 import com.lemondead1.carshopservice.util.MapStruct;
-import com.lemondead1.carshopservice.util.MapStructImpl;
 import com.lemondead1.carshopservice.util.Range;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -30,27 +27,21 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.log;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@AutoConfigureMockMvc
 public class CarControllerTest {
-  @Mock
+  @MockBean
   CarService carService;
 
-  ObjectMapper objectMapper = EnvironmentConfig.objectMapper();
+  @Autowired
+  ObjectMapper objectMapper;
 
-  MapStruct mapStruct = new MapStructImpl();
+  @Autowired
+  MapStruct mapStruct;
 
-  CarController controller;
-
+  @Autowired
   MockMvc mockMvc;
-
-  @BeforeEach
-  void beforeEach() {
-    controller = new CarController(carService, mapStruct);
-    mockMvc = standaloneSetup(controller).setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
-                                         .build();
-  }
 
   @Test
   @DisplayName("POST /cars calls CarService.createCar and responds with the created car.")

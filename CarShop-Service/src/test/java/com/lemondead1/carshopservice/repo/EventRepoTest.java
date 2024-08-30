@@ -3,23 +3,23 @@ package com.lemondead1.carshopservice.repo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lemondead1.carshopservice.DBInitializer;
 import com.lemondead1.carshopservice.HasIdEnumSetConverter;
 import com.lemondead1.carshopservice.IntegerArrayConverter;
 import com.lemondead1.carshopservice.RangeConverter;
-import com.lemondead1.carshopservice.TestDBConnector;
-import com.lemondead1.carshopservice.config.EnvironmentConfig;
 import com.lemondead1.carshopservice.entity.Event;
 import com.lemondead1.carshopservice.enums.EventSorting;
 import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.exceptions.NotFoundException;
 import com.lemondead1.carshopservice.util.Range;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -29,20 +29,17 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SpringBootTest
+@ContextConfiguration(initializers = DBInitializer.class)
 public class EventRepoTest {
-  private static final ObjectMapper jackson = EnvironmentConfig.objectMapper();
-  private static final EventRepo events = new EventRepo(TestDBConnector.DB_MANAGER, jackson);
-  private static final UserRepo users = new UserRepo(TestDBConnector.DB_MANAGER);
+  @Autowired
+  ObjectMapper jackson;
 
-  @BeforeEach
-  void beforeEach() {
-    TestDBConnector.beforeEach();
-  }
+  @Autowired
+  EventRepo events;
 
-  @AfterEach
-  void afterEach() {
-    TestDBConnector.afterEach();
-  }
+  @Autowired
+  UserRepo users;
 
   @Test
   @DisplayName("create creates an event.")

@@ -4,7 +4,6 @@ import com.lemondead1.carshopservice.annotations.Audited;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.filter.RequestCaptorFilter;
 import com.lemondead1.carshopservice.service.EventService;
 import jakarta.annotation.Nullable;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,34 +13,34 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletWebRequest;
 
 import java.util.Map;
 
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class AuditedAspectTest {
   @Mock
   EventService eventService;
 
-  @Mock
-  RequestCaptorFilter requestCaptorFilter;
-
   TestInterface proxy;
 
   @BeforeEach
   void beforeEach() {
     var proxyFactory = new AspectJProxyFactory(new TestClass());
-    proxyFactory.addAspect(new AuditedAspect(eventService, requestCaptorFilter));
+    proxyFactory.addAspect(new AuditedAspect(eventService));
     proxy = proxyFactory.getProxy();
   }
 
   @Test
   @DisplayName("EventService.postEvent is called when testMethod is executed.")
   void testAuditedAspect() {
-    when(requestCaptorFilter.getCurrentPrincipal())
-        .thenReturn(new User(1, "admin", "71234567890", "admin@example.com", "password", UserRole.ADMIN, 0));
+    var currentRequest = new MockHttpServletRequest();
+    currentRequest.setUserPrincipal(new User(1, "admin", "88005553535", "admin@ya.com", "password", UserRole.ADMIN, 0));
+    RequestContextHolder.setRequestAttributes(new ServletWebRequest(currentRequest));
 
     proxy.testMethod("a", null, "c", "d");
 
