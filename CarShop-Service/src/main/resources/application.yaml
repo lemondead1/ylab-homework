@@ -12,6 +12,12 @@ database:
     schema: infra
     changelog: db/changelog/changelog.yaml
 
+lemondead1:
+  logging:
+    classes:
+      - com.lemondead1.carshopservice.repo
+      - com.lemondead1.carshopservice
+
 spring:
   aop:
     proxyTargetClass: false

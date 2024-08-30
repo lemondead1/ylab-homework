@@ -1,7 +1,7 @@
 package com.lemondead1.carshopservice.service.impl;
 
 import com.lemondead1.carshopservice.annotations.Audited;
-import com.lemondead1.carshopservice.annotations.Timed;
+import com.lemondead1.logging.annotations.Timed;
 import com.lemondead1.carshopservice.annotations.Transactional;
 import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.entity.Order;
