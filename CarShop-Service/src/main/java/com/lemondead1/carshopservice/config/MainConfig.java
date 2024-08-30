@@ -1,6 +1,7 @@
 package com.lemondead1.carshopservice.config;
 
 import com.lemondead1.carshopservice.util.ConstraintSecurityHandlerBuilder;
+import com.lemondead1.logging.EnableLogging;
 import jakarta.servlet.Filter;
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.security.LoginService;
@@ -15,6 +16,7 @@ import java.util.List;
 import static com.lemondead1.carshopservice.enums.UserRole.*;
 
 @Configuration
+@EnableLogging
 @EnableAspectJAutoProxy
 public class MainConfig {
   /**

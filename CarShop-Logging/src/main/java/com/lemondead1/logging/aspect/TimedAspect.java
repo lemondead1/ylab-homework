@@ -11,20 +11,13 @@ import org.springframework.stereotype.Component;
 @Aspect
 @Slf4j
 public class TimedAspect {
-  @Pointcut("execution(@com.lemondead1.logging.annotations.Timed(value=true) * * (..))")
+  @Pointcut("execution(@com.lemondead1.logging.annotations.Timed * * (..))")
   public void methodsWithTimed() { }
 
-  @Pointcut("within(@com.lemondead1.logging.annotations.Timed(value=true) *) && " +
-            "execution(!@com.lemondead1.logging.annotations.Timed(value=false) * * (..))")
+  @Pointcut("within(@com.lemondead1.logging.annotations.Timed *) && execution(* * (..))")
   public void methodsInClassesWithTimed() { }
 
-  @Pointcut("configuredTimedClasses() &&" +
-            "within(!@com.lemondead1.logging.annotations.Timed(value=false) *) && " +
-            "execution(!@com.lemondead1.logging.annotations.Timed(value=false) * * (..))")
-  public void filteredMethodsInConfiguredTimedClasses() { }
-
-
-  @Around("methodsWithTimed() || methodsInClassesWithTimed() || filteredMethodsInConfiguredTimedClasses()")
+  @Around("methodsWithTimed() || methodsInClassesWithTimed()")
   public Object around(ProceedingJoinPoint pjp) throws Throwable {
     log.debug("Entering {}.{}", pjp.getSignature().getDeclaringTypeName(), pjp.getSignature().getName());
     long startNanoTime = System.nanoTime();

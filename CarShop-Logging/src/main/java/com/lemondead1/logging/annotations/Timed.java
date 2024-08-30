@@ -11,9 +11,4 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.METHOD, ElementType.TYPE })
-public @interface Timed {
-  /**
-   * Changing to false disables measurements.
-   */
-  boolean value() default true;
-}
+public @interface Timed { }

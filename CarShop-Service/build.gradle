@@ -17,7 +17,7 @@ dependencies {
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     implementation "org.mapstruct:mapstruct:${mapstruct_version}"
 
-    implementation ("org.springframework.boot:spring-boot-starter-web") {
+    implementation("org.springframework.boot:spring-boot-starter-web") {
         exclude group: "org.springframework.boot", module: "spring-boot-starter-tomcat"
     }
     implementation "org.springframework.boot:spring-boot-starter-jetty"

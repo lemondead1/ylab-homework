@@ -12,11 +12,10 @@ database:
     schema: infra
     changelog: db/changelog/changelog.yaml
 
-lemondead1:
-  logging:
-    classes:
-      - com.lemondead1.carshopservice.repo
-      - com.lemondead1.carshopservice
+logging:
+  level:
+    root: INFO
+    com.lemondead1: DEBUG
 
 spring:
   aop:
