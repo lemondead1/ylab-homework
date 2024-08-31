@@ -1,10 +1,9 @@
 package com.lemondead1.carshopservice.service.impl;
 
-import com.lemondead1.carshopservice.annotations.Audited;
+import com.lemondead1.audit.annotations.Audited;
 import com.lemondead1.logging.annotations.Timed;
 import com.lemondead1.carshopservice.annotations.Transactional;
 import com.lemondead1.carshopservice.entity.User;
-import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.enums.UserSorting;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
@@ -46,7 +45,7 @@ public class UserServiceImpl implements UserService {
   }
 
   @Transactional
-  @Audited(EventType.USER_CREATED)
+  @Audited("user_created")
   @Override
   public User createUser(@Audited.Param("username") String username,
                          @Audited.Param("phone_number") String phoneNumber,
@@ -60,7 +59,7 @@ public class UserServiceImpl implements UserService {
   }
 
   @Transactional
-  @Audited(EventType.USER_MODIFIED)
+  @Audited("user_edited")
   @Override
   public User editUser(@Audited.Param("edited_user_id") int userId,
                        @Audited.Param("new_username") @Nullable String username,
@@ -72,7 +71,7 @@ public class UserServiceImpl implements UserService {
   }
 
   @Transactional
-  @Audited(EventType.USER_DELETED)
+  @Audited("user_deleted")
   @Override
   public void deleteUser(@Audited.Param("deleted_user_id") int userId) {
     if (orders.doAnyOrdersExistFor(userId)) {
@@ -83,7 +82,7 @@ public class UserServiceImpl implements UserService {
   }
 
   @Transactional
-  @Audited(EventType.USER_DELETED)
+  @Audited("user_deleted")
   @Override
   public void deleteUserCascading(@Audited.Param("deleted_user_id") int userId) {
     orders.deleteClientOrders(userId);

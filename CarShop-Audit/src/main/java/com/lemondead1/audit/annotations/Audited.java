@@ -1,6 +1,4 @@
-package com.lemondead1.carshopservice.annotations;
-
-import com.lemondead1.carshopservice.enums.EventType;
+package com.lemondead1.audit.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -10,7 +8,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface Audited {
-  EventType value();
+  String value();
 
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.PARAMETER)
