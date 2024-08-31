@@ -8,6 +8,12 @@ version = '1.0-SNAPSHOT'
 subprojects {
     plugins.withType(JavaPlugin).tap {
         configureEach {
+            java {
+                toolchain {
+                    languageVersion = JavaLanguageVersion.of(17)
+                }
+            }
+
             dependencies {
                 implementation platform("org.springframework.boot:spring-boot-dependencies:${spring_boot_version}")
 

@@ -1,6 +1,7 @@
 plugins {
     id 'application'
     id 'io.freefair.lombok' version '8.6'
+    id 'org.springframework.boot' version "${spring_boot_version}"
 }
 
 group = 'com.lemondead1.carshopservice'
@@ -42,30 +43,20 @@ compileJava {
     options.compilerArgs << '-parameters'
 }
 
-jar {
-    manifest.attributes('Main-Class': application.mainClass)
-
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-    }
-
-    duplicatesStrategy DuplicatesStrategy.WARN
-}
-
 test {
     useJUnitPlatform()
 }
 
 tasks.register('buildDockerImage', Exec) {
-    doFirst {
-        mkdir "${layout.buildDirectory.get()}/docker"
-    }
-
-    dependsOn jar
+    group = 'build'
+    dependsOn bootJar
 
     workingDir = "${projectDir}"
     commandLine "docker", "build", "-t=carshop-service", "--build-arg=JAR_PATH=build/libs/CarShop-Service.jar", "."
 }
+
+// It does not work anyway.
+bootBuildImage.enabled = false
 
 tasks.register('runDocker', Exec) {
     dependsOn buildDockerImage
