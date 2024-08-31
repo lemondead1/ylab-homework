@@ -2,7 +2,7 @@ package com.lemondead1.carshopservice.dto.car;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(name = "ExistingCar")
+@Schema(name = "IdentifiedCar")
 public record ExistingCarDTO(@Schema(description = "The car's id.")
                              int id,
 

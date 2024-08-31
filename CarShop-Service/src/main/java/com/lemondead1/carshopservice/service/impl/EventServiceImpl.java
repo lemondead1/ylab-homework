@@ -21,9 +21,11 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
+import com.lemondead1.audit.Auditor;
+
 /**
  * This class is responsible for interfacing with the event database.
- * It provides convenience methods for both submitting and querying events.
+ * It provides convenience methods for both submitting and querying events as well as implements {@linkplain Auditor}.
  */
 @Timed
 @Service
@@ -51,12 +53,18 @@ public class EventServiceImpl implements EventService {
     events.create(Instant.now(), currentUser.id(), eventType, data);
   }
 
+  /**
+   * Called when a user logs in.
+   */
   @Override
   public void onUserLoggedIn(int userId) {
     log.info("User #{} logged in.", userId);
     events.create(Instant.now(), userId, EventType.USER_LOGGED_IN, Map.of());
   }
 
+  /**
+   * Called when a user signs up.
+   */
   @Override
   public void onUserSignedUp(User user) {
     log.info("User id={}, phone number={}, email={} signed up.", user.id(), user.phoneNumber(), user.email());

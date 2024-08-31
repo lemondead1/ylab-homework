@@ -8,11 +8,20 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface Audited {
+  /**
+   * The type of the event.
+   */
   String value();
 
+  /**
+   * Marks the parameter to be captured for audit.
+   */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.PARAMETER)
   @interface Param {
+    /**
+     * Key for the data map entry.
+     */
     String value();
   }
 
@@ -22,6 +31,9 @@ public @interface Audited {
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.PARAMETER)
   @interface PresenceCheck {
+    /**
+     * Key for the data map entry.
+     */
     String value();
   }
 }

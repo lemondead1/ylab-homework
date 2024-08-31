@@ -6,6 +6,9 @@ import lombok.RequiredArgsConstructor;
 
 import javax.annotation.Nullable;
 
+/**
+ * Validator for a value.
+ */
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class Validated<T> {
   @Nullable
@@ -38,13 +41,6 @@ public class Validated<T> {
       throw new ValidationException(message);
     }
     return value;
-  }
-
-  /**
-   * @return the current value if it is not {@code null}, {@code defaultValue} otherwise
-   */
-  public T orElse(T defaultValue) {
-    return value == null ? defaultValue : value;
   }
 
   @Nullable

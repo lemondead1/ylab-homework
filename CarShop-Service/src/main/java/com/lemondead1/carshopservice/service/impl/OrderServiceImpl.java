@@ -107,8 +107,8 @@ public class OrderServiceImpl implements OrderService {
 
   @Transactional
   @Override
-  public List<Order> findClientOrders(int userId, OrderSorting sorting) {
-    return orders.findClientOrders(userId, sorting);
+  public List<Order> findClientOrders(int clientId, OrderSorting sorting) {
+    return orders.findClientOrders(clientId, sorting);
   }
 
   @Transactional
