@@ -4,7 +4,8 @@ plugins {
     id 'org.springframework.boot' version "${spring_boot_version}"
 }
 
-group = 'com.lemondead1.carshopservice'
+group = 'com.lemondead1'
+version = '0.0.1'
 
 application {
     mainClass = "com.lemondead1.carshopservice.CarShopServiceApplication"
