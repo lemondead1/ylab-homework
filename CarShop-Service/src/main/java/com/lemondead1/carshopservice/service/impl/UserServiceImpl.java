@@ -1,7 +1,6 @@
 package com.lemondead1.carshopservice.service.impl;
 
 import com.lemondead1.audit.annotations.Audited;
-import com.lemondead1.logging.annotations.Timed;
 import com.lemondead1.carshopservice.annotations.Transactional;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
@@ -12,6 +11,7 @@ import com.lemondead1.carshopservice.repo.OrderRepo;
 import com.lemondead1.carshopservice.repo.UserRepo;
 import com.lemondead1.carshopservice.service.UserService;
 import com.lemondead1.carshopservice.util.Range;
+import com.lemondead1.logging.annotations.Timed;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

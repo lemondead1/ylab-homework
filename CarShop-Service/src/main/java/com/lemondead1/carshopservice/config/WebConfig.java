@@ -3,11 +3,7 @@ package com.lemondead1.carshopservice.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lemondead1.carshopservice.conversion.HasIdToStringConverter;
 import com.lemondead1.carshopservice.conversion.StringToHasIdEnumConverterFactory;
-import io.swagger.v3.core.jackson.ModelResolver;
-import io.swagger.v3.oas.models.OpenAPI;
 import lombok.RequiredArgsConstructor;
-import org.springdoc.core.properties.SpringDocConfigProperties;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
@@ -57,21 +53,5 @@ public class WebConfig implements WebMvcConfigurer {
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
     registry.addResourceHandler("swagger-ui.html").addResourceLocations("classpath:/META-INF/resources/");
     registry.addResourceHandler("/webjars/**").addResourceLocations("classpath:/META-INF/resources/webjars/");
-  }
-
-  /**
-   * Customizing Swagger model resolver with a custom objectMapper.
-   */
-  @Bean
-  ModelResolver modelResolver() {
-    return new ModelResolver(objectMapper);
-  }
-
-  /**
-   * Manually exposing OpenAPI instance form the config file to fix the marvellous SpringDoc programming.
-   */
-  @Bean
-  OpenAPI openAPI(SpringDocConfigProperties springDocConfigProperties) {
-    return springDocConfigProperties.getOpenApi();
   }
 }

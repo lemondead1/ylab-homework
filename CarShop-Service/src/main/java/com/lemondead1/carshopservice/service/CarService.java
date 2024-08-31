@@ -3,8 +3,8 @@ package com.lemondead1.carshopservice.service;
 import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
-import com.lemondead1.carshopservice.util.Range;
 import com.lemondead1.carshopservice.exceptions.NotFoundException;
+import com.lemondead1.carshopservice.util.Range;
 
 import javax.annotation.Nullable;
 import java.util.Collection;

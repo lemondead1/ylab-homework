@@ -1,5 +1,6 @@
 package com.lemondead1.carshopservice.controller;
 
+import com.lemondead1.carshopservice.conversion.MapStruct;
 import com.lemondead1.carshopservice.dto.order.EditOrderDTO;
 import com.lemondead1.carshopservice.dto.order.ExistingOrderDTO;
 import com.lemondead1.carshopservice.dto.order.NewOrderDTO;
@@ -12,7 +13,6 @@ import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.ForbiddenException;
 import com.lemondead1.carshopservice.service.OrderService;
-import com.lemondead1.carshopservice.util.MapStruct;
 import com.lemondead1.carshopservice.util.Range;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

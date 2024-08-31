@@ -1,5 +1,6 @@
 package com.lemondead1.carshopservice.service.impl;
 
+import com.lemondead1.audit.Auditor;
 import com.lemondead1.carshopservice.annotations.Transactional;
 import com.lemondead1.carshopservice.entity.Event;
 import com.lemondead1.carshopservice.entity.User;
@@ -20,8 +21,6 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-
-import com.lemondead1.audit.Auditor;
 
 /**
  * This class is responsible for interfacing with the event database.

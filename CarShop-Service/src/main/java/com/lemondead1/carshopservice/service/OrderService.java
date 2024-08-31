@@ -5,8 +5,8 @@ import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.exceptions.ConflictException;
-import com.lemondead1.carshopservice.util.Range;
 import com.lemondead1.carshopservice.exceptions.NotFoundException;
+import com.lemondead1.carshopservice.util.Range;
 
 import javax.annotation.Nullable;
 import java.time.Instant;

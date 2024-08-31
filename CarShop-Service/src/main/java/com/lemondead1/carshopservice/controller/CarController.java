@@ -1,5 +1,6 @@
 package com.lemondead1.carshopservice.controller;
 
+import com.lemondead1.carshopservice.conversion.MapStruct;
 import com.lemondead1.carshopservice.dto.car.CarQueryDTO;
 import com.lemondead1.carshopservice.dto.car.ExistingCarDTO;
 import com.lemondead1.carshopservice.dto.car.NewCarDTO;
@@ -9,7 +10,6 @@ import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.ForbiddenException;
 import com.lemondead1.carshopservice.service.CarService;
-import com.lemondead1.carshopservice.util.MapStruct;
 import com.lemondead1.carshopservice.util.Range;
 import com.lemondead1.carshopservice.util.Util;
 import com.lemondead1.carshopservice.validation.PastYearValidator;

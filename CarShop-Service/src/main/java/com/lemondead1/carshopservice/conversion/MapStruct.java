@@ -1,4 +1,4 @@
-package com.lemondead1.carshopservice.util;
+package com.lemondead1.carshopservice.conversion;
 
 import com.lemondead1.carshopservice.dto.car.ExistingCarDTO;
 import com.lemondead1.carshopservice.dto.car.NewCarDTO;
