@@ -1,4 +1,12 @@
 services:
+  carshop-service:
+    image: carshop-service
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+
   postgres:
     image: postgres
     container_name: postgres
@@ -7,5 +15,3 @@ services:
       - POSTGRES_PASSWORD=some_password
       - POSTGRES_DB=car_shop
     restart: unless-stopped
-    ports:
-      - "5433:5432"

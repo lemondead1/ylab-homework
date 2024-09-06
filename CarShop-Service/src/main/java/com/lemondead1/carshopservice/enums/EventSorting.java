@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum EventSorting implements HasId {
-  TIMESTAMP_DESC("newer_first"),
+  TIMESTAMP_DESC("latest_first"),
   TIMESTAMP_ASC("older_first"),
   USERNAME_ASC("username"),
   USERNAME_DESC("username_reversed"),

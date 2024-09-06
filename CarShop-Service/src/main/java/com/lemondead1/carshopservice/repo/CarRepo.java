@@ -5,8 +5,8 @@ import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.DBException;
-import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
-import com.lemondead1.carshopservice.util.IntRange;
+import com.lemondead1.carshopservice.exceptions.NotFoundException;
+import com.lemondead1.carshopservice.util.Range;
 import com.lemondead1.carshopservice.util.Util;
 import lombok.RequiredArgsConstructor;
 
@@ -36,7 +36,7 @@ public class CarRepo {
   public Car create(String brand, String model, int productionYear, int price, String condition) {
     var sql = "insert into cars (brand, model, production_year, price, condition) values (?, ?, ?, ?, ?)";
 
-    try (var stmt = db.connect().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+    try (var stmt = db.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
       stmt.setString(1, brand);
       stmt.setString(2, model);
       stmt.setInt(3, productionYear);
@@ -47,7 +47,7 @@ public class CarRepo {
       var generatedKeys = stmt.getGeneratedKeys();
       generatedKeys.next();
 
-      var generatedId = generatedKeys.getInt(1);
+      int generatedId = generatedKeys.getInt(1);
 
       return new Car(generatedId, brand, model, productionYear, price, condition, true);
     } catch (SQLException e) {
@@ -82,7 +82,7 @@ public class CarRepo {
         returning id, brand, model, production_year, price, condition,
                   c.id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase""";
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setString(1, brand);
       stmt.setString(2, model);
       stmt.setObject(3, productionYear);
@@ -95,7 +95,7 @@ public class CarRepo {
       var results = stmt.getResultSet();
 
       if (!results.next()) {
-        throw new RowNotFoundException("Car #" + carId + " not found.");
+        throw new NotFoundException("Car #" + carId + " not found.");
       }
 
       return readCar(results, 1);
@@ -109,7 +109,7 @@ public class CarRepo {
    *
    * @param carId id to be deleted
    * @return old row
-   * @throws RowNotFoundException if a car with given id does not exist.
+   * @throws NotFoundException if a car with given id does not exist.
    */
   public Car delete(int carId) {
     var sql = """
@@ -117,14 +117,14 @@ public class CarRepo {
         returning id, brand, model, production_year, price, condition,
                   id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase""";
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setInt(1, carId);
       stmt.execute();
 
       var results = stmt.getResultSet();
 
       if (!results.next()) {
-        throw new RowNotFoundException("Car #" + carId + " not found.");
+        throw new NotFoundException("Car #" + carId + " not found.");
       }
 
       return readCar(results, 1);
@@ -138,7 +138,7 @@ public class CarRepo {
    *
    * @param carId id to find
    * @return a car with the given id
-   * @throws RowNotFoundException if the car was not found
+   * @throws NotFoundException if the car was not found
    */
   public Car findById(int carId) {
     var sql = """
@@ -146,14 +146,14 @@ public class CarRepo {
                id not in (select car_id from orders where state!='cancelled' and kind='purchase') as available_for_purchase
         from cars where id=?""";
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setInt(1, carId);
       stmt.execute();
 
       var results = stmt.getResultSet();
 
       if (!results.next()) {
-        throw new RowNotFoundException("Car #" + carId + " not found.");
+        throw new NotFoundException("Car #" + carId + " not found.");
       }
 
       return readCar(results, 1);
@@ -176,7 +176,7 @@ public class CarRepo {
         join orders o on o.client_id=u.id
         where o.car_id=? and o.state='done' and o.kind='purchase'""";
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setInt(1, carId);
       stmt.execute();
 
@@ -206,8 +206,8 @@ public class CarRepo {
    */
   public List<Car> lookup(String brand,
                           String model,
-                          IntRange productionYear,
-                          IntRange price,
+                          Range<Integer> productionYear,
+                          Range<Integer> price,
                           String condition,
                           Set<Boolean> availabilityForPurchase,
                           CarSorting sorting) {
@@ -220,21 +220,21 @@ public class CarRepo {
                               )
                               where upper(brand) like '%' || upper(?) || '%' and
                                     upper(model) like '%' || upper(?) || '%' and
-                                    production_year between ? and ? and
-                                    price between ? and ? and
+                                    production_year between coalesce(?, '-infinity'::float) and coalesce(?, '+infinity'::float) and
+                                    price between coalesce(?, '-infinity'::float) and coalesce(?, '+infinity'::float) and
                                     upper(condition) like '%' || upper(?) || '%' and
                                     available_for_purchase in ({})
                                     order by {}""",
                           Util.serializeBooleans(availabilityForPurchase),
                           getOrderingString(sorting));
 
-    try (var stmt = db.connect().prepareStatement(sql)) {
+    try (var stmt = db.getConnection().prepareStatement(sql)) {
       stmt.setString(1, brand);
       stmt.setString(2, model);
-      stmt.setInt(3, productionYear.min());
-      stmt.setInt(4, productionYear.max());
-      stmt.setInt(5, price.min());
-      stmt.setInt(6, price.max());
+      stmt.setObject(3, productionYear.min());
+      stmt.setObject(4, productionYear.max());
+      stmt.setObject(5, price.min());
+      stmt.setObject(6, price.max());
       stmt.setString(7, condition);
       stmt.execute();
 

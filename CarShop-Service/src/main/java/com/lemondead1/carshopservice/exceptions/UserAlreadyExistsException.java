@@ -1,6 +1,9 @@
 package com.lemondead1.carshopservice.exceptions;
 
-import lombok.experimental.StandardException;
+import org.eclipse.jetty.http.HttpStatus;
 
-@StandardException
-public class UserAlreadyExistsException extends CommandException { }
+public class UserAlreadyExistsException extends RequestException {
+  public UserAlreadyExistsException(String message) {
+    super(HttpStatus.CONFLICT_409, message);
+  }
+}

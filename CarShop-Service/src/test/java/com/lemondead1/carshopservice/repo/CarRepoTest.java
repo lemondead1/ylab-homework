@@ -1,19 +1,21 @@
 package com.lemondead1.carshopservice.repo;
 
-import com.lemondead1.carshopservice.BooleanSetConverter;
-import com.lemondead1.carshopservice.IntRangeConverter;
 import com.lemondead1.carshopservice.IntegerArrayConverter;
-import com.lemondead1.carshopservice.database.DBManager;
+import com.lemondead1.carshopservice.RangeConverter;
+import com.lemondead1.carshopservice.TestDBConnector;
 import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.DBException;
-import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
-import com.lemondead1.carshopservice.util.IntRange;
-import org.junit.jupiter.api.*;
+import com.lemondead1.carshopservice.exceptions.NotFoundException;
+import com.lemondead1.carshopservice.util.Range;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.shaded.org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Comparator;
 import java.util.Set;
@@ -22,23 +24,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class CarRepoTest {
-  static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres").withReuse(true);
+  private static final CarRepo cars = new CarRepo(TestDBConnector.DB_MANAGER);
 
-  static DBManager dbManager;
-  static CarRepo cars;
-
-  @BeforeAll
-  static void beforeAll() {
-    postgres.start();
-    dbManager = new DBManager(postgres.getJdbcUrl(), postgres.getUsername(),
-                              postgres.getPassword(), "data", "infra", true);
-    dbManager.setupDatabase();
-    cars = new CarRepo(dbManager);
+  @BeforeEach
+  void beforeEach() {
+    TestDBConnector.beforeEach();
   }
 
-  @AfterAll
-  static void afterAll() {
-    dbManager.dropSchemas();
+  @AfterEach
+  void afterEach() {
+    TestDBConnector.afterEach();
   }
 
   @ParameterizedTest(name = "findById({0}) returns Car({0}, {1}, {2}, {3}, {4}, {5}, {6}).")
@@ -81,7 +76,7 @@ public class CarRepoTest {
   @Test
   @DisplayName("edit throws RowNotFoundException a car when the given id is not found.")
   void editNonExistingCarThrows() {
-    assertThatThrownBy(() -> cars.edit(999, null, null, null, 3000000, null)).isInstanceOf(RowNotFoundException.class);
+    assertThatThrownBy(() -> cars.edit(999, null, null, null, 3000000, null)).isInstanceOf(NotFoundException.class);
   }
 
   @Test
@@ -89,7 +84,13 @@ public class CarRepoTest {
   void deleteTest() {
     var created = cars.create("BMW", "X5", 2015, 3000000, "good");
     assertThat(cars.delete(created.id())).isEqualTo(created);
-    assertThatThrownBy(() -> cars.findById(created.id())).isInstanceOf(RowNotFoundException.class);
+    assertThatThrownBy(() -> cars.findById(created.id())).isInstanceOf(NotFoundException.class);
+  }
+
+  @Test
+  @DisplayName("delete throws when the car does not exist.")
+  void deleteNotFoundTest() {
+    assertThatThrownBy(() -> cars.delete(1000)).isInstanceOf(NotFoundException.class);
   }
 
   @Test
@@ -98,77 +99,69 @@ public class CarRepoTest {
     assertThatThrownBy(() -> cars.delete(1)).isInstanceOf(DBException.class);
   }
 
-  @Nested
-  class LookupCarsTests {
-    private static final Set<Boolean> allBool = Set.of(true, false);
+  private static final Set<Boolean> allBool = Set.of(true, false);
 
-    @BeforeAll
-    static void beforeAll() {
-      dbManager.dropSchemas();
-      dbManager.setupDatabase();
-    }
+  @Test
+  void sortingTestNameAsc() {
+    assertThat(cars.lookup("", "", Range.all(), Range.all(), "", allBool, CarSorting.NAME_ASC))
+        .isSortedAccordingTo(Comparator.comparing(Car::getBrandModel, String::compareToIgnoreCase))
+        .hasSize(100);
+  }
 
-    @Test
-    void sortingTestNameAsc() {
-      assertThat(cars.lookup("", "", IntRange.ALL, IntRange.ALL, "", allBool, CarSorting.NAME_ASC))
-          .isSortedAccordingTo(Comparator.comparing(Car::getBrandModel, String::compareToIgnoreCase))
-          .hasSize(100);
-    }
+  @Test
+  void sortingTestNameDesc() {
+    assertThat(cars.lookup("", "", Range.all(), Range.all(), "", allBool, CarSorting.NAME_DESC))
+        .isSortedAccordingTo(Comparator.comparing(Car::getBrandModel, String::compareToIgnoreCase).reversed())
+        .hasSize(100);
+  }
 
-    @Test
-    void sortingTestNameDesc() {
-      assertThat(cars.lookup("", "", IntRange.ALL, IntRange.ALL, "", allBool, CarSorting.NAME_DESC))
-          .isSortedAccordingTo(Comparator.comparing(Car::getBrandModel, String::compareToIgnoreCase).reversed())
-          .hasSize(100);
-    }
+  @Test
+  void sortingTestProductionYearAsc() {
+    assertThat(cars.lookup("", "", Range.all(), Range.all(), "", allBool, CarSorting.PRODUCTION_YEAR_ASC))
+        .isSortedAccordingTo(Comparator.comparing(Car::productionYear))
+        .hasSize(100);
+  }
 
-    @Test
-    void sortingTestProductionYearAsc() {
-      assertThat(cars.lookup("", "", IntRange.ALL, IntRange.ALL, "", allBool, CarSorting.PRODUCTION_YEAR_ASC))
-          .isSortedAccordingTo(Comparator.comparing(Car::productionYear))
-          .hasSize(100);
-    }
+  @Test
+  void sortingTestProductionYearDesc() {
+    assertThat(cars.lookup("", "", Range.all(), Range.all(), "", allBool, CarSorting.PRODUCTION_YEAR_DESC))
+        .isSortedAccordingTo(Comparator.comparing(Car::productionYear).reversed())
+        .hasSize(100);
+  }
 
-    @Test
-    void sortingTestProductionYearDesc() {
-      assertThat(cars.lookup("", "", IntRange.ALL, IntRange.ALL, "", allBool, CarSorting.PRODUCTION_YEAR_DESC))
-          .isSortedAccordingTo(Comparator.comparing(Car::productionYear).reversed())
-          .hasSize(100);
-    }
+  @Test
+  void sortingTestPriceAsc() {
+    assertThat(cars.lookup("", "", Range.all(), Range.all(), "", allBool, CarSorting.PRICE_ASC))
+        .isSortedAccordingTo(Comparator.comparing(Car::price))
+        .hasSize(100);
+  }
 
-    @Test
-    void sortingTestPriceAsc() {
-      assertThat(cars.lookup("", "", IntRange.ALL, IntRange.ALL, "", allBool, CarSorting.PRICE_ASC))
-          .isSortedAccordingTo(Comparator.comparing(Car::price))
-          .hasSize(100);
-    }
+  @Test
+  void sortingTestPriceDesc() {
+    assertThat(cars.lookup("", "", Range.all(), Range.all(), "", allBool, CarSorting.PRICE_DESC))
+        .isSortedAccordingTo(Comparator.comparing(Car::price).reversed())
+        .hasSize(100);
+  }
 
-    @Test
-    void sortingTestPriceDesc() {
-      assertThat(cars.lookup("", "", IntRange.ALL, IntRange.ALL, "", allBool, CarSorting.PRICE_DESC))
-          .isSortedAccordingTo(Comparator.comparing(Car::price).reversed())
-          .hasSize(100);
-    }
-
-    @ParameterizedTest
-    @CsvSource(value = {
-        "'27, 28, 50, 66, 80, 88', chev, '',  ALL,         ALL,               '',   ALL",
-        "'28, 80',                 '',   cor, ALL,         ALL,               '',   ALL",
-        "'19, 22, 31, 39, 62, 93', '',   '',  2000 - 2001, ALL,               '',   ALL",
-        "'19, 23, 39, 71, 73',     '',   '',  ALL,         3000000 - 3500000, '',   ALL",
-        "'11, 40, 80',             '',   '',  ALL,         0 - 2000000,       good, ALL",
-        "'90, 96, 97, 100',        '',   '',  ALL,         0 - 2000000,       '',   true",
-    })
-    @DisplayName("lookup returns entries matching arguments.")
-    void filterTest(@ConvertWith(IntegerArrayConverter.class) Integer[] expectedIds,
-                    String brand,
-                    String model,
-                    @ConvertWith(IntRangeConverter.class) IntRange year,
-                    @ConvertWith(IntRangeConverter.class) IntRange price,
-                    String condition,
-                    @ConvertWith(BooleanSetConverter.class) Set<Boolean> available) {
-      assertThat(cars.lookup(brand, model, year, price, condition, available, CarSorting.NAME_ASC))
-          .map(Car::id).containsExactlyInAnyOrder(expectedIds);
-    }
+  @ParameterizedTest
+  @CsvSource(nullValues = "null", value = {
+      "'27, 28, 50, 66, 80, 88', chev, '',  ALL,         ALL,               '',   null",
+      "'28, 80',                 '',   cor, ALL,         ALL,               '',   null",
+      "'19, 22, 31, 39, 62, 93', '',   '',  2000 - 2001, ALL,               '',   null",
+      "'19, 23, 39, 71, 73',     '',   '',  ALL,         3000000 - 3500000, '',   null",
+      "'11, 40, 80',             '',   '',  ALL,         0 - 2000000,       good, null",
+      "'90, 96, 97, 100',        '',   '',  ALL,         0 - 2000000,       '',   true",
+  })
+  @DisplayName("lookup returns entries matching arguments.")
+  void filterTest(@ConvertWith(IntegerArrayConverter.class) Integer[] expectedIds,
+                  String brand,
+                  String model,
+                  @ConvertWith(RangeConverter.class) Range<Integer> year,
+                  @ConvertWith(RangeConverter.class) Range<Integer> price,
+                  String condition,
+                  @Nullable Boolean available) {
+    var availableSet = available == null ? allBool : Set.of(available);
+    assertThat(cars.lookup(brand, model, year, price, condition, availableSet, CarSorting.NAME_ASC))
+        .map(Car::id).containsExactlyInAnyOrder(expectedIds);
   }
 }

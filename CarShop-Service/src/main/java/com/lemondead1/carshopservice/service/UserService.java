@@ -1,79 +1,91 @@
 package com.lemondead1.carshopservice.service;
 
+import com.lemondead1.carshopservice.annotations.Audited;
+import com.lemondead1.carshopservice.annotations.Timed;
+import com.lemondead1.carshopservice.annotations.Transactional;
 import com.lemondead1.carshopservice.entity.User;
+import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.enums.UserSorting;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
 import com.lemondead1.carshopservice.repo.OrderRepo;
 import com.lemondead1.carshopservice.repo.UserRepo;
-import com.lemondead1.carshopservice.util.IntRange;
+import com.lemondead1.carshopservice.util.Range;
 import lombok.RequiredArgsConstructor;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
-import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 
+@Timed
 @RequiredArgsConstructor
 public class UserService {
   private final UserRepo users;
   private final OrderRepo orders;
-  private final EventService events;
 
+  @Transactional
   public User findById(int userId) {
     return users.findById(userId);
   }
 
-  public List<User> lookupUsers(String username, Collection<UserRole> roles, String phoneNumber, String email,
-                                IntRange purchases, UserSorting sorting) {
-    return users.lookup(username, EnumSet.copyOf(roles), phoneNumber, email, purchases, sorting);
+  @Transactional
+  public List<User> lookupUsers(String username,
+                                Collection<UserRole> roles,
+                                String phoneNumber,
+                                String email,
+                                Range<Integer> purchases,
+                                UserSorting sorting) {
+    return users.lookup(username, new HashSet<>(roles), phoneNumber, email, purchases, sorting);
   }
 
-  public User createUser(int creatorId, String username, String phoneNumber,
-                         String email, String password, UserRole role) {
-    if (role == UserRole.ANONYMOUS) {
-      throw new IllegalArgumentException("Role 'anonymous' is not allowed");
-    }
+  @Transactional
+  @Audited(EventType.USER_CREATED)
+  public User createUser(@Audited.Param("username") String username,
+                         @Audited.Param("phone_number") String phoneNumber,
+                         @Audited.Param("email") String email,
+                         String password,
+                         @Audited.Param("role") UserRole role) {
     if (users.existsUsername(username)) {
       throw new UserAlreadyExistsException("Username '" + username + "' is already taken.");
     }
-    var user = users.create(username, phoneNumber, email, password, role);
-    events.onUserCreated(creatorId, user);
-    return user;
+    return users.create(username, phoneNumber, email, password, role);
   }
 
-  public User editUser(int userId,
-                       int userIdToEdit,
-                       @Nullable String username,
-                       @Nullable String phoneNumber,
-                       @Nullable String email,
-                       @Nullable String password,
-                       @Nullable UserRole role) {
-    if (role == UserRole.ANONYMOUS) {
-      throw new IllegalArgumentException("Role anonymous is not allowed");
-    }
-    var oldUser = users.findById(userIdToEdit);
-    var newUser = users.edit(userIdToEdit, username, phoneNumber, email, password, role);
-    events.onUserEdited(userId, oldUser, newUser);
-    return newUser;
+  @Transactional
+  @Audited(EventType.USER_MODIFIED)
+  public User editUser(@Audited.Param("edited_user_id") int userId,
+                       @Audited.Param("new_username") @Nullable String username,
+                       @Audited.Param("new_phone_number") @Nullable String phoneNumber,
+                       @Audited.Param("new_email") @Nullable String email,
+                       @Audited.PresenceCheck("password_changed") @Nullable String password,
+                       @Audited.Param("new_role") @Nullable UserRole role) {
+    return users.edit(userId, username, phoneNumber, email, password, role);
   }
 
-  public void deleteUser(int userId, int userIdToDelete) {
-    if (orders.doAnyOrdersExistFor(userIdToDelete)) {
-      throw new CascadingException(orders.countClientOrders(userIdToDelete) + " order(s) reference this user.");
+  /**
+   * Deletes the user by id.
+   *
+   * @throws CascadingException if there exists an order referencing this user
+   */
+  @Transactional
+  @Audited(EventType.USER_DELETED)
+  public void deleteUser(@Audited.Param("deleted_user_id") int userId) {
+    if (orders.doAnyOrdersExistFor(userId)) {
+      throw new CascadingException(orders.countClientOrders(userId) + " order(s) reference this user.");
     }
 
-    users.delete(userIdToDelete);
-    events.onUserDeleted(userId, userIdToDelete);
+    users.delete(userId);
   }
 
-  public void deleteUserCascading(int userId, int userIdToDelete) {
-    for (var order : orders.deleteClientOrders(userIdToDelete)) {
-      events.onOrderDeleted(userId, order.id());
-    }
-
-    users.delete(userIdToDelete);
-    events.onUserDeleted(userId, userIdToDelete);
+  /**
+   * Deletes the user and related orders.
+   */
+  @Transactional
+  @Audited(EventType.USER_DELETED)
+  public void deleteUserCascading(@Audited.Param("deleted_user_id") int userId) {
+    orders.deleteClientOrders(userId);
+    users.delete(userId);
   }
 }

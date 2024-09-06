@@ -1,38 +1,31 @@
 package com.lemondead1.carshopservice.service;
 
+import com.lemondead1.carshopservice.annotations.Timed;
+import com.lemondead1.carshopservice.annotations.Transactional;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
-import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
+import com.lemondead1.carshopservice.exceptions.NotFoundException;
 import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
-import com.lemondead1.carshopservice.exceptions.WrongUsernamePasswordException;
 import com.lemondead1.carshopservice.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
+import org.eclipse.jetty.security.AbstractLoginService;
+import org.eclipse.jetty.security.RolePrincipal;
+import org.eclipse.jetty.security.UserIdentity;
+import org.eclipse.jetty.security.UserPrincipal;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Session;
 
+import javax.annotation.Nullable;
+import java.util.List;
+import java.util.function.Function;
+
+@Timed
 @RequiredArgsConstructor
-public class SessionService {
-  private static final User anonymous = new User(0, "anonymous", "+71234567890", "test@example.com",
-                                                 "password", UserRole.ANONYMOUS, 0);
-
+public class SessionService extends AbstractLoginService {
   private final UserRepo users;
   private final EventService events;
-  private int currentUserId;
 
-  public User getCurrentUser() {
-    if (currentUserId == 0) {
-      return anonymous;
-    }
-    try {
-      return users.findById(currentUserId);
-    } catch (RowNotFoundException e) {
-      currentUserId = 0;
-      return anonymous;
-    }
-  }
-
-  public boolean checkUsernameFree(String username) {
-    return !users.existsUsername(username);
-  }
-
+  @Transactional
   public User signUserUp(String username, String phoneNumber, String email, String password) {
     if (users.existsUsername(username)) {
       throw new UserAlreadyExistsException("Username '" + username + "' is already taken.");
@@ -42,21 +35,33 @@ public class SessionService {
     return user;
   }
 
-  public void login(String username, String password) {
-    User user;
-    try {
-      user = users.findByUsername(username);
-    } catch (RowNotFoundException e) {
-      throw new WrongUsernamePasswordException("Wrong username or password.");
+  @Override
+  @Nullable
+  @Transactional
+  public UserIdentity login(String username,
+                            Object credentials,
+                            Request request,
+                            Function<Boolean, Session> getOrCreateSession) {
+    UserIdentity login = super.login(username, credentials, request, getOrCreateSession);
+    if (login == null) {
+      return null;
     }
-    if (!user.password().equals(password)) {
-      throw new WrongUsernamePasswordException("Wrong username or password.");
-    }
-    currentUserId = user.id();
-    events.onUserLoggedIn(user.id());
+    events.onUserLoggedIn(((User) login.getUserPrincipal()).id());
+    return login;
   }
 
-  public void logout() {
-    currentUserId = 0;
+  @Override
+  protected List<RolePrincipal> loadRoleInfo(UserPrincipal user) {
+    return List.of(((User) user).role().toPrincipal());
+  }
+
+  @Override
+  @Nullable
+  protected UserPrincipal loadUserInfo(String username) {
+    try {
+      return users.findByUsername(username);
+    } catch (NotFoundException e) {
+      return null;
+    }
   }
 }
