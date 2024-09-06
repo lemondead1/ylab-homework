@@ -146,11 +146,12 @@ public class DBManagerImpl implements DBManager {
         try {
           log.debug("Rolling back to the savepoint.");
           connection.rollback(lastSavepoint);
-          connection.releaseSavepoint(lastSavepoint);
         } catch (SQLException e) {
           throw new DBException("Failed to rollback to the savepoint.", e);
         }
-      } else {
+      }
+
+      if (savepoints.peek() != lastSavepoint) {
         try {
           log.debug("Releasing the savepoint.");
           connection.releaseSavepoint(lastSavepoint);
@@ -210,10 +211,14 @@ public class DBManagerImpl implements DBManager {
           taken = createConnection();
         }
 
-        //Adding scheduled savepoints
-        for (int i = savepoints.size(); i < savepointDepth; i++) {
-          log.debug("Setting a late savepoint.");
-          savepoints.push(taken.setSavepoint());
+        // Adding scheduled savepoints.
+        if (savepoints.size() < savepointDepth) {
+          // Can be reused, since all these savepoints represent the same transaction state.
+          Savepoint savepoint = taken.setSavepoint();
+          for (int i = savepoints.size(); i < savepointDepth; i++) {
+            log.debug("Setting a late savepoint.");
+            savepoints.push(savepoint);
+          }
         }
 
         connection = taken;

@@ -1,28 +1,22 @@
 package com.lemondead1.carshopservice.config;
 
 import com.lemondead1.carshopservice.util.ConstraintSecurityHandlerBuilder;
-import jakarta.servlet.DispatcherType;
+import com.lemondead1.logging.EnableLogging;
 import jakarta.servlet.Filter;
-import jakarta.servlet.ServletContext;
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.security.SecurityHandler;
-import org.eclipse.jetty.server.Server;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
-import org.springframework.web.context.ContextLoaderListener;
-import org.springframework.web.context.ServletContextAware;
-import org.springframework.web.context.WebApplicationContext;
-import org.springframework.web.servlet.DispatcherServlet;
 
-import java.util.EnumSet;
 import java.util.List;
 
 import static com.lemondead1.carshopservice.enums.UserRole.*;
 
 @Configuration
+@EnableLogging
 @EnableAspectJAutoProxy
 public class MainConfig {
   /**
@@ -56,32 +50,13 @@ public class MainConfig {
 
   /**
    * Doing some hacking to make Spring and Jetty work together.
-   * Adding security, filters and a DispatcherServlet to the ServletContext.
+   * Adds security to the servlet.
    */
   @Bean
-  ServletContextAware servletContextConfigurator(WebApplicationContext spring,
-                                                 SecurityHandler securityHandler,
-                                                 List<Filter> filters) {
+  ServletContextInitializer servletContextInitializer(SecurityHandler securityHandler, List<Filter> filters) {
     return context -> {
       var jetty = (ServletContextHandler) ((ServletContextHandler.ServletContextApi) context).getContextHandler();
-      jetty.addEventListener(new ContextLoaderListener(spring));
-      jetty.setContextPath("/");
       jetty.setSecurityHandler(securityHandler);
-      for (var filter : filters) {
-        jetty.addFilter(filter, "/*", EnumSet.allOf(DispatcherType.class));
-      }
-      jetty.addServlet(new DispatcherServlet(spring), "/*");
     };
-  }
-
-  /**
-   * Sets up a Jetty server instance with a servlet context.
-   * I didn't expect it to work without a separate context, but it works.
-   */
-  @Bean
-  Server server(ServletContext contextHandler, @Value("${server.port}") int port) {
-    var server = new Server(port);
-    server.setHandler(((ServletContextHandler.ServletContextApi) contextHandler).getContextHandler());
-    return server;
   }
 }

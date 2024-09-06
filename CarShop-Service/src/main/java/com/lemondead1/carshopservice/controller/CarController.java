@@ -1,5 +1,6 @@
 package com.lemondead1.carshopservice.controller;
 
+import com.lemondead1.carshopservice.conversion.MapStruct;
 import com.lemondead1.carshopservice.dto.car.CarQueryDTO;
 import com.lemondead1.carshopservice.dto.car.ExistingCarDTO;
 import com.lemondead1.carshopservice.dto.car.NewCarDTO;
@@ -9,7 +10,6 @@ import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.ForbiddenException;
 import com.lemondead1.carshopservice.service.CarService;
-import com.lemondead1.carshopservice.util.MapStruct;
 import com.lemondead1.carshopservice.util.Range;
 import com.lemondead1.carshopservice.util.Util;
 import com.lemondead1.carshopservice.validation.PastYearValidator;
@@ -59,6 +59,9 @@ public class CarController {
   }
 
   @PatchMapping("/{carId}")
+  @Operation(summary = "Patches a car by id.", description = "Patches a car by id. Not allowed for clients.")
+  @ApiResponse(responseCode = "200", description = "Patched the car successfully.")
+  @ApiResponse(responseCode = "404", description = "Could not find a car by the given id.")
   ExistingCarDTO editCarById(@PathVariable int carId, @RequestBody NewCarDTO carDTO) {
     Car editedCar = carService.editCar(
         carId,
@@ -74,7 +77,7 @@ public class CarController {
   @DeleteMapping("/{carId}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   @Operation(summary = "Deletes a car by id.", description = "Deletes a car by id. Not allowed for clients.")
-  @ApiResponse(responseCode = "204", description = "Deleted a car successfully.")
+  @ApiResponse(responseCode = "204", description = "Deleted the car successfully.")
   @ApiResponse(responseCode = "404", description = "Could not find a car with the given id.", content = @Content)
   void deleteCarById(@PathVariable int carId, @RequestParam(defaultValue = "false") boolean cascade, HttpServletRequest request) {
     User currentUser = (User) request.getUserPrincipal();

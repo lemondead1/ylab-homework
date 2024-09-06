@@ -5,3 +5,8 @@ databaseChangeLog:
   - include:
       file: prefill-data.yaml
       relativeToChangelogFile: true
+  - include:
+      context: test
+      errorIfMissing: false
+      file: test-data.yaml
+      relativeToChangelogFile: true

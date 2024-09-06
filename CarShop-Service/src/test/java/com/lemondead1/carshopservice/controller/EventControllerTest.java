@@ -1,54 +1,51 @@
 package com.lemondead1.carshopservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lemondead1.carshopservice.config.EnvironmentConfig;
+import com.lemondead1.carshopservice.config.WebConfig;
+import com.lemondead1.carshopservice.conversion.MapStruct;
 import com.lemondead1.carshopservice.dto.event.EventQueryDTO;
 import com.lemondead1.carshopservice.entity.Event;
 import com.lemondead1.carshopservice.enums.EventSorting;
 import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.service.EventService;
-import com.lemondead1.carshopservice.util.MapStruct;
-import com.lemondead1.carshopservice.util.MapStructImpl;
 import com.lemondead1.carshopservice.util.Range;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.log;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 
-@ExtendWith(MockitoExtension.class)
+@WebMvcTest
+@ComponentScan({ "com.lemondead1.carshopservice.conversion" })
+@ContextConfiguration(classes = { WebConfig.class, EventController.class })
+@AutoConfigureMockMvc
 public class EventControllerTest {
-  @Mock
+  @MockBean
   EventService eventService;
 
-  ObjectMapper objectMapper = EnvironmentConfig.objectMapper();
+  @Autowired
+  ObjectMapper objectMapper;
 
-  MapStruct mapStruct = new MapStructImpl();
+  @Autowired
+  MapStruct mapStruct;
 
-  EventController controller;
-
+  @Autowired
   MockMvc mockMvc;
-
-  @BeforeEach
-  void beforeEach() {
-    controller = new EventController(eventService, mapStruct);
-    mockMvc = standaloneSetup(controller).setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
-                                         .build();
-  }
 
   @Test
   @DisplayName("POST /event/search calls EventService.findEvents and responds with the result.")

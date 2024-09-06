@@ -1,5 +1,6 @@
 package com.lemondead1.carshopservice.controller;
 
+import com.lemondead1.carshopservice.conversion.MapStruct;
 import com.lemondead1.carshopservice.dto.order.EditOrderDTO;
 import com.lemondead1.carshopservice.dto.order.ExistingOrderDTO;
 import com.lemondead1.carshopservice.dto.order.NewOrderDTO;
@@ -12,7 +13,6 @@ import com.lemondead1.carshopservice.enums.OrderState;
 import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.ForbiddenException;
 import com.lemondead1.carshopservice.service.OrderService;
-import com.lemondead1.carshopservice.util.MapStruct;
 import com.lemondead1.carshopservice.util.Range;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -41,9 +41,7 @@ public class OrderController {
   @ResponseStatus(HttpStatus.CREATED)
   @Operation(summary = "Places a new order.", description = "Places a new order. Clients can only place orders for themselves.")
   @ApiResponse(responseCode = "201", description = "The order was created successfully.")
-  @ApiResponse(responseCode = "409",
-               description = "Either the car is not available for purchase or the client does not own the car (for service orders).",
-               content = @Content)
+  @ApiResponse(responseCode = "409", description = "Either the car is not available for purchase or the client does not own the car (for service orders).", content = @Content)
   ExistingOrderDTO createOrder(@RequestBody NewOrderDTO orderDTO, HttpServletRequest request) {
     User currentUser = (User) request.getUserPrincipal();
     if (currentUser.role() == UserRole.CLIENT && orderDTO.clientId() != null && orderDTO.clientId() != currentUser.id()) {
@@ -60,8 +58,7 @@ public class OrderController {
   }
 
   @PatchMapping("/orders/{orderId}")
-  @Operation(summary = "Modifies an order by id.",
-             description = "Modifies an order by id. Clients are only allowed to cancel and leave comments under their own orders.")
+  @Operation(summary = "Modifies an order by id.", description = "Modifies an order by id. Clients are only allowed to cancel and leave comments under their own orders.")
   @ApiResponse(responseCode = "200", description = "The order was updated successfully.")
   @ApiResponse(responseCode = "404", description = "Could not find an order by the given id.", content = @Content)
   ExistingOrderDTO editOrderById(@PathVariable int orderId,
@@ -82,8 +79,7 @@ public class OrderController {
   }
 
   @GetMapping("/orders/{orderId}")
-  @Operation(summary = "Finds an order by id.",
-             description = "Finds an order by id. Clients are only allowed to view their own orders.")
+  @Operation(summary = "Finds an order by id.", description = "Finds an order by id. Clients are only allowed to view their own orders.")
   @ApiResponse(responseCode = "200", description = "The order was found successfully.")
   @ApiResponse(responseCode = "404", description = "Could not find an order by the given id.", content = @Content)
   ExistingOrderDTO findOrderById(@PathVariable int orderId, HttpServletRequest request) {
@@ -100,8 +96,7 @@ public class OrderController {
   @Operation(summary = "Deletes an order by id.", description = "Deletes an order by id. Only allowed for admins.")
   @ApiResponse(responseCode = "204", description = "The order was deleted successfully.")
   @ApiResponse(responseCode = "404", description = "Could not find an order by the given id.", content = @Content)
-  @ApiResponse(responseCode = "409", description = "There exist service orders that depend on this purchase.",
-               content = @Content)
+  @ApiResponse(responseCode = "409", description = "There exist service orders that depend on this purchase.", content = @Content)
   void deleteOrderById(@PathVariable int orderId) {
     orderService.deleteOrder(orderId);
   }
@@ -116,8 +111,7 @@ public class OrderController {
   }
 
   @GetMapping("/users/{userId}/orders")
-  @Operation(summary = "Finds orders by client id.",
-             description = "Finds orders by client id. Clients are only allowed to view their own orders.")
+  @Operation(summary = "Finds orders by client id.", description = "Finds orders by client id. Clients are only allowed to view their own orders.")
   @ApiResponse(responseCode = "200", description = "Found the user's orders successfully.")
   @ApiResponse(responseCode = "404", description = "Could not find a user with the given id.", content = @Content)
   List<ExistingOrderDTO> findOrdersByClientId(@PathVariable int userId,
@@ -131,8 +125,7 @@ public class OrderController {
   }
 
   @PostMapping("/orders/search")
-  @Operation(summary = "Searches for orders matching query.",
-             description = "Searches for orders matching query. Not allowed for clients.")
+  @Operation(summary = "Searches for orders matching query.", description = "Searches for orders matching query. Not allowed for clients.")
   @ApiResponse(responseCode = "200", description = "Search completed successfully.")
   List<ExistingOrderDTO> searchOrders(@RequestBody OrderQueryDTO queryDTO) {
     List<Order> found = orderService.lookupOrders(

@@ -1,16 +1,15 @@
 package com.lemondead1.carshopservice.service.impl;
 
-import com.lemondead1.carshopservice.annotations.Audited;
-import com.lemondead1.carshopservice.annotations.Timed;
+import com.lemondead1.audit.annotations.Audited;
 import com.lemondead1.carshopservice.annotations.Transactional;
 import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.enums.CarSorting;
-import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.repo.CarRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
 import com.lemondead1.carshopservice.service.CarService;
 import com.lemondead1.carshopservice.util.Range;
+import com.lemondead1.logging.annotations.Timed;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +26,7 @@ public class CarServiceImpl implements CarService {
   private final OrderRepo orders;
 
   @Transactional
-  @Audited(EventType.CAR_CREATED)
+  @Audited("car_created")
   @Override
   public Car createCar(@Audited.Param("brand") String brand,
                        @Audited.Param("model") String model,
@@ -38,7 +37,7 @@ public class CarServiceImpl implements CarService {
   }
 
   @Transactional
-  @Audited(EventType.CAR_MODIFIED)
+  @Audited("car_edited")
   @Override
   public Car editCar(@Audited.Param("car_id") int carId,
                      @Audited.Param("new_brand") @Nullable String brand,
@@ -50,7 +49,7 @@ public class CarServiceImpl implements CarService {
   }
 
   @Transactional
-  @Audited(EventType.CAR_DELETED)
+  @Audited("car_deleted")
   @Override
   public void deleteCar(@Audited.Param("car_id") int carId) {
     if (orders.existCarOrders(carId)) {
@@ -61,7 +60,7 @@ public class CarServiceImpl implements CarService {
   }
 
   @Transactional
-  @Audited(EventType.CAR_DELETED)
+  @Audited("car_deleted")
   @Override
   public void deleteCarCascading(@Audited.Param("car_id") int carId) {
     orders.deleteCarOrders(carId);

@@ -1,6 +1,6 @@
 package com.lemondead1.carshopservice.service.impl;
 
-import com.lemondead1.carshopservice.annotations.Timed;
+import com.lemondead1.audit.Auditor;
 import com.lemondead1.carshopservice.annotations.Transactional;
 import com.lemondead1.carshopservice.entity.Event;
 import com.lemondead1.carshopservice.entity.User;
@@ -9,9 +9,12 @@ import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.repo.EventRepo;
 import com.lemondead1.carshopservice.service.EventService;
 import com.lemondead1.carshopservice.util.Range;
+import com.lemondead1.logging.annotations.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -21,7 +24,7 @@ import java.util.Map;
 
 /**
  * This class is responsible for interfacing with the event database.
- * It provides convenience methods for both submitting and querying events.
+ * It provides convenience methods for both submitting and querying events as well as implements {@linkplain Auditor}.
  */
 @Timed
 @Service
@@ -32,21 +35,40 @@ public class EventServiceImpl implements EventService {
 
   @Transactional
   @Override
-  public void postEvent(int userId, EventType eventType, Map<String, Object> data) {
-    log.info("Posting a new event: userId={}, type={}, data={}.", userId, eventType, data);
-    events.create(Instant.now(), userId, eventType, data);
+  public void postEvent(String eventTypeId, Map<String, Object> data) {
+    var currentRequest = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+    if (currentRequest == null) {
+      throw new IllegalStateException("No request was found.");
+    }
+
+    var currentUser = (User) currentRequest.getRequest().getUserPrincipal();
+    if (currentUser == null) {
+      throw new IllegalStateException("No user is authenticated.");
+    }
+
+    log.info("Posting a new event: userId={}, type={}, data={}.", currentUser.id(), eventTypeId, data);
+
+    var eventType = EventType.parse(eventTypeId);
+    events.create(Instant.now(), currentUser.id(), eventType, data);
   }
 
+  /**
+   * Called when a user logs in.
+   */
   @Override
   public void onUserLoggedIn(int userId) {
-    postEvent(userId, EventType.USER_LOGGED_IN, Map.of());
+    log.info("User #{} logged in.", userId);
+    events.create(Instant.now(), userId, EventType.USER_LOGGED_IN, Map.of());
   }
 
+  /**
+   * Called when a user signs up.
+   */
   @Override
   public void onUserSignedUp(User user) {
-    postEvent(user.id(), EventType.USER_SIGNED_UP, Map.of("username", user.username(),
-                                                          "phone_number", user.phoneNumber(),
-                                                          "email", user.email()));
+    log.info("User id={}, phone number={}, email={} signed up.", user.id(), user.phoneNumber(), user.email());
+    events.create(Instant.now(), user.id(), EventType.USER_SIGNED_UP,
+                  Map.of("username", user.username(), "phone_number", user.phoneNumber(), "email", user.email()));
   }
 
   @Transactional

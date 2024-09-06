@@ -1,12 +1,10 @@
 package com.lemondead1.carshopservice.service.impl;
 
-import com.lemondead1.carshopservice.annotations.Audited;
-import com.lemondead1.carshopservice.annotations.Timed;
+import com.lemondead1.audit.annotations.Audited;
 import com.lemondead1.carshopservice.annotations.Transactional;
 import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.entity.Order;
 import com.lemondead1.carshopservice.entity.User;
-import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderSorting;
 import com.lemondead1.carshopservice.enums.OrderState;
@@ -17,6 +15,7 @@ import com.lemondead1.carshopservice.repo.OrderRepo;
 import com.lemondead1.carshopservice.repo.UserRepo;
 import com.lemondead1.carshopservice.service.OrderService;
 import com.lemondead1.carshopservice.util.Range;
+import com.lemondead1.logging.annotations.Timed;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -36,7 +35,7 @@ public class OrderServiceImpl implements OrderService {
   private final UserRepo users;
 
   @Transactional
-  @Audited(EventType.ORDER_CREATED)
+  @Audited("order_created")
   @Override
   public Order createOrder(@Audited.Param("client_id") int clientId,
                            @Audited.Param("car_id") int carId,
@@ -77,7 +76,7 @@ public class OrderServiceImpl implements OrderService {
   }
 
   @Transactional
-  @Audited(EventType.ORDER_DELETED)
+  @Audited("order_deleted")
   @Override
   public void deleteOrder(@Audited.Param("order_id") int orderId) {
     Order old = orders.findById(orderId);
@@ -89,7 +88,7 @@ public class OrderServiceImpl implements OrderService {
   }
 
   @Transactional
-  @Audited(EventType.ORDER_MODIFIED)
+  @Audited("order_edited")
   @Override
   public Order updateState(@Audited.Param("order_id") int orderId,
                            @Audited.Param("new_state") @Nullable OrderState newState,
@@ -108,8 +107,8 @@ public class OrderServiceImpl implements OrderService {
 
   @Transactional
   @Override
-  public List<Order> findClientOrders(int userId, OrderSorting sorting) {
-    return orders.findClientOrders(userId, sorting);
+  public List<Order> findClientOrders(int clientId, OrderSorting sorting) {
+    return orders.findClientOrders(clientId, sorting);
   }
 
   @Transactional

@@ -10,6 +10,9 @@ import org.eclipse.jetty.security.authentication.BasicAuthenticator;
 import javax.annotation.Nonnull;
 import java.util.Arrays;
 
+/**
+ * A convenient builder for {@linkplain ConstraintSecurityHandler}.
+ */
 public class ConstraintSecurityHandlerBuilder {
   private final ConstraintSecurityHandler security = new ConstraintSecurityHandler();
 

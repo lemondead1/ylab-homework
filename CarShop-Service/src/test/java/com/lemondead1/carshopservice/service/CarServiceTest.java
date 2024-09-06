@@ -1,41 +1,43 @@
 package com.lemondead1.carshopservice.service;
 
-import com.lemondead1.carshopservice.TestDBConnector;
+import com.lemondead1.carshopservice.DBInitializer;
 import com.lemondead1.carshopservice.entity.Car;
+import com.lemondead1.carshopservice.entity.User;
+import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.exceptions.NotFoundException;
 import com.lemondead1.carshopservice.repo.CarRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
-import com.lemondead1.carshopservice.service.impl.CarServiceImpl;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.runner.RunWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletWebRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@RunWith(SpringRunner.class)
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@ContextConfiguration(initializers = DBInitializer.class)
 public class CarServiceTest {
-  private static final CarRepo cars = new CarRepo(TestDBConnector.DB_MANAGER);
-  private static final OrderRepo orders = new OrderRepo(TestDBConnector.DB_MANAGER);
+  @Autowired
+  CarRepo cars;
 
+  @Autowired
+  OrderRepo orders;
+
+  @Autowired
   CarService carService;
 
   @BeforeEach
   void beforeEach() {
-    TestDBConnector.beforeEach();
-    carService = new CarServiceImpl(cars, orders);
-  }
-
-  @AfterEach
-  void afterEach() {
-    TestDBConnector.afterEach();
+    var currentRequest = new MockHttpServletRequest();
+    currentRequest.setUserPrincipal(new User(1, "admin", "88005553535", "admin@ya.com", "password", UserRole.ADMIN, 0));
+    RequestContextHolder.setRequestAttributes(new ServletWebRequest(currentRequest));
   }
 
   @Test

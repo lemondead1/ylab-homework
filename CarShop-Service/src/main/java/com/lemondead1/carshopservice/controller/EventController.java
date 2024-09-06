@@ -1,12 +1,12 @@
 package com.lemondead1.carshopservice.controller;
 
+import com.lemondead1.carshopservice.conversion.MapStruct;
 import com.lemondead1.carshopservice.dto.event.EventDTO;
 import com.lemondead1.carshopservice.dto.event.EventQueryDTO;
 import com.lemondead1.carshopservice.entity.Event;
 import com.lemondead1.carshopservice.enums.EventSorting;
 import com.lemondead1.carshopservice.enums.EventType;
 import com.lemondead1.carshopservice.service.EventService;
-import com.lemondead1.carshopservice.util.MapStruct;
 import com.lemondead1.carshopservice.util.Range;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

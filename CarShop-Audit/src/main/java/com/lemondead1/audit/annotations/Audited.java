@@ -1,6 +1,4 @@
-package com.lemondead1.carshopservice.annotations;
-
-import com.lemondead1.carshopservice.enums.EventType;
+package com.lemondead1.audit.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -10,11 +8,20 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface Audited {
-  EventType value();
+  /**
+   * The type of the event.
+   */
+  String value();
 
+  /**
+   * Marks the parameter to be captured for audit.
+   */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.PARAMETER)
   @interface Param {
+    /**
+     * Key for the data map entry.
+     */
     String value();
   }
 
@@ -24,6 +31,9 @@ public @interface Audited {
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.PARAMETER)
   @interface PresenceCheck {
+    /**
+     * Key for the data map entry.
+     */
     String value();
   }
 }

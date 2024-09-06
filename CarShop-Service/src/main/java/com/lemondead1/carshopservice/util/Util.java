@@ -43,6 +43,13 @@ public class Util {
     throw new NullPointerException("No nonnull object was found.");
   }
 
+  /**
+   * Formats the template.
+   *
+   * @param template      For example: "{} is the capital of {}."
+   * @param substitutions Substitutions for placeholders. For example: "London", "Great Britain".
+   * @return Substituted template.
+   */
   public static String format(String template, Object... substitutions) {
     var builder = new StringBuilder();
 
@@ -74,14 +81,23 @@ public class Util {
     return builder.toString();
   }
 
+  /**
+   * Serializes a set in format: 'item_one_id', 'item_two_id',...
+   */
   public static String serializeSet(Set<? extends HasId> items) {
     return items.stream().map(HasId::getId).map(id -> "'" + id + "'").collect(Collectors.joining(", "));
   }
 
+  /**
+   * Serializes a boolean set in format: true, false.
+   */
   public static String serializeBooleans(Set<Boolean> items) {
-    return items.stream().map(b -> Boolean.toString(b)).collect(Collectors.joining(","));
+    return items.stream().map(b -> Boolean.toString(b)).collect(Collectors.joining(", "));
   }
 
+  /**
+   * Creates a map from value.getId() to value.
+   */
   @SafeVarargs
   public static <V extends HasId> Map<String, V> createIdToValueMap(V... array) {
     Map<String, V> map = new LinkedHashMap<>();

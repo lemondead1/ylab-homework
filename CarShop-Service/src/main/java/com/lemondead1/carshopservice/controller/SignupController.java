@@ -1,10 +1,10 @@
 package com.lemondead1.carshopservice.controller;
 
+import com.lemondead1.carshopservice.conversion.MapStruct;
 import com.lemondead1.carshopservice.dto.SignupDTO;
 import com.lemondead1.carshopservice.dto.user.ExistingUserDTO;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.service.SignupLoginService;
-import com.lemondead1.carshopservice.util.MapStruct;
 import com.lemondead1.carshopservice.util.Util;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

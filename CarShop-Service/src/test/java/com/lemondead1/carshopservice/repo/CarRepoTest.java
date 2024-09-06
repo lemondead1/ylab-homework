@@ -1,20 +1,21 @@
 package com.lemondead1.carshopservice.repo;
 
+import com.lemondead1.carshopservice.DBInitializer;
 import com.lemondead1.carshopservice.IntegerArrayConverter;
 import com.lemondead1.carshopservice.RangeConverter;
-import com.lemondead1.carshopservice.TestDBConnector;
 import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.DBException;
 import com.lemondead1.carshopservice.exceptions.NotFoundException;
 import com.lemondead1.carshopservice.util.Range;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ContextConfiguration;
 import org.testcontainers.shaded.org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Comparator;
@@ -23,18 +24,11 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@SpringBootTest
+@ContextConfiguration(initializers = DBInitializer.class)
 public class CarRepoTest {
-  private static final CarRepo cars = new CarRepo(TestDBConnector.DB_MANAGER);
-
-  @BeforeEach
-  void beforeEach() {
-    TestDBConnector.beforeEach();
-  }
-
-  @AfterEach
-  void afterEach() {
-    TestDBConnector.afterEach();
-  }
+  @Autowired
+  CarRepo cars;
 
   @ParameterizedTest(name = "findById({0}) returns Car({0}, {1}, {2}, {3}, {4}, {5}, {6}).")
   @CsvSource({

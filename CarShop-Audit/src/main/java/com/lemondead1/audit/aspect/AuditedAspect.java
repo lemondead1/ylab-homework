@@ -1,17 +1,13 @@
-package com.lemondead1.carshopservice.aspect;
+package com.lemondead1.audit.aspect;
 
-import com.lemondead1.carshopservice.annotations.Audited;
-import com.lemondead1.carshopservice.entity.User;
-import com.lemondead1.carshopservice.enums.EventType;
-import com.lemondead1.carshopservice.filter.RequestCaptorFilter;
-import com.lemondead1.carshopservice.service.EventService;
+import com.lemondead1.audit.Auditor;
+import com.lemondead1.audit.annotations.Audited;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -20,31 +16,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
 @Aspect
 @RequiredArgsConstructor
 public class AuditedAspect {
-  private final EventService eventService;
-  private final RequestCaptorFilter requestCaptor;
+  private final Auditor eventService;
 
   private final Map<Method, AuditedMethod> auditedMethodCache = new ConcurrentHashMap<>();
 
-  @Pointcut("execution(@com.lemondead1.carshopservice.annotations.Audited * * (..))")
+  @Pointcut("execution(@com.lemondead1.audit.annotations.Audited * * (..))")
   public void annotatedByAudited() { }
 
   @AfterReturning("annotatedByAudited()")
   public void afterReturning(JoinPoint jp) throws NoSuchMethodException {
-    User currentUser = requestCaptor.getCurrentPrincipal();
-
-    if (currentUser == null) {
-      throw new IllegalStateException("Not authenticated.");
-    }
-
     Method iFaceMethod = ((MethodSignature) jp.getSignature()).getMethod();
     Method implMethod = jp.getTarget().getClass().getMethod(iFaceMethod.getName(), iFaceMethod.getParameterTypes());
 
     AuditedMethod audited = auditedMethodCache.computeIfAbsent(implMethod, this::preprocessMethod);
-    EventType type = audited.type;
+    String type = audited.type;
     Map<String, Object> arguments = new LinkedHashMap<>();
     for (int i = 0; i < audited.auditedArgumentCount; i++) {
       Object arg = jp.getArgs()[audited.argIndices[i]];
@@ -57,12 +45,12 @@ public class AuditedAspect {
         arguments.put(audited.argNames[i], arg);
       }
     }
-    eventService.postEvent(currentUser.id(), type, arguments);
+    eventService.postEvent(type, arguments);
   }
 
   private AuditedMethod preprocessMethod(Method method) {
     var annotation = method.getAnnotation(Audited.class);
-    EventType type = annotation.value();
+    String type = annotation.value();
 
     List<String> argNames = new ArrayList<>();
     List<Integer> argIndices = new ArrayList<>();
@@ -94,7 +82,7 @@ public class AuditedAspect {
                              onlyPresenceArr);
   }
 
-  private record AuditedMethod(EventType type,
+  private record AuditedMethod(String type,
                                int auditedArgumentCount,
                                String[] argNames,
                                int[] argIndices,

@@ -1,4 +1,4 @@
-package com.lemondead1.carshopservice.aspect;
+package com.lemondead1.logging.aspect;
 
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -11,10 +11,10 @@ import org.springframework.stereotype.Component;
 @Aspect
 @Slf4j
 public class TimedAspect {
-  @Pointcut("execution(@com.lemondead1.carshopservice.annotations.Timed * * (..))")
+  @Pointcut("execution(@com.lemondead1.logging.annotations.Timed * * (..))")
   public void methodsWithTimed() { }
 
-  @Pointcut("within(@com.lemondead1.carshopservice.annotations.Timed *) && execution(* * (..))")
+  @Pointcut("within(@com.lemondead1.logging.annotations.Timed *) && execution(* * (..))")
   public void methodsInClassesWithTimed() { }
 
   @Around("methodsWithTimed() || methodsInClassesWithTimed()")

@@ -197,13 +197,13 @@ public class CarRepo {
   /**
    * Looks up cars matching query
    *
-   * @param brand car brand query
-   * @param model car model query
-   * @param productionYear production year range
-   * @param price price range
-   * @param condition car condition query
+   * @param brand                   car brand query
+   * @param model                   car model query
+   * @param productionYear          production year range
+   * @param price                   price range
+   * @param condition               car condition query
    * @param availabilityForPurchase availability for purchase
-   * @param sorting sorting
+   * @param sorting                 sorting
    * @return List of cars matching the query
    */
   public List<Car> lookup(String brand,

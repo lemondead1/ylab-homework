@@ -12,13 +12,48 @@ database:
     schema: infra
     changelog: db/changelog/changelog.yaml
 
+logging:
+  level:
+    root: INFO
+    com.lemondead1: DEBUG
+
+spring:
+  aop:
+    proxyTargetClass: false
+
+  jackson:
+    serialization:
+      writeDatesAsTimestamps: false
+    propertyNamingStrategy: SNAKE_CASE
+
 springdoc:
-  swagger-ui:
+  openApi:
+    info:
+      version: 1.0.0
+      title: CarShop Service API
+      description: The API spec for the YLAB homework project.
+
+    security:
+      - basicAuth: [ ]
+
+    components:
+      securitySchemes:
+        basicAuth:
+          type: http
+          scheme: basic
+
+      # Do not remove this. Otherwise, it throws an NPE on access to the spec.
+      schemas: { }
+
+  swaggerUi:
     path: /swagger-ui
-  group-configs:
+
+  groupConfigs:
     - group: car-shop
-      paths-to-match: /**
+      pathsToMatch: /**
+
   packagesToScan:
     - com.lemondead1.carshopservice
+
   pathsToMatch:
     - /**

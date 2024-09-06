@@ -1,2 +1,4 @@
 rootProject.name = 'ylab-homework'
 include 'CarShop-Service'
+include 'CarShop-Audit'
+include 'CarShop-Logging'

@@ -1,6 +1,5 @@
 package com.lemondead1.carshopservice.service.impl;
 
-import com.lemondead1.carshopservice.annotations.Timed;
 import com.lemondead1.carshopservice.annotations.Transactional;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.UserRole;
@@ -9,6 +8,7 @@ import com.lemondead1.carshopservice.exceptions.UserAlreadyExistsException;
 import com.lemondead1.carshopservice.repo.UserRepo;
 import com.lemondead1.carshopservice.service.EventService;
 import com.lemondead1.carshopservice.service.SignupLoginService;
+import com.lemondead1.logging.annotations.Timed;
 import lombok.RequiredArgsConstructor;
 import org.eclipse.jetty.security.AbstractLoginService;
 import org.eclipse.jetty.security.RolePrincipal;
@@ -29,8 +29,8 @@ public class LoginServiceImpl extends AbstractLoginService implements SignupLogi
   private final UserRepo users;
   private final EventService events;
 
-  @Transactional
   @Override
+  @Transactional
   public User signUserUp(String username, String phoneNumber, String email, String password) {
     if (users.existsUsername(username)) {
       throw new UserAlreadyExistsException("Username '" + username + "' is already taken.");

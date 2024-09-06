@@ -1,44 +1,43 @@
 package com.lemondead1.carshopservice.service;
 
-import com.lemondead1.carshopservice.TestDBConnector;
+import com.lemondead1.carshopservice.DBInitializer;
+import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.OrderKind;
 import com.lemondead1.carshopservice.enums.OrderState;
+import com.lemondead1.carshopservice.enums.UserRole;
 import com.lemondead1.carshopservice.exceptions.CascadingException;
 import com.lemondead1.carshopservice.exceptions.ConflictException;
 import com.lemondead1.carshopservice.exceptions.NotFoundException;
-import com.lemondead1.carshopservice.repo.CarRepo;
 import com.lemondead1.carshopservice.repo.OrderRepo;
-import com.lemondead1.carshopservice.repo.UserRepo;
-import com.lemondead1.carshopservice.service.impl.OrderServiceImpl;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletWebRequest;
 
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@ContextConfiguration(initializers = DBInitializer.class)
 public class OrderServiceTest {
-  private static final OrderRepo orders = new OrderRepo(TestDBConnector.DB_MANAGER);
-  private static final CarRepo cars = new CarRepo(TestDBConnector.DB_MANAGER);
-  private static final UserRepo users = new UserRepo(TestDBConnector.DB_MANAGER);
+  @Autowired
+  OrderRepo orders;
 
+  @Autowired
   OrderService orderService;
 
   @BeforeEach
   void beforeEach() {
-    TestDBConnector.beforeEach();
-    orderService = new OrderServiceImpl(orders, cars, users);
-  }
-
-  @AfterEach
-  void afterEach() {
-    TestDBConnector.afterEach();
+    var currentRequest = new MockHttpServletRequest();
+    currentRequest.setUserPrincipal(new User(1, "admin", "88005553535", "admin@ya.com", "password", UserRole.ADMIN, 0));
+    RequestContextHolder.setRequestAttributes(new ServletWebRequest(currentRequest));
   }
 
   @Test
@@ -80,13 +79,15 @@ public class OrderServiceTest {
   }
 
   @Test
-  @DisplayName("deleteOrder throws CascadingException when the purchase order is in 'done' state and there exist service orders for the same car and user.")
+  @DisplayName(
+      "deleteOrder throws CascadingException when the purchase order is in 'done' state and there exist service orders for the same car and user.")
   void deleteOrderThrowsOnOwnershipConstraintViolation() {
     assertThatThrownBy(() -> orderService.deleteOrder(52)).isInstanceOf(CascadingException.class);
   }
 
   @Test
-  @DisplayName("updateState throws CascadingException when the purchase order is in 'done' state and there exist service orders for the same car and user.")
+  @DisplayName(
+      "updateState throws CascadingException when the purchase order is in 'done' state and there exist service orders for the same car and user.")
   void updateOrderStateThrowsOnOwnershipConstraintViolation() {
     assertThatThrownBy(() -> orderService.updateState(52, OrderState.PERFORMING, ""))
         .isInstanceOf(CascadingException.class);
