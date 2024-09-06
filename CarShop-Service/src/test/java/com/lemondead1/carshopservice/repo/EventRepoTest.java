@@ -3,7 +3,11 @@ package com.lemondead1.carshopservice.repo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lemondead1.carshopservice.*;
+import com.lemondead1.carshopservice.HasIdEnumSetConverter;
+import com.lemondead1.carshopservice.IntegerArrayConverter;
+import com.lemondead1.carshopservice.RangeConverter;
+import com.lemondead1.carshopservice.TestDBConnector;
+import com.lemondead1.carshopservice.config.EnvironmentConfig;
 import com.lemondead1.carshopservice.entity.Event;
 import com.lemondead1.carshopservice.enums.EventSorting;
 import com.lemondead1.carshopservice.enums.EventType;
@@ -26,9 +30,9 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class EventRepoTest {
-  private static final EventRepo events = new EventRepo(TestDBConnector.DB_MANAGER, SharedTestObjects.jackson);
+  private static final ObjectMapper jackson = EnvironmentConfig.objectMapper();
+  private static final EventRepo events = new EventRepo(TestDBConnector.DB_MANAGER, jackson);
   private static final UserRepo users = new UserRepo(TestDBConnector.DB_MANAGER);
-  private static final ObjectMapper jackson = SharedTestObjects.jackson;
 
   @BeforeEach
   void beforeEach() {

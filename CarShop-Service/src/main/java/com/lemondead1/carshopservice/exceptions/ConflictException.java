@@ -1,9 +1,12 @@
 package com.lemondead1.carshopservice.exceptions;
 
-import org.eclipse.jetty.http.HttpStatus;
+import lombok.experimental.StandardException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
-public class ConflictException extends RequestException {
-  public ConflictException(String message) {
-    super(HttpStatus.CONFLICT_409, message);
+@StandardException
+public class ConflictException extends ResponseStatusException {
+  public ConflictException(String reason, Throwable cause) {
+    super(HttpStatus.CONFLICT, reason, cause);
   }
 }

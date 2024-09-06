@@ -16,5 +16,10 @@ import java.time.Instant;
  * @param car the car that is being purchased or performed service on
  * @param comments comments
  */
-public record Order(int id, Instant createdAt, OrderKind type, OrderState state,
-                    User client, Car car, String comments) { }
+public record Order(int id,
+                    Instant createdAt,
+                    OrderKind type,
+                    OrderState state,
+                    User client,
+                    Car car,
+                    String comments) { }

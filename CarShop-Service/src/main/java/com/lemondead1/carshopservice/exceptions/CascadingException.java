@@ -1,9 +1,6 @@
 package com.lemondead1.carshopservice.exceptions;
 
-import org.eclipse.jetty.http.HttpStatus;
+import lombok.experimental.StandardException;
 
-public class CascadingException extends RequestException {
-  public CascadingException(String message) {
-    super(HttpStatus.CONFLICT_409, message);
-  }
-}
+@StandardException
+public class CascadingException extends ConflictException { }

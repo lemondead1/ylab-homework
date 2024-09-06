@@ -2,6 +2,7 @@ package com.lemondead1.carshopservice.dto.car;
 
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.util.Range;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import javax.annotation.Nullable;
 
@@ -16,6 +17,7 @@ import javax.annotation.Nullable;
  * @param availability car availability, matches any if {@code null}
  * @param sorting entry sorting
  */
+@Schema(name = "CarQuery")
 public record CarQueryDTO(@Nullable String brand,
                           @Nullable String model,
                           @Nullable Range<Integer> productionYear,

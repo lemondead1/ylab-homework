@@ -7,10 +7,9 @@
 
   <logger name="com.lemondead1.carshopservice" level="DEBUG"/>
 
-  <!-->Allowing exceptions to show in the log messages.<-->
-  <logger name="org.eclipse.jetty.ee10.servlet.ServletChannelState" level="DEBUG"/>
+  <logger name="org.springframework.aop" level="TRACE"/>
 
-  <root level="INFO">
+  <root level="DEBUG">
     <appender-ref ref="STDOUT"/>
   </root>
 </configuration>

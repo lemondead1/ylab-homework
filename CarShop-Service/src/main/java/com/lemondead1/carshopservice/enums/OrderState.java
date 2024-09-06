@@ -1,21 +1,20 @@
 package com.lemondead1.carshopservice.enums;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.lemondead1.carshopservice.util.HasId;
 import com.lemondead1.carshopservice.util.Util;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Getter
 @RequiredArgsConstructor
 public enum OrderState implements HasId {
-  NEW("new", "New"),
-  PERFORMING("performing", "Performing"),
-  DONE("done", "Done"),
-  CANCELLED("cancelled", "Cancelled");
+  NEW("new"),
+  PERFORMING("performing"),
+  DONE("done"),
+  CANCELLED("cancelled");
 
   public static final List<OrderState> ALL = List.of(values());
   public static final Set<OrderState> ALL_SET = Set.of(values());
@@ -23,7 +22,12 @@ public enum OrderState implements HasId {
   private static final Map<String, OrderState> idToEnum = Util.createIdToValueMap(values());
 
   private final String id;
-  private final String prettyName;
+
+  @JsonValue
+  @Override
+  public String getId() {
+    return this.id;
+  }
 
   public static OrderState parse(String id) {
     var found = idToEnum.get(id);

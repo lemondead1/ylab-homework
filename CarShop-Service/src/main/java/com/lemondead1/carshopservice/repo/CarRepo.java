@@ -5,10 +5,11 @@ import com.lemondead1.carshopservice.entity.Car;
 import com.lemondead1.carshopservice.entity.User;
 import com.lemondead1.carshopservice.enums.CarSorting;
 import com.lemondead1.carshopservice.exceptions.DBException;
-import com.lemondead1.carshopservice.exceptions.NotFoundException;
+import com.lemondead1.carshopservice.exceptions.RowNotFoundException;
 import com.lemondead1.carshopservice.util.Range;
 import com.lemondead1.carshopservice.util.Util;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
 
 import javax.annotation.Nullable;
 import java.sql.ResultSet;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+@Repository
 @RequiredArgsConstructor
 public class CarRepo {
   private final DBManager db;
@@ -95,7 +97,7 @@ public class CarRepo {
       var results = stmt.getResultSet();
 
       if (!results.next()) {
-        throw new NotFoundException("Car #" + carId + " not found.");
+        throw new RowNotFoundException("Car #" + carId + " not found.");
       }
 
       return readCar(results, 1);
@@ -109,7 +111,7 @@ public class CarRepo {
    *
    * @param carId id to be deleted
    * @return old row
-   * @throws NotFoundException if a car with given id does not exist.
+   * @throws RowNotFoundException if a car with given id does not exist.
    */
   public Car delete(int carId) {
     var sql = """
@@ -124,7 +126,7 @@ public class CarRepo {
       var results = stmt.getResultSet();
 
       if (!results.next()) {
-        throw new NotFoundException("Car #" + carId + " not found.");
+        throw new RowNotFoundException("Car #" + carId + " not found.");
       }
 
       return readCar(results, 1);
@@ -138,7 +140,7 @@ public class CarRepo {
    *
    * @param carId id to find
    * @return a car with the given id
-   * @throws NotFoundException if the car was not found
+   * @throws RowNotFoundException if the car was not found
    */
   public Car findById(int carId) {
     var sql = """
@@ -153,7 +155,7 @@ public class CarRepo {
       var results = stmt.getResultSet();
 
       if (!results.next()) {
-        throw new NotFoundException("Car #" + carId + " not found.");
+        throw new RowNotFoundException("Car #" + carId + " not found.");
       }
 
       return readCar(results, 1);

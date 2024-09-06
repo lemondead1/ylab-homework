@@ -1,18 +1,17 @@
 package com.lemondead1.carshopservice.filter;
 
 import com.lemondead1.carshopservice.entity.User;
-import jakarta.servlet.DispatcherType;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 
-@WebFilter(value = "/*", asyncSupported = true, dispatcherTypes = DispatcherType.REQUEST)
+@Component
 public class RequestCaptorFilter extends HttpFilter {
   private final ThreadLocal<HttpServletRequest> requests = new ThreadLocal<>();
 

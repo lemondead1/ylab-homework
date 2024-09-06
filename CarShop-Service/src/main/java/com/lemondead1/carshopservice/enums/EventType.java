@@ -1,15 +1,14 @@
 package com.lemondead1.carshopservice.enums;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.lemondead1.carshopservice.util.HasId;
 import com.lemondead1.carshopservice.util.Util;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Getter
 @RequiredArgsConstructor
 public enum EventType implements HasId {
   CAR_CREATED("car_created"),
@@ -30,6 +29,12 @@ public enum EventType implements HasId {
   private static final Map<String, EventType> idToEnum = Util.createIdToValueMap(values());
 
   private final String id;
+
+  @JsonValue
+  @Override
+  public String getId() {
+    return this.id;
+  }
 
   public static EventType parse(String id) {
     var value = idToEnum.get(id);

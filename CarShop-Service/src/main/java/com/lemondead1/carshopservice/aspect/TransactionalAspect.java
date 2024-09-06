@@ -1,16 +1,18 @@
 package com.lemondead1.carshopservice.aspect;
 
 import com.lemondead1.carshopservice.database.DBManager;
-import lombok.Setter;
+import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.stereotype.Component;
 
-@Setter
+@Component
 @Aspect
+@RequiredArgsConstructor
 public class TransactionalAspect {
-  private DBManager dbManager;
+  private final DBManager dbManager;
 
   @Pointcut("execution(@com.lemondead1.carshopservice.annotations.Transactional * * (..))")
   public void annotatedByTransactional() { }

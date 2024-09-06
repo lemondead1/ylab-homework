@@ -1,9 +1,12 @@
 package com.lemondead1.carshopservice.exceptions;
 
-import org.eclipse.jetty.http.HttpStatus;
+import lombok.experimental.StandardException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
-public class BadRequestException extends RequestException {
-  public BadRequestException(String message) {
-    super(HttpStatus.BAD_REQUEST_400, message);
+@StandardException
+public class BadRequestException extends ResponseStatusException {
+  public BadRequestException(String reason, Throwable cause) {
+    super(HttpStatus.BAD_REQUEST, reason, cause);
   }
 }
